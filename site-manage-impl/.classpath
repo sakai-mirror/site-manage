@@ -3,9 +3,8 @@
 	<classpathentry excluding="**/.DS_Store" kind="src" path="impl/src/java"/>
 	<classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
 	<classpathentry kind="var" path="MAVEN_REPO/commons-logging/jars/commons-logging-1.0.4.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
-	<classpathentry kind="var" path="MAVEN_REPO/concurrent/jars/concurrent-1.3.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/site-manage-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
