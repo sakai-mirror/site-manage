@@ -20,5 +20,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/email-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/site-manage-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/mailarchive-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/announcement-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
