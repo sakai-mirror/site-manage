@@ -22,5 +22,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/announcement-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
+	<classpathentry kind="src" path="/site-manage-util"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
