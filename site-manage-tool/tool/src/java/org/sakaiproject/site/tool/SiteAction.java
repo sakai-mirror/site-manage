@@ -1410,6 +1410,7 @@ public class SiteAction extends PagedResourceActionII
 				/*  buildContextForTemplate chef_site-siteInfo-list.vm
 				* 
 				*/
+				context.put("userDirectoryService", UserDirectoryService.getInstance());
 				try
 				{
 					siteProperties = site.getProperties();
@@ -9306,7 +9307,7 @@ public class SiteAction extends PagedResourceActionII
 			for (Iterator i = grants.iterator(); i.hasNext();)
 			{
 				Member g = (Member) i.next();
-				String userString = g.getUserId();
+				String userString = g.getUserEid();
 				Role r = g.getRole();
 				
 				boolean alreadyInList = false;
@@ -9329,7 +9330,7 @@ public class SiteAction extends PagedResourceActionII
 				{
 					try
 					{
-						User user = UserDirectoryService.getUser(userString);
+						User user = UserDirectoryService.getUserByEid(userString);
 						Participant participant = new Participant();
 						participant.name = user.getSortName();
 						participant.uniqname = user.getId();
@@ -11287,7 +11288,7 @@ public class SiteAction extends PagedResourceActionII
 					MyTool tool = (MyTool) i.next();
 					if(toolConfiguration.getTitle() != null)
 					{
-						if((toolConfiguration.getTool().getId()).indexOf(tool.getId()) != -1) { match = true; }
+						if(toolConfiguration.getTool() != null && toolConfiguration.getTool().getId().indexOf(tool.getId()) != -1) { match = true; }
 					}
 				}
 				if (!match) { return false; }
