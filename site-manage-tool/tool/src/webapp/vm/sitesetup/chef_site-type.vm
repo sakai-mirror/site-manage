@@ -46,18 +46,19 @@
 									</label>	
 									<select name="selectTerm" id="selectTerm" onchange="javascript:selectCourseType();">
 										#foreach($term in $termList)
-											<option value ="$term.Id"
+											<option value ="$term.Eid"
 												#if ($!selectedTerm)
-													#if ($term.id == $selectedTerm.Id)
+													#if ($term.Eid == $selectedTerm.Eid)
 														selected="selected"
 													#end
-												#else
+												#*#else
 													#if ($term.isCurrentTerm())
 														selected="selected"
 													#end
+                                                                                                *#
 												#end
 											>
-											$term.Id
+											$term.title
 											</option>
 										#end
 									</select> 

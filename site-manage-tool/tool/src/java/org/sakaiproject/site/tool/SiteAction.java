@@ -135,6 +135,9 @@ import org.sakaiproject.util.Validator;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+//import org.sakaiproject.coursemanagement.api.CourseManagementService;
+import org.sakaiproject.coursemanagement.api.AcademicSession;
+
 /**
 * <p>SiteAction controls the interface for worksite setup.</p>
 */
@@ -145,7 +148,12 @@ public class SiteAction extends PagedResourceActionII
 
 	/** portlet configuration parameter values**/
 	/** Resource bundle using current language locale */
-    private static ResourceLoader rb = new ResourceLoader("sitesetupgeneric");
+        private static ResourceLoader rb = new ResourceLoader("sitesetupgeneric");
+
+        private org.sakaiproject.coursemanagement.api.CourseManagementService cms =
+          (org.sakaiproject.coursemanagement.api.CourseManagementService) ComponentManager.
+            get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
+
 	
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 	private static final String SITE_MODE_SITEINFO= "siteinfo";
@@ -749,6 +757,7 @@ public class SiteAction extends PagedResourceActionII
 			state.setAttribute(STATE_SITE_INFO, siteInfo);	
 		}
 		// Lists used in more than one template
+                List terms = new Vector();
 				
 		// Access
 		List roles = new Vector();
@@ -977,6 +986,8 @@ public class SiteAction extends PagedResourceActionII
 				{
 					context.put("typeSelected", types.get(0));
 				}
+                                prepareAvailableTerms(context, state);
+				/*
 				List terms = CourseManagementService.getTerms();
 				List termsForSiteCreation = new Vector();
 				if (terms != null && terms.size() >0)
@@ -999,6 +1010,7 @@ public class SiteAction extends PagedResourceActionII
 				{
 					context.put("selectedTerm", state.getAttribute(STATE_TERM_SELECTED));
 				}
+				*/
 				return (String)getContext(data).get("template") + TEMPLATE[1];
 			case 2: 
 				/*   buildContextForTemplate chef_site-newSiteInformation.vm 
@@ -13039,4 +13051,31 @@ public class SiteAction extends PagedResourceActionII
 
 		return rv;
 	}
+
+  private void prepareAvailableTerms(Context context, SessionState state){
+    List terms = cms.getAcademicSessions();
+    List termsForSiteCreation = new Vector();
+    if (terms !=null && terms.size() >0)
+    {
+      for (int i=0; i<terms.size();i++)
+      {
+        AcademicSession a = (AcademicSession)terms.get(i);
+	if (a.getEndDate().getTime() > TimeService.newTime().getTime())
+        {
+          // don't show those terms which have ended already
+          termsForSiteCreation.add(a);
+        }
+      }
+    }
+    if (termsForSiteCreation.size() > 0)
+    {
+      context.put("termList", termsForSiteCreation);
+    }
+    if (state.getAttribute(STATE_TERM_SELECTED) != null)
+    {
+      context.put("selectedTerm", state.getAttribute(STATE_TERM_SELECTED));
+    }
+  }
+
+
 }
