@@ -7,5 +7,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/site-manage-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
+	<classpathentry kind="src" path="/cm-api"/>
+	<classpathentry kind="src" path="/authz-api"/>
+	<classpathentry kind="src" path="/authz-impl"/>
+	<classpathentry kind="src" path="/cm-impl"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

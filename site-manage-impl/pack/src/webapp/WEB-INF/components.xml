@@ -4,7 +4,7 @@
 <beans>
 
 	<bean id="org.sakaiproject.site.api.CourseManagementService"
-			class="org.sakaiproject.site.impl.BasicCourseManagementService"
+			class="org.sakaiproject.site.impl.CourseManagementServiceDelegatingImpl"
 			init-method="init"
 			destroy-method="destroy"
 			singleton="true">

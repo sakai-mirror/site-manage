@@ -62,6 +62,26 @@
 			<artifactId>commons-logging</artifactId>
 			<version>1.0.4</version>
 		</dependency>
+                <dependency>
+                        <groupId>sakaiproject</groupId>
+                        <artifactId>sakai-authz-api</artifactId>
+                        <version>${sakai.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>sakaiproject</groupId>
+                        <artifactId>sakai-authz-impl</artifactId>
+                        <version>${sakai.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>sakaiproject</groupId>
+                        <artifactId>sakai-coursemanagement-api</artifactId>
+                        <version>${sakai.version}</version>
+                </dependency>
+                <dependency>
+                        <groupId>sakaiproject</groupId>
+                        <artifactId>sakai-coursemanagement-hibernate-model</artifactId>
+                        <version>${sakai.version}</version>
+                </dependency>
 
 	</dependencies>
 
