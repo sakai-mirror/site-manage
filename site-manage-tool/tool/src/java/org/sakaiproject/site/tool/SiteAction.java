@@ -2545,7 +2545,7 @@ public class SiteAction extends PagedResourceActionII
 				context.put ("term", t);
 				if (t != null)
 				{
-					String userId = StringUtil.trimToZero(SessionManager.getCurrentSessionUserId());
+					String userId = StringUtil.trimToZero(SessionManager.getCurrentSession().getUserEid());
 					List courses = CourseManagementService.getInstructorCourses(userId, t.getYear(), t.getTerm());
 					if (courses != null && courses.size() > 0)
 					{
@@ -5709,6 +5709,8 @@ public class SiteAction extends PagedResourceActionII
 								buf.append(requiredField +"\t" + requiredFieldList.get(j) + "\n");
 							}
 						}
+						buf.append("\n" + rb.getString("java.sitetitle")+"\t" + title + "\n"); 
+						buf.append(rb.getString("java.siteid")+"\t" +  id);
 						buf.append("\n\n"+rb.getString("java.according")+" " + sessionUserName + " "+rb.getString("java.record"));
 						buf.append(" " + rb.getString("java.canyou")+" "  + sessionUserName + " "+ rb.getString("java.assoc")+"\n\n");
 						buf.append(rb.getString("java.respond")+" " + sessionUserName + rb.getString("java.appoint")+"\n\n");
@@ -7430,6 +7432,10 @@ public class SiteAction extends PagedResourceActionII
 					}
 				}
 				
+				// does the site has maintain type user(s) before the removing of selected participant?
+				String maintainRoleString = realmEdit.getMaintainRole();
+				boolean hadMaintainUser = realmEdit.getUsersHasRole(maintainRoleString).isEmpty();
+				
 				//remove selected users
 				if (params.getStrings ("selectedUser") != null)
 				{
@@ -7453,10 +7459,9 @@ public class SiteAction extends PagedResourceActionII
 					}
 				}
 				
-				String maintainRoleString = realmEdit.getMaintainRole();
-				if (realmEdit.getUsersHasRole(maintainRoleString).isEmpty())
+				if (hadMaintainUser != realmEdit.getUsersHasRole(maintainRoleString).isEmpty())
 				{
-					// if after update, there is no maintainer role user for the site, show alert message and don't save the update
+					// if after update, the "had maintain type user" status changed, show alert message and don't save the update
 					addAlert(state, rb.getString("sitegen.siteinfolist.nomaintainuser") + maintainRoleString + ".");
 				}
 				else
