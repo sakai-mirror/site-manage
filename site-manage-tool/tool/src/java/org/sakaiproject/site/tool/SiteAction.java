@@ -2051,6 +2051,7 @@ public class SiteAction extends PagedResourceActionII
 			* 
 			*/
 			context.put("title", site.getTitle());
+			context.put("sitePublished", Boolean.valueOf(site.isPublished()));
 			if (state.getAttribute("form_selectedNotify") == null)
 			{
 				state.setAttribute("form_selectedNotify", Boolean.FALSE);
@@ -4452,6 +4453,24 @@ public class SiteAction extends PagedResourceActionII
 			if (title == null)
 			{
 				addAlert(state, rb.getString("editgroup.titlemissing"));
+			}
+			else
+			{
+				// check whether the group title has been used already
+				boolean titleExist = false;
+				for (Iterator iGroups = site.getGroups().iterator(); !titleExist && iGroups.hasNext(); )
+				{
+					Group iGroup = (Group) iGroups.next();
+					if (iGroup.getTitle().equals(title))
+					{
+						// found same title
+						titleExist = true;
+					}
+				}
+				if (titleExist)
+				{
+					addAlert(state, rb.getString("group.title.same"));
+				}
 			}
 			
 			if (state.getAttribute(STATE_MESSAGE) == null)
@@ -10035,13 +10054,12 @@ public class SiteAction extends PagedResourceActionII
 		if (noEmailInIdAccounts != null)
 		{
 			// adding noEmailInIdAccounts
-			String[] noEmailInIdAccountArray = noEmailInIdAccounts.replaceAll(",","\r\n").split("\r\n");
+			String[] noEmailInIdAccountArray = noEmailInIdAccounts.split("\r\n");
 			
 			for (i = 0; i < noEmailInIdAccountArray.length; i++)
 			{
-				String noEmailInIdAccount = StringUtil.trimToNull(noEmailInIdAccountArray[i]);
+				String noEmailInIdAccount = StringUtil.trimToNull(noEmailInIdAccountArray[i].replaceAll("[\t\r\n]",""));
 				//if there is some text, try to use it
-				noEmailInIdAccount.replaceAll("[\t\r\n]","");
 				if(noEmailInIdAccount != null)
 				{
 					//automaticially add emailInIdAccount account
