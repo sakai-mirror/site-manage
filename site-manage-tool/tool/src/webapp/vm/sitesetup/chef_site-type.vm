@@ -57,7 +57,7 @@
 													#end
 												#end
 											>
-											$term.Id
+											$term.title
 											</option>
 										#end
 									</select> 
