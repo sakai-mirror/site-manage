@@ -2439,7 +2439,7 @@ public class SiteAction extends PagedResourceActionII {
 					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
 				context.put("backIndex", "");
 			}
-			context.put("termCourseList", (List) state
+			context.put("termCourseList", state
 					.getAttribute(STATE_TERM_COURSE_LIST));
 
 			return (String) getContext(data).get("template") + TEMPLATE[36];
