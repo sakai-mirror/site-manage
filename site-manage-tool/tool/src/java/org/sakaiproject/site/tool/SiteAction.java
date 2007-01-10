@@ -35,6 +35,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
@@ -82,15 +83,15 @@ import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.id.cover.IdManager;
 import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.mailarchive.api.MailArchiveService;
-import org.sakaiproject.site.api.Course;
-import org.sakaiproject.site.api.CourseMember;
+// import org.sakaiproject.site.api.Course;
+// import org.sakaiproject.site.api.CourseMember;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
-import org.sakaiproject.site.api.Term;
+// import org.sakaiproject.site.api.Term;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
-import org.sakaiproject.site.cover.CourseManagementService;
+// import org.sakaiproject.site.cover.CourseManagementService;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.util.SubjectAffiliates;
 import org.sakaiproject.time.api.Time;
@@ -123,6 +124,7 @@ import org.sakaiproject.coursemanagement.api.AcademicSession;
 import org.sakaiproject.coursemanagement.api.Section;
 import org.sakaiproject.coursemanagement.api.Enrollment;
 import org.sakaiproject.coursemanagement.api.Membership;
+import org.sakaiproject.authz.api.GroupProvider;
 
 /**
  * <p>
@@ -142,6 +144,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	private org.sakaiproject.coursemanagement.api.CourseManagementService cms = (org.sakaiproject.coursemanagement.api.CourseManagementService) ComponentManager
 			.get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
+
+	private org.sakaiproject.authz.api.GroupProvider groupProvider = (org.sakaiproject.authz.api.GroupProvider) ComponentManager
+			.get(org.sakaiproject.authz.api.GroupProvider.class);
 
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
@@ -1042,7 +1047,8 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (types.size() > 0) {
 				context.put("typeSelected", types.get(0));
 			}
-			setTermListForContext(context, state, true); // true => only upcoming terms
+			setTermListForContext(context, state, true); // true => only
+			// upcoming terms
 			setSelectedTermForContext(context, state, STATE_TERM_SELECTED);
 			return (String) getContext(data).get("template") + TEMPLATE[1];
 		case 2:
@@ -1109,7 +1115,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("form_site_contact_email", siteInfo.site_contact_email);
 
 			// those manual inputs
-			context.put("form_requiredFields", CourseManagementService
+			context.put("form_requiredFields", CourseIdGenerator
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
@@ -1466,7 +1472,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("siteService", SiteService.getInstance());
 
 			// those manual inputs
-			context.put("form_requiredFields", CourseManagementService
+			context.put("form_requiredFields", CourseIdGenerator
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
@@ -1829,7 +1835,9 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("selectedIcon", site.getIconUrl());
 				}
 
-				setTermListForContext(context, state, false); // false => all possible terms
+				setTermListForContext(context, state, false); // false => all
+				// possible
+				// terms
 
 				if (state.getAttribute(FORM_SITEINFO_TERM) == null) {
 					String currentTerm = site.getProperties().getProperty(
@@ -2372,7 +2380,9 @@ public class SiteAction extends PagedResourceActionII {
 			if (site != null) {
 				context.put("site", site);
 				context.put("siteTitle", site.getTitle());
-				setTermListForContext(context, state, false); // false => all possible terms
+				setTermListForContext(context, state, false); // false => all
+				// possible
+				// terms
 
 				List providerCourseList = (List) state
 						.getAttribute(SITE_PROVIDER_COURSE_LIST);
@@ -2380,17 +2390,18 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("manualCourseList", state
 						.getAttribute(SITE_MANUAL_COURSE_LIST));
 
-				AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+				AcademicSession t = (AcademicSession) state
+						.getAttribute(STATE_TERM_SELECTED);
 				context.put("term", t);
 				if (t != null) {
 					String userId = StringUtil.trimToZero(SessionManager
 							.getCurrentSessionUserId());
-					Set courses = cms.findInstructingSections(userId, t.getEid());
+					Set courses = cms.findInstructingSections(userId, t
+							.getEid());
 					/*
-					List courses = CourseManagementService
-							.getInstructorCourses(userId, t.getYear(), t
-									.getTerm());
-									*/
+					 * List courses = CourseManagementService
+					 * .getInstructorCourses(userId, t.getYear(), t .getTerm());
+					 */
 					if (courses != null && courses.size() > 0) {
 						Vector notIncludedCourse = new Vector();
 
@@ -2442,9 +2453,9 @@ public class SiteAction extends PagedResourceActionII {
 				coursesIntoContext(state, context, site);
 			}
 			buildInstructorSectionsList(state, params, context);
-			context.put("form_requiredFields", CourseManagementService
+			context.put("form_requiredFields", CourseIdGenerator
 					.getCourseIdRequiredFields());
-			context.put("form_requiredFieldsSizes", CourseManagementService
+			context.put("form_requiredFieldsSizes", CourseIdGenerator
 					.getCourseIdRequiredFieldsSizes());
 			context.put("form_additional", siteInfo.additional);
 			context.put("form_title", siteInfo.title);
@@ -2554,7 +2565,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("backIndex", "36");
 			}
 			// those manual inputs
-			context.put("form_requiredFields", CourseManagementService
+			context.put("form_requiredFields", CourseIdGenerator
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
@@ -2695,7 +2706,6 @@ public class SiteAction extends PagedResourceActionII {
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
 	} // buildContextForTemplate
-
 
 	/**
 	 * Launch the Page Order Helper Tool -- for ordering, adding and customizing
@@ -3034,7 +3044,8 @@ public class SiteAction extends PagedResourceActionII {
 				.getAttribute("providerCourseSectionList"));
 		context.put("manualCourseSectionList", state
 				.getAttribute("manualCourseSectionList"));
-		context.put("term", (AcademicSession) state.getAttribute(STATE_TERM_SELECTED));
+		context.put("term", (AcademicSession) state
+				.getAttribute(STATE_TERM_SELECTED));
 		setTermListForContext(context, state, false);
 		context.put(STATE_TERM_COURSE_LIST, (List) state
 				.getAttribute(STATE_TERM_COURSE_LIST));
@@ -3719,15 +3730,15 @@ public class SiteAction extends PagedResourceActionII {
 				String userId = StringUtil.trimToZero(SessionManager
 						.getCurrentSessionUserId());
 				String academicSessionEid = params.getString("selectTerm");
-				AcademicSession t  = cms.getAcademicSession(academicSessionEid);
+				AcademicSession t = cms.getAcademicSession(academicSessionEid);
 				state.setAttribute(STATE_TERM_SELECTED, t);
 				if (t != null) {
-					Set sections = cms.findInstructingSections(userId, t.getEid());
-/*
-					List courses = CourseManagementService
-							.getInstructorCourses(userId, t.getYear(), t
-									.getTerm());
-*/
+					Set sections = cms.findInstructingSections(userId, t
+							.getEid());
+					/*
+					 * List courses = CourseManagementService
+					 * .getInstructorCourses(userId, t.getYear(), t .getTerm());
+					 */
 					// future term? roster information is not available yet?
 					int weeks = 0;
 					Calendar c = (Calendar) Calendar.getInstance().clone();
@@ -3741,7 +3752,8 @@ public class SiteAction extends PagedResourceActionII {
 					} catch (Exception ignore) {
 					}
 
-					if ((sections == null || sections != null && sections.size() == 0)
+					if ((sections == null || sections != null
+							&& sections.size() == 0)
 							&& c.getTimeInMillis() < t.getStartDate().getTime()) {
 						// if a future term is selected
 						state.setAttribute(STATE_FUTURE_TERM_SELECTED,
@@ -4218,8 +4230,7 @@ public class SiteAction extends PagedResourceActionII {
 		// read the user input
 		int validInputSites = 0;
 		boolean validInput = true;
-		List requiredFields = CourseManagementService
-				.getCourseIdRequiredFields();
+		List requiredFields = CourseIdGenerator.getCourseIdRequiredFields();
 		List multiCourseInputs = new Vector();
 		for (int i = 0; i < oldNumber; i++) {
 			List aCourseInputs = new Vector();
@@ -4306,13 +4317,14 @@ public class SiteAction extends PagedResourceActionII {
 		// store the manually requested sections in one site property
 		if ((providerCourseList == null || providerCourseList.size() == 0)
 				&& multiCourseInputs.size() > 0) {
-			AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+			AcademicSession t = (AcademicSession) state
+					.getAttribute(STATE_TERM_SELECTED);
 			String courseId = CourseIdGenerator.getCourseId(t,
 					(List) multiCourseInputs.get(0));
 			String title = "";
 			try {
-				title = CourseManagementService.getCourseName(courseId);
-			} catch (IdUnusedException e) {
+				title = CourseIdGenerator.getCourseName(courseId);
+			} catch (Exception e) {
 				// ignore
 			}
 			siteInfo.title = appendTermInSiteTitle(state, title);
@@ -4519,7 +4531,8 @@ public class SiteAction extends PagedResourceActionII {
 
 				AcademicSession term = null;
 				if (state.getAttribute(STATE_TERM_SELECTED) != null) {
-					term = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+					term = (AcademicSession) state
+							.getAttribute(STATE_TERM_SELECTED);
 					rp.addProperty(PROP_SITE_TERM, term.getEid());
 				}
 
@@ -4643,12 +4656,12 @@ public class SiteAction extends PagedResourceActionII {
 			String courseId = (String) i.next();
 
 			try {
-				Course c = CourseManagementService.getCourse(courseId);
-				if (c.getSubject() != null && c.getSubject() != "")
-					subject = c.getSubject();
+				Section c = cms.getSection(courseId);
+				if (c != null)
+					subject = CourseIdGenerator.getSubject(c.getEid());
 
 				subjAffiliates.add(subject);
-			} catch (IdUnusedException e) {
+			} catch (Exception e) {
 				// M_log.warn(this + " cannot find course " + courseId + ". ");
 			}
 		}
@@ -4735,7 +4748,7 @@ public class SiteAction extends PagedResourceActionII {
 			return null;
 		}
 
-		return CourseManagementService.getProviderId(providerIdList);
+		return CourseIdGenerator.getProviderId(providerIdList);
 
 	} // buildExternalRealm
 
@@ -4772,7 +4785,8 @@ public class SiteAction extends PagedResourceActionII {
 			boolean termExist = false;
 			if (state.getAttribute(STATE_TERM_SELECTED) != null) {
 				termExist = true;
-				term = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+				term = (AcademicSession) state
+						.getAttribute(STATE_TERM_SELECTED);
 			}
 			String productionSiteName = ServerConfigurationService
 					.getServerName();
@@ -4829,14 +4843,14 @@ public class SiteAction extends PagedResourceActionII {
 						buf.append(rb.getString("java.who") + "\n");
 						if (termExist) {
 							String dateString = term.getStartDate().toString();
-							String year = dateString.substring(dateString.length()-4);
-							buf.append(term.getTitle() + " " + year
-									+ "\n");
+							String year = dateString.substring(dateString
+									.length() - 4);
+							buf.append(term.getTitle() + " " + year + "\n");
 
 						}
 
 						// what are the required fields shown in the UI
-						List requiredFields = CourseManagementService
+						List requiredFields = CourseIdGenerator
 								.getCourseIdRequiredFields();
 						for (int i = 0; i < requestListSize; i++) {
 							List requiredFieldList = (List) requestFields
@@ -4907,7 +4921,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			if (termExist) {
 				String dateString = term.getStartDate().toString();
-				String year = dateString.substring(dateString.length()-4);
+				String year = dateString.substring(dateString.length() - 4);
 				buf.append(term.getTitle() + " " + year);
 			}
 			if (requestListSize > 1) {
@@ -4919,8 +4933,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			// what are the required fields shown in the UI
-			List requiredFields = CourseManagementService
-					.getCourseIdRequiredFields();
+			List requiredFields = CourseIdGenerator.getCourseIdRequiredFields();
 			for (int i = 0; i < requestListSize; i++) {
 				List requiredFieldList = (List) requestFields.get(i);
 				for (int j = 0; j < requiredFieldList.size(); j++) {
@@ -4991,8 +5004,8 @@ public class SiteAction extends PagedResourceActionII {
 			String local_date = time.toStringLocalDate();
 			String term_name = "";
 			if (state.getAttribute(STATE_TERM_SELECTED) != null) {
-				term_name = ((AcademicSession) state.getAttribute(STATE_TERM_SELECTED))
-						.getEid();
+				term_name = ((AcademicSession) state
+						.getAttribute(STATE_TERM_SELECTED)).getEid();
 			}
 			String message_subject = rb.getString("java.official") + " "
 					+ UserDirectoryService.getCurrentUser().getDisplayName()
@@ -5541,8 +5554,8 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		Site site = getStateSite(state);
-		state.setAttribute(STATE_TERM_SELECTED, CourseManagementService
-				.getTerm(site.getProperties().getProperty(PROP_SITE_TERM)));
+		state.setAttribute(STATE_TERM_SELECTED, cms.getAcademicSession(site
+				.getProperties().getProperty(PROP_SITE_TERM)));
 
 		state.setAttribute(STATE_TEMPLATE_INDEX, "36");
 
@@ -5569,7 +5582,8 @@ public class SiteAction extends PagedResourceActionII {
 		} else if (option.equalsIgnoreCase("add")) {
 			String userId = StringUtil.trimToZero(SessionManager
 					.getCurrentSessionUserId());
-			AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+			AcademicSession t = (AcademicSession) state
+					.getAttribute(STATE_TERM_SELECTED);
 			if (t != null) {
 				Set courses = cms.findInstructingSections(userId, t.getEid());
 
@@ -6899,7 +6913,8 @@ public class SiteAction extends PagedResourceActionII {
 					List manualAddFields = (List) state
 							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
 
-					AcademicSession a = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+					AcademicSession a = (AcademicSession) state
+							.getAttribute(STATE_TERM_SELECTED);
 					for (int m = 0; m < manualAddNumber && a != null; m++) {
 						String manualAddClassId = CourseIdGenerator
 								.getCourseId(a, (List) manualAddFields.get(m));
@@ -7357,18 +7372,20 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		if (providerCourseList != null) {
-			for (int k = 0; k < providerCourseList.size(); k++) {
-				String courseId = (String) providerCourseList.get(k);
-				try {
-					members.addAll(CourseManagementService
-							.getCourseMembers(courseId));
-				} catch (Exception e) {
-					// M_log.warn(this + " Cannot find course " + courseId);
-				}
-			}
-		}
-
+		/*
+        if (providerCourseList != null) {
+            for (int k = 0; k < providerCourseList.size(); k++) {
+                    String courseId = (String) providerCourseList.get(k);
+                    try {
+                            members.addAll(CourseManagementService
+                                            .getCourseMembers(courseId));
+                    } catch (Exception e) {
+                            // M_log.warn(this + " Cannot find course " +
+							// courseId);
+                    }
+            }
+        }
+		 
 		try {
 			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
 			Set grants = realm.getMembers();
@@ -7430,12 +7447,45 @@ public class SiteAction extends PagedResourceActionII {
 		} catch (GroupNotDefinedException e) {
 			M_log.warn(this + "  IdUnusedException " + realmId);
 		}
-
+*/
+		participants = prepareParticipants(realmId); 
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
 
 	} // getParticipantList
+
+	private Vector prepareParticipants(String realmId) {
+		Vector participants = new Vector();
+		try {
+			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
+			Set grants = realm.getMembers();
+			// Collections.sort(users);
+			for (Iterator i = grants.iterator(); i.hasNext();) {
+				Member g = (Member) i.next();
+				String userString = g.getUserEid();
+				Role r = g.getRole();
+					try {
+						User user = UserDirectoryService
+								.getUserByEid(userString);
+						Participant participant = new Participant();
+						participant.name = user.getSortName();
+						participant.uniqname = user.getId();
+						if (r != null) {
+							participant.role = r.getId();
+						}
+						participants.add(participant);
+					} catch (UserNotDefinedException e) {
+						// deal with missing user quietly without throwing a
+						// warning message
+					}
+				}
+
+		} catch (GroupNotDefinedException e) {
+			M_log.warn(this + "  IdUnusedException " + realmId);
+		}
+		return participants;
+	}
 
 	/**
 	 * getRoles
@@ -9083,12 +9133,12 @@ public class SiteAction extends PagedResourceActionII {
 		StringBuffer tab = new StringBuffer();
 
 		try {
-			String courseName = CourseManagementService.getCourseName(id);
+			String courseName = CourseIdGenerator.getCourseName(id);
 			if (courseName != null && courseName.length() > 0) {
 				tab.append(courseName);
 				return appendTermInSiteTitle(state, tab.toString());
 			}
-		} catch (IdUnusedException ignore) {
+		} catch (Exception ignore) {
 
 		}
 
@@ -9100,17 +9150,16 @@ public class SiteAction extends PagedResourceActionII {
 		// append term information into the tab in order to differenciate same
 		// course taught in different terms
 		if (state.getAttribute(STATE_TERM_SELECTED) != null) {
-			AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+			AcademicSession t = (AcademicSession) state
+					.getAttribute(STATE_TERM_SELECTED);
 			title = title.concat(" ").concat(t.getEid());
-			/* sorry! academicSession don't ve abbrev.
-			if (StringUtil.trimToNull(t.getListAbbreviation()) != null) {
-				// use term abbreviation, if any
-				title = title.concat(" ").concat(t.getListAbbreviation());
-			} else {
-				// use term id
-				title = title.concat(" ").concat(t.getId());
-			}
-			*/
+			/*
+			 * sorry! academicSession don't ve abbrev. if
+			 * (StringUtil.trimToNull(t.getListAbbreviation()) != null) { // use
+			 * term abbreviation, if any title = title.concat("
+			 * ").concat(t.getListAbbreviation()); } else { // use term id title =
+			 * title.concat(" ").concat(t.getId()); }
+			 */
 		}
 		return title;
 
@@ -10889,7 +10938,7 @@ public class SiteAction extends PagedResourceActionII {
 						// don't show those terms which have ended already
 						termsForSiteCreation.add(a);
 					}
-				} else{
+				} else {
 					termsForSiteCreation.add(a);
 				}
 			}
@@ -10899,11 +10948,10 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	private void setSelectedTermForContext(Context context, SessionState state, String stateAttribute) {
+	private void setSelectedTermForContext(Context context, SessionState state,
+			String stateAttribute) {
 		if (state.getAttribute(stateAttribute) != null) {
-			context
-					.put("selectedTerm", state
-							.getAttribute(stateAttribute));
+			context.put("selectedTerm", state.getAttribute(stateAttribute));
 		}
 	}
 
