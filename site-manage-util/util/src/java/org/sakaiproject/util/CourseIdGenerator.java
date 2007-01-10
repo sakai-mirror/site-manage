@@ -77,7 +77,6 @@ public class CourseIdGenerator {
 		List rv = new Vector();
 		for (int i = 0; i < required_fields.length; i++) {
 			rv.add(rb.getString(required_fields[i].trim()));
-			System.out.println(required_fields[i]+"="+rb.getString(required_fields[i].trim()));
 		}
 		return rv;
 
