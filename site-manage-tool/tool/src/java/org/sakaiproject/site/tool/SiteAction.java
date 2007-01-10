@@ -3047,7 +3047,7 @@ public class SiteAction extends PagedResourceActionII {
 		context.put("term", (AcademicSession) state
 				.getAttribute(STATE_TERM_SELECTED));
 		setTermListForContext(context, state, false);
-		context.put(STATE_TERM_COURSE_LIST, (List) state
+		context.put(STATE_TERM_COURSE_LIST, state
 				.getAttribute(STATE_TERM_COURSE_LIST));
 		context.put("tlang", rb);
 	} // buildInstructorSectionsList
