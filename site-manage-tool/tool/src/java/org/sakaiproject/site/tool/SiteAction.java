@@ -4533,7 +4533,7 @@ public class SiteAction extends PagedResourceActionII {
 				if (state.getAttribute(STATE_TERM_SELECTED) != null) {
 					term = (AcademicSession) state
 							.getAttribute(STATE_TERM_SELECTED);
-					rp.addProperty(PROP_SITE_TERM, term.getEid());
+					rp.addProperty(PROP_SITE_TERM, term.getTitle());
 				}
 
 				List providerCourseList = (List) state
