@@ -103,12 +103,16 @@ public class CourseIdGenerator {
 		String nameDelimiter = ServerConfigurationService.getString(
 				"site-manage.courseName.delimiter", " ");
 		String[] fields = courseId.split(idDelimiter);
-		for (int i = 2; i < fields.length; i++) {
-			if ("".equals(name)) {
-				name = fields[i];
-			} else { // courseName format = SMPL,001,001
-				name = nameDelimiter + fields[i];
+		if (fields.length > 2) {
+			for (int i = 2; i < fields.length; i++) {
+				if ("".equals(name)) {
+					name = fields[i];
+				} else { // courseName format = SMPL,001,001
+					name = nameDelimiter + fields[i];
+				}
 			}
+		} else {
+			name = courseId;
 		}
 		return name;
 	}

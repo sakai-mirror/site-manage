@@ -78,9 +78,10 @@
 							checked="checked"
 						#end 
 						/>
-					#<label for="course$courseNumber">
-						#$validator.escapeHtml($course.eid)
-						#$validator.escapeHtml($course.Crosslist)</label></p>
+                                        <!--
+					<label for="course$courseNumber">
+						$validator.escapeHtml($course.eid)
+						$validator.escapeHtml($course.Crosslist)</label></p> -->
 					<label for="course$courseNumber">
 						$validator.escapeHtml($course.eid)</label></p>
 				#end
