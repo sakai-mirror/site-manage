@@ -24,7 +24,7 @@
 			#if (!$site)
 				<h5>
 					<span class="reqStar">*</span> $tlang.getString("nscourse.acad")
-					$term.Id
+					$term.title
 				</h5>
 			#else
 				$tlang.getString("nscourse.already")
@@ -51,12 +51,12 @@
 					</label>	
 					<select name="selectTerm" id="selectTerm" onchange="javascript:document.addCourseForm.option.value='change';document.addCourseForm.submit();">
 						#foreach($t in $termList)
-							<option value ="$t.Id"
-								#if($t.Id == $term.Id)
+							<option value ="$t.eid"
+								#if($t.eid == $term.eid)
 									selected="selected"
 								#end
 							>
-							$t.Id
+							$t.title
 							</option>
 						#end
 					</select> 
@@ -73,14 +73,17 @@
 				#foreach($course in $termCourseList)
 				#set($courseNumber=$courseNumber + 1)
 					<p class="checkbox">
-					<input type="checkbox" name="providerCourseAdd" value="$course.Id" id="course$courseNumber"
-						#if ($!selectedProviderCourse.contains("$course.Id"))
+					<input type="checkbox" name="providerCourseAdd" value="$course.eid" id="course$courseNumber"
+						#if ($!selectedProviderCourse.contains("$course.eid"))
 							checked="checked"
 						#end 
 						/>
+                                        <!--
 					<label for="course$courseNumber">
-						$validator.escapeHtml($course.Id)
-						$validator.escapeHtml($course.Crosslist)</label></p>
+						$validator.escapeHtml($course.eid)
+						$validator.escapeHtml($course.Crosslist)</label></p> -->
+					<label for="course$courseNumber">
+						$validator.escapeHtml($course.eid)</label></p>
 				#end
 			#end
 			## instructor could choose to go to the manual creation page

@@ -33,7 +33,7 @@
 				<input type="hidden" name="eventSubmit_doManual_add_course" value="x" />
 				<h4> 
 					$tlang.getString("nscourse.acad")
-					$term.Id
+					$term.title
 				</h4>
 				#if ($!selectedProviderCourse)
 				<p class="instruction">$tlang.getString("man.sofar") #if($!site) $tlang.getString("man.toaddto") #else $tlang.getString("java.for") #end $tlang.getString("man.this")</p> 
