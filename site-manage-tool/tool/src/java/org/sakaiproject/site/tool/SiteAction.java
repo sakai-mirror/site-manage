@@ -10926,25 +10926,14 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void setTermListForContext(Context context, SessionState state,
 			boolean upcomingOnly) {
-		// TODO Auto-generated method stub
-		List terms = cms.getAcademicSessions();
-		List termsForSiteCreation = new Vector();
-		if (terms != null && terms.size() > 0) {
-			for (int i = 0; i < terms.size(); i++) {
-				AcademicSession a = (AcademicSession) terms.get(i);
-				if (upcomingOnly) {
-					if (a.getEndDate().getTime() > TimeService.newTime()
-							.getTime()) {
-						// don't show those terms which have ended already
-						termsForSiteCreation.add(a);
-					}
-				} else {
-					termsForSiteCreation.add(a);
-				}
-			}
+		List terms;
+		if (upcomingOnly) {
+			terms = cms.getCurrentAcademicSessions();
+		} else { // get all
+			terms = cms.getAcademicSessions();
 		}
-		if (termsForSiteCreation.size() > 0) {
-			context.put("termList", termsForSiteCreation);
+		if (terms != null && terms.size() > 0) {
+			context.put("termList", terms);
 		}
 	}
 
