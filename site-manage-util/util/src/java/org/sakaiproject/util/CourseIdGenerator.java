@@ -3,6 +3,7 @@
  */
 package org.sakaiproject.util;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Vector;
@@ -26,8 +27,9 @@ public class CourseIdGenerator {
 		String rv = new String("");
 		if (a != null && format == null) {
 			// default courseId format = 2007,WINTER,SMPL,001,001
-			String dateString = a.getStartDate().toString();
-			String year = dateString.substring(dateString.length() - 4);
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String dateString = dateFormat.format(a.getStartDate());
+			String year = dateString.substring(0, 4);
 			rv = rv.concat(year + delimiter + a.getTitle());
 		} else {
 			rv = rv.concat(delimiter + delimiter);
@@ -107,7 +109,7 @@ public class CourseIdGenerator {
 				if ("".equals(name)) {
 					name = fields[i];
 				} else { // courseName format = SMPL,001,001
-					name = nameDelimiter + fields[i];
+					name = name + nameDelimiter + fields[i];
 				}
 			}
 		} else {
