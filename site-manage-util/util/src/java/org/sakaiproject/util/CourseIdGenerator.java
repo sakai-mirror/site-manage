@@ -23,7 +23,6 @@ public class CourseIdGenerator {
 		String format = ServerConfigurationService.getString(
 				"site-manage.courseId.format", null);
 
-		List requiredFieldsList = getCourseIdRequiredFields();
 		String rv = new String("");
 		if (a != null && format == null) {
 			// default courseId format = 2007,WINTER,SMPL,001,001
@@ -52,11 +51,11 @@ public class CourseIdGenerator {
 		String subject = "";
 		String format = ServerConfigurationService
 				.getString("site-manage.courseId.requiredField.format",
-						"required_fields_subject required_fields_course required_fields_section");
+						"required_fields_courseId");
 
 		String delimiter = ServerConfigurationService.getString(
 				"site-manage.courseId.delimiter", ",");
-		String[] required_fields = format.split(" ");
+		String[] required_fields = format.split(",");
 		String[] fields = courseId.split(delimiter);
 		for (int i = 0; i < required_fields.length; i++) {
 			if ("required_fields_subject".equals(required_fields[i].trim())) {
@@ -71,8 +70,8 @@ public class CourseIdGenerator {
 	public static List getCourseIdRequiredFields() {
 		String format = ServerConfigurationService
 				.getString("site-manage.courseId.requiredFields.format",
-						"required_fields_subject required_fields_course required_fields_section");
-		String[] required_fields = format.split(" ");
+						"required_fields_courseId");
+		String[] required_fields = format.split(",");
 
 		List rv = new Vector();
 		for (int i = 0; i < required_fields.length; i++) {
@@ -84,8 +83,8 @@ public class CourseIdGenerator {
 
 	public static List getCourseIdRequiredFieldsSizes() {
 		String formatSize = ServerConfigurationService.getString(
-				"site-manage.courseId.requiredFields.size", "8 3 3");
-		String[] required_fields = formatSize.split(" ");
+				"site-manage.courseId.requiredFields.size", "40");
+		String[] required_fields = formatSize.split(",");
 		List rv = new Vector();
 		for (int i = 0; i < required_fields.length; i++) {
 			rv.add(new Integer(required_fields[i].trim()));
