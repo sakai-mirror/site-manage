@@ -83,6 +83,7 @@
                                         #foreach($section in $courseObject.otherSections)
          		 			#set($courseNumber=$courseNumber + 1)
                                 	         <p class="checkbox">
+						 &nbsp; &nbsp;
 						 <input type="checkbox" name="providerCourseAdd" value="$section.eid" id="course$courseNumber"
 							#if ($!selectedProviderCourse.contains("$section.eid"))
 								checked="checked"
