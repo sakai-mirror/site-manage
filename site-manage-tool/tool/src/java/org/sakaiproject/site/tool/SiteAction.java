@@ -125,6 +125,7 @@ import org.sakaiproject.coursemanagement.api.Section;
 import org.sakaiproject.coursemanagement.api.Enrollment;
 import org.sakaiproject.coursemanagement.api.Membership;
 import org.sakaiproject.authz.api.GroupProvider;
+import org.apache.velocity.tools.generic.SortTool;
 
 /**
  * <p>
@@ -206,7 +207,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importMtrlCopyConfirmMsg", // 48
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
-			"-siteInfo-groupDeleteConfirm" // 51
+			"-siteInfo-groupDeleteConfirm", // 51
+			"-newSiteCourseAndSection"// 52 - new for v2.4
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -2396,12 +2398,11 @@ public class SiteAction extends PagedResourceActionII {
 				if (t != null) {
 					String userId = StringUtil.trimToZero(SessionManager
 							.getCurrentSessionUserId());
+                    /*
 					Set courses = cms.findInstructingSections(userId, t
 							.getEid());
-					/*
-					 * List courses = CourseManagementService
-					 * .getInstructorCourses(userId, t.getYear(), t .getTerm());
-					 */
+							*/
+					List courses = prepareCourseAndSectionListing(userId, t.getEid());
 					if (courses != null && courses.size() > 0) {
 						Vector notIncludedCourse = new Vector();
 
@@ -3733,13 +3734,12 @@ public class SiteAction extends PagedResourceActionII {
 				AcademicSession t = cms.getAcademicSession(academicSessionEid);
 				state.setAttribute(STATE_TERM_SELECTED, t);
 				if (t != null) {
+					/*
 					Set sections = cms.findInstructingSections(userId, t
 							.getEid());
-					/*
-					 * List courses = CourseManagementService
-					 * .getInstructorCourses(userId, t.getYear(), t .getTerm());
-					 */
-					// future term? roster information is not available yet?
+							*/
+					List sections = prepareCourseAndSectionListing(userId, t.getEid());
+
 					int weeks = 0;
 					Calendar c = (Calendar) Calendar.getInstance().clone();
 					try {
@@ -5585,7 +5585,10 @@ public class SiteAction extends PagedResourceActionII {
 			AcademicSession t = (AcademicSession) state
 					.getAttribute(STATE_TERM_SELECTED);
 			if (t != null) {
+				/*
 				Set courses = cms.findInstructingSections(userId, t.getEid());
+                */
+				List courses = prepareCourseAndSectionListing(userId, t.getEid());
 
 				// future term? roster information is not available yet?
 				int weeks = 0;
@@ -10941,6 +10944,72 @@ public class SiteAction extends PagedResourceActionII {
 			String stateAttribute) {
 		if (state.getAttribute(stateAttribute) != null) {
 			context.put("selectedTerm", state.getAttribute(stateAttribute));
+		}
+	}
+
+	private List prepareCourseAndSectionListing(String userId, String academicSessionEid) {
+		List propsList = new ArrayList();
+		propsList.add("category");
+		propsList.add("eid");
+				
+		List courseList = new ArrayList();
+		List tempList = new ArrayList();
+		Set lectures = cms.findInstructingSections(userId, academicSessionEid);
+		SortTool sort = new SortTool();
+		Collection lecturesSorted = sort.sort(lectures, propsList); // actually category = lecture anyway
+				
+		for (Iterator i = lecturesSorted.iterator(); i.hasNext();) {
+			Section s = (Section) i.next();
+			System.out.println("lecture="+s.getEid());
+			Set sections = cms.getSections(s.getCourseOfferingEid());
+			// sort sections
+			SortTool sort2 = new SortTool();
+			Collection sectionsSorted = sort2.sort(sections, propsList);
+
+			// remove the 1st element (lecture) in the section set
+		    List sectionList = new ArrayList();
+		    int count = 0;
+			for (Iterator j = sectionsSorted.iterator(); j.hasNext();) {
+				Section s1 = (Section) j.next();
+				System.out.println("section="+s1.getEid());
+				count++;
+				if (count > 1){
+					sectionList.add(s1);
+				}
+			}
+			CourseObject courseObj = new CourseObject(s,sectionList);
+			courseList.add(courseObj);
+			tempList.add(s);
+			tempList.addAll(sectionList);
+		}
+		return courseList;
+		
+		//return tempList;
+	}
+
+    // this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	// where the lecture is shown with its associated lab & discussion sections indented.
+	public class CourseObject {
+		public String eid;
+		public Section lecture;
+		public List otherSections;
+
+		public CourseObject(Section lecture, List otherSections){
+			this.eid = lecture.getEid();
+			this.lecture = lecture;
+			this.otherSections = otherSections;
+		}
+		
+		public String getEid() {
+			return eid;
+		}
+		
+		public Section getLecture() {
+			return lecture;
+		}
+
+		public List getOtherSections() {
+			return otherSections;
 		}
 	}
 

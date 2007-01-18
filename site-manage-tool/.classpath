@@ -25,5 +25,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
 	<classpathentry kind="src" path="/site-manage-util"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/import-api"/>
+	<classpathentry kind="src" path="/cm-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cm-impl"/>
+	<classpathentry kind="lib" path="/Users/daisyflemming/.maven/repository/velocity-tools/jars/velocity-tools-1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

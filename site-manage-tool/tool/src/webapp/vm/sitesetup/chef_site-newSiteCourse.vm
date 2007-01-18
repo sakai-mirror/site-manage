@@ -70,20 +70,26 @@
 				## display only subject, course number and section
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
 				#set($courseNumber=0)	
-				#foreach($course in $termCourseList)
-				#set($courseNumber=$courseNumber + 1)
+				#foreach($courseObject in $termCourseList)
+					#set($courseNumber=$courseNumber + 1)
 					<p class="checkbox">
-					<input type="checkbox" name="providerCourseAdd" value="$course.eid" id="course$courseNumber"
-						#if ($!selectedProviderCourse.contains("$course.eid"))
+					<input type="checkbox" name="providerCourseAdd" value="$courseObject.lecture.eid" id="course$courseNumber"
+						#if ($!selectedProviderCourse.contains("$courseObject.lecture.eid"))
 							checked="checked"
 						#end 
+						/> 
+					<label for="course$courseNumber">
+						$validator.escapeHtml($courseObject.lecture.eid) : $courseObject.lecture.title</label></p>
+                                        #foreach($section in $courseObject.otherSections)
+         		 			#set($courseNumber=$courseNumber + 1)
+                                	         <p class="checkbox">
+						 <input type="checkbox" name="providerCourseAdd" value="$section.eid" id="course$courseNumber"
+							#if ($!selectedProviderCourse.contains("$section.eid"))
+								checked="checked"
+							#end 
 						/>
-                                        <!--
-					<label for="course$courseNumber">
-						$validator.escapeHtml($course.eid)
-						$validator.escapeHtml($course.Crosslist)</label></p> -->
-					<label for="course$courseNumber">
-						$validator.escapeHtml($course.eid)</label></p>
+        	                                $section.eid : $section.title
+                                        #end
 				#end
 			#end
 			## instructor could choose to go to the manual creation page
