@@ -10953,7 +10953,6 @@ public class SiteAction extends PagedResourceActionII {
 		propsList.add("eid");
 				
 		List courseList = new ArrayList();
-		List tempList = new ArrayList();
 		Set lectures = cms.findInstructingSections(userId, academicSessionEid);
 		SortTool sort = new SortTool();
 		Collection lecturesSorted = sort.sort(lectures, propsList); // actually category = lecture anyway
@@ -10979,12 +10978,8 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			CourseObject courseObj = new CourseObject(s,sectionList);
 			courseList.add(courseObj);
-			tempList.add(s);
-			tempList.addAll(sectionList);
 		}
 		return courseList;
-		
-		//return tempList;
 	}
 
     // this object is used for displaying purposes in chef_site-newSiteCourse.vm
