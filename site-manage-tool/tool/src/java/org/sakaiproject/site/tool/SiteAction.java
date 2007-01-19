@@ -30,6 +30,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -683,7 +684,7 @@ public class SiteAction extends PagedResourceActionII {
 		String site_mode = portlet.getPortletConfig().getInitParameter(
 				STATE_SITE_MODE);
 		state.setAttribute(STATE_SITE_MODE, site_mode);
-
+		
 	} // initState
 
 	/**
@@ -10947,62 +10948,79 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
+	// here, we assume that sections do not have subsections, so notice that the code
+	// did not drill down on sections.	
 	private List prepareCourseAndSectionListing(String userId, String academicSessionEid) {
 		List propsList = new ArrayList();
 		propsList.add("category");
 		propsList.add("eid");
 				
-		List courseList = new ArrayList();
+		List list = new ArrayList();
+		// look up sections that has enrollment set, we called it lectures here
+		// bear in mind that other category of section can have enrollment set too.
 		Set lectures = cms.findInstructingSections(userId, academicSessionEid);
 		SortTool sort = new SortTool();
-		Collection lecturesSorted = sort.sort(lectures, propsList); // actually category = lecture anyway
+		Collection lecturesSorted = sort.sort(lectures, propsList); 
 				
 		for (Iterator i = lecturesSorted.iterator(); i.hasNext();) {
 			Section s = (Section) i.next();
-			System.out.println("lecture="+s.getEid());
 			Set sections = cms.getSections(s.getCourseOfferingEid());
 			// sort sections
 			SortTool sort2 = new SortTool();
 			Collection sectionsSorted = sort2.sort(sections, propsList);
 
-			// remove the 1st element (lecture) in the section set
+			// remove the lecture
 		    List sectionList = new ArrayList();
-		    int count = 0;
 			for (Iterator j = sectionsSorted.iterator(); j.hasNext();) {
 				Section s1 = (Section) j.next();
-				System.out.println("section="+s1.getEid());
-				count++;
-				if (count > 1){
-					sectionList.add(s1);
+				if (!s1.getEid().equals(s.getEid())){
+					sectionList.add(new SectionObject(s1, false, new ArrayList()));
 				}
 			}
-			CourseObject courseObj = new CourseObject(s,sectionList);
-			courseList.add(courseObj);
+			list.add(new SectionObject(s, true, sectionList));
 		}
-		return courseList;
+		return list;
 	}
 
     // this object is used for displaying purposes in chef_site-newSiteCourse.vm
-	// where the lecture is shown with its associated lab & discussion sections indented.
-	public class CourseObject {
+	// where the section with enrollmentSet is shown with any associated sections indented.
+	public class SectionObject {
+		public Section section;
 		public String eid;
-		public Section lecture;
+		public String title;
+		public String categoryDescription;
+		public boolean hasEnrollmentSet; // lecture has enrollment set
 		public List otherSections;
-
-		public CourseObject(Section lecture, List otherSections){
-			this.eid = lecture.getEid();
-			this.lecture = lecture;
+		
+		public SectionObject(Section section, boolean hasEnrollmentSet, List otherSections){
+			this.section = section;
+			this.eid = section.getEid();
+			this.title = section.getTitle();
+			this.categoryDescription = cms.getSectionCategoryDescription(section.getCategory());
+			this.hasEnrollmentSet = hasEnrollmentSet;
 			this.otherSections = otherSections;
 		}
 		
+		public Section getSection() {
+			return section;
+		}
+
 		public String getEid() {
 			return eid;
 		}
 		
-		public Section getLecture() {
-			return lecture;
+		public String getTitle() {
+			return eid;
 		}
-
+		
+		public String getCategoryDescription() {
+			return categoryDescription;
+		}
+		
+		public boolean getHasEnrollmentSet() {
+			return hasEnrollmentSet;
+		}
+		
 		public List getOtherSections() {
 			return otherSections;
 		}

@@ -86,19 +86,19 @@ function toggle(toggleKey, begin, end) {
 				## display only subject, course number and section
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
 				#set($courseNumber=0)	
-				#foreach($courseObject in $termCourseList)
+				#foreach($sectionObject in $termCourseList)
 					#set($courseNumber = $courseNumber + 1)
 					#set($toggleKey = $courseNumber - 1) 
-					#set($endKey = $courseNumber + $courseObject.getOtherSections().size())
+					#set($endKey = $courseNumber + $sectionObject.getOtherSections().size())
 					<p class="checkbox">
-					<input type="checkbox" name="providerCourseAdd" value="$courseObject.lecture.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
-						#if ($!selectedProviderCourse.contains("$courseObject.lecture.eid"))
+					<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
+						#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
 							checked="checked"
 						#end 
 						/> 
 					<label for="course$courseNumber">
-						$validator.escapeHtml($courseObject.lecture.eid) : $courseObject.lecture.title</label></p>
-                                        #foreach($section in $courseObject.otherSections)
+						$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label></p>
+                                        #foreach($section in $sectionObject.otherSections)
          		 			#set($courseNumber=$courseNumber + 1)
                                 	         <p class="checkbox">
 						 &nbsp; &nbsp;
@@ -107,7 +107,7 @@ function toggle(toggleKey, begin, end) {
 								checked="checked"
 							#end 
 						/>
-        	                                $section.eid : $section.title
+        	                                $section.eid : $section.title, $section.categoryDescription
                                         #end
 				#end
 			#end
