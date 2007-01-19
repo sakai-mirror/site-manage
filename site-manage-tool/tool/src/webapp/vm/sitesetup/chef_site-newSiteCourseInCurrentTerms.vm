@@ -31,6 +31,7 @@ function toggle(toggleKey, begin, end) {
 			$tlang.getString("nscourse.cinfo")
 		</h4>	
 
+		#set($courseNumber=0)	
 		#foreach($termSectionObject in $providerCourseList)
 			#if ($termSectionObject.getSectionObjectList().size()>0)
 				<h5>
@@ -40,7 +41,6 @@ function toggle(toggleKey, begin, end) {
 			#end
 			## display only subject, course number and section
 			##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
-			#set($courseNumber=0)	
 			#foreach($sectionObject in $termSectionObject.sectionObjectList)
 				#set($courseNumber = $courseNumber + 1)
 				#set($toggleKey = $courseNumber - 1) 
