@@ -12,6 +12,18 @@ function toggle(toggleKey, begin, end) {
 	}
     }
 }
+
+function submitShowAll(){
+    index = document.getElementById("index");
+    index.value=1; 
+    document.addCourseForm.back.value=0; 
+    document.addCourseForm.showAll.value="true"; 
+    continueButton = document.getElementById("continueButton");
+    continueButton.click();
+    document.addCourseForm.submit(); 
+    return false;
+}
+
 // -->
 </SCRIPT>
 
@@ -121,11 +133,15 @@ function toggle(toggleKey, begin, end) {
 				#end
 				</p>
 
-		<input type="hidden" name="template-index" value="36" />
+		<input id="index" type="hidden" name="template-index" value="36" />
 		<input type="hidden" name="back" value="1" />
 		<p class="act">
 			#if (!$site)
-				<input type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+				<!-- Show all available terms -->
+				<input type="hidden" name="showAll" value="" />
+		                <a href="#" onclick="javascript:submitShowAll();">$tlang.getString('nscourse.showAllAvailableTerms')</a>
+				<p></p>
+				<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
 				<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
 				<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')" />
 			#else
@@ -149,5 +165,6 @@ function toggle(toggleKey, begin, end) {
 				/>
 			#end
 		</p>
+
 	</form>
 </div>
