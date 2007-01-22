@@ -209,7 +209,7 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51
-			"-newSiteCourseAndSection"// 52 - new for v2.4
+			"-newSiteCourseInCurrentTerms"// 52 - new for v2.4
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -479,6 +479,8 @@ public class SiteAction extends PagedResourceActionII {
 	/** for course information */
 	private final static String STATE_TERM_COURSE_LIST = "state_term_course_list";
 
+	private final static String STATE_TERM_COURSE_HASH = "state_term_course_hash";
+
 	private final static String STATE_TERM_SELECTED = "state_term_selected";
 
 	private final static String STATE_FUTURE_TERM_SELECTED = "state_future_term_selected";
@@ -565,6 +567,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	// Special tool id for Home page
 	private static final String HOME_TOOL_ID = "home";
+
+	// added by daisyf for v2.4, case 52
+	private static final String STATE_SHOW_ALL_IN_CURRENT_TERMS = "state_show_all_in_current_terms";
 
 	/**
 	 * Populate the state object, if needed.
@@ -684,7 +689,7 @@ public class SiteAction extends PagedResourceActionII {
 		String site_mode = portlet.getPortletConfig().getInitParameter(
 				STATE_SITE_MODE);
 		state.setAttribute(STATE_SITE_MODE, site_mode);
-		
+
 	} // initState
 
 	/**
@@ -714,6 +719,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		// remove those state attributes related to course site creation
 		state.removeAttribute(STATE_TERM_COURSE_LIST);
+		state.removeAttribute(STATE_TERM_COURSE_HASH);
 		state.removeAttribute(STATE_TERM_SELECTED);
 		state.removeAttribute(STATE_FUTURE_TERM_SELECTED);
 		state.removeAttribute(STATE_ADD_CLASS_PROVIDER);
@@ -724,6 +730,10 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
 		state.removeAttribute(SITE_CREATE_TOTAL_STEPS);
 		state.removeAttribute(SITE_CREATE_CURRENT_STEP);
+		
+		// added by daisyf for v2.4, case 52
+		state.removeAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS);
+
 	} // cleanState
 
 	/**
@@ -1083,7 +1093,12 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
 					context.put("back", "37");
 				} else {
-					context.put("back", "36");
+					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
+						// show courses in terms that is defined as current
+						context.put("back", "52");
+					} else { // show course in one term only
+						context.put("back", "36");
+					}
 				}
 
 				context.put("skins", state.getAttribute(STATE_ICONS));
@@ -2399,11 +2414,8 @@ public class SiteAction extends PagedResourceActionII {
 				if (t != null) {
 					String userId = StringUtil.trimToZero(SessionManager
 							.getCurrentSessionUserId());
-                    /*
-					Set courses = cms.findInstructingSections(userId, t
+					List courses = prepareCourseAndSectionListing(userId, t
 							.getEid());
-							*/
-					List courses = prepareCourseAndSectionListing(userId, t.getEid());
 					if (courses != null && courses.size() > 0) {
 						Vector notIncludedCourse = new Vector();
 
@@ -2703,6 +2715,29 @@ public class SiteAction extends PagedResourceActionII {
 							.asList((String[]) state
 									.getAttribute(STATE_GROUP_REMOVE))));
 			return (String) getContext(data).get("template") + TEMPLATE[51];
+		case 52:
+			/*
+			 * buildContextForTemplate chef_site-newSiteCourseInCurrentTerms.vm
+			 */
+			setTermListForContext(context, state, false); 
+			// false => all possible terms
+
+			context.put("back", "52");
+			context.put("termCourseList", state
+					.getAttribute(STATE_TERM_COURSE_LIST));
+			context.put("providerCourseList", state
+					.getAttribute(SITE_PROVIDER_COURSE_LIST));
+			context.put("manualCourseList", state
+					.getAttribute(SITE_MANUAL_COURSE_LIST));
+
+			if (((String) state.getAttribute(STATE_SITE_MODE))
+					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
+				context.put("backIndex", "1");
+			} else if (((String) state.getAttribute(STATE_SITE_MODE))
+					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
+				context.put("backIndex", "");
+			}
+			return (String) getContext(data).get("template") + TEMPLATE[52];
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
@@ -3736,10 +3771,11 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_TERM_SELECTED, t);
 				if (t != null) {
 					/*
-					Set sections = cms.findInstructingSections(userId, t
+					 * Set sections = cms.findInstructingSections(userId, t
+					 * .getEid());
+					 */
+					List sections = prepareCourseAndSectionListing(userId, t
 							.getEid());
-							*/
-					List sections = prepareCourseAndSectionListing(userId, t.getEid());
 
 					int weeks = 0;
 					Calendar c = (Calendar) Calendar.getInstance().clone();
@@ -4475,9 +4511,14 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
+			} else { // a branch to show all courses, case 52 - daisyf v2.4 01/18/07
+				// only chef_site-newCourseInCurrentTerms.vm has this flag
+				String showAll = params.getString("showAll");
+				if ("true".equals(showAll)) {
+					doShowCoursesInCurrentTerms(data);
+				}
 			}
 		}
-
 	}// doContinue
 
 	/**
@@ -4497,7 +4538,9 @@ public class SiteAction extends PagedResourceActionII {
 		// Let actionForTemplate know not to make any permanent changes before
 		// continuing to the next template
 		String direction = "back";
-		actionForTemplate(direction, currentIndex, params, state);
+		if (currentIndex != 52 ){
+			actionForTemplate(direction, currentIndex, params, state);
+		}
 
 	}// doBack
 
@@ -5587,9 +5630,11 @@ public class SiteAction extends PagedResourceActionII {
 					.getAttribute(STATE_TERM_SELECTED);
 			if (t != null) {
 				/*
-				Set courses = cms.findInstructingSections(userId, t.getEid());
-                */
-				List courses = prepareCourseAndSectionListing(userId, t.getEid());
+				 * Set courses = cms.findInstructingSections(userId,
+				 * t.getEid());
+				 */
+				List courses = prepareCourseAndSectionListing(userId, t
+						.getEid());
 
 				// future term? roster information is not available yet?
 				int weeks = 0;
@@ -6775,6 +6820,7 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 33:
 			break;
+		case 52:
 		case 36:
 			/*
 			 * actionForTemplate chef_site-newSiteCourse.vm
@@ -6804,6 +6850,7 @@ public class SiteAction extends PagedResourceActionII {
 							siteInfo = (SiteInfo) state
 									.getAttribute(STATE_SITE_INFO);
 						}
+						// site title is the title of the 1st section selected - daisyf's note 
 						if (providerChosenList.size() >= 1) {
 							siteInfo.title = getCourseTab(state,
 									(String) providerChosenList.get(0));
@@ -7377,82 +7424,47 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		/*
-        if (providerCourseList != null) {
-            for (int k = 0; k < providerCourseList.size(); k++) {
-                    String courseId = (String) providerCourseList.get(k);
-                    try {
-                            members.addAll(CourseManagementService
-                                            .getCourseMembers(courseId));
-                    } catch (Exception e) {
-                            // M_log.warn(this + " Cannot find course " +
-							// courseId);
-                    }
-            }
-        }
-		 
-		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			Set grants = realm.getMembers();
-			// Collections.sort(users);
-			for (Iterator i = grants.iterator(); i.hasNext();) {
-				Member g = (Member) i.next();
-				String userString = g.getUserEid();
-				Role r = g.getRole();
-
-				boolean alreadyInList = false;
-				for (Iterator p = members.iterator(); p.hasNext()
-						&& !alreadyInList;) {
-					CourseMember member = (CourseMember) p.next();
-					String memberUniqname = member.getUniqname();
-					if (userString.equalsIgnoreCase(memberUniqname)) {
-						alreadyInList = true;
-						if (r != null) {
-							member.setRole(r.getId());
-						}
-
-						try {
-							User user = UserDirectoryService
-									.getUserByEid(memberUniqname);
-							Participant participant = new Participant();
-							participant.name = user.getSortName();
-							participant.uniqname = user.getId();
-							participant.role = member.getRole();
-							participant.providerRole = member.getProviderRole();
-							participant.course = member.getCourse();
-							participant.section = member.getSection();
-							participant.credits = member.getCredits();
-							participant.regId = member.getId();
-							participant.removeable = false;
-							participants.add(participant);
-						} catch (UserNotDefinedException e) {
-							// deal with missing user quietly without throwing a
-							// warning message
-						}
-					}
-				}
-
-				if (!alreadyInList) {
-					try {
-						User user = UserDirectoryService
-								.getUserByEid(userString);
-						Participant participant = new Participant();
-						participant.name = user.getSortName();
-						participant.uniqname = user.getId();
-						if (r != null) {
-							participant.role = r.getId();
-						}
-						participants.add(participant);
-					} catch (UserNotDefinedException e) {
-						// deal with missing user quietly without throwing a
-						// warning message
-					}
-				}
-			}
-		} catch (GroupNotDefinedException e) {
-			M_log.warn(this + "  IdUnusedException " + realmId);
-		}
-*/
-		participants = prepareParticipants(realmId); 
+		 * if (providerCourseList != null) { for (int k = 0; k <
+		 * providerCourseList.size(); k++) { String courseId = (String)
+		 * providerCourseList.get(k); try {
+		 * members.addAll(CourseManagementService .getCourseMembers(courseId)); }
+		 * catch (Exception e) { // M_log.warn(this + " Cannot find course " + //
+		 * courseId); } } }
+		 * 
+		 * try { AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
+		 * Set grants = realm.getMembers(); // Collections.sort(users); for
+		 * (Iterator i = grants.iterator(); i.hasNext();) { Member g = (Member)
+		 * i.next(); String userString = g.getUserEid(); Role r = g.getRole();
+		 * 
+		 * boolean alreadyInList = false; for (Iterator p = members.iterator();
+		 * p.hasNext() && !alreadyInList;) { CourseMember member =
+		 * (CourseMember) p.next(); String memberUniqname =
+		 * member.getUniqname(); if
+		 * (userString.equalsIgnoreCase(memberUniqname)) { alreadyInList = true;
+		 * if (r != null) { member.setRole(r.getId()); }
+		 * 
+		 * try { User user = UserDirectoryService .getUserByEid(memberUniqname);
+		 * Participant participant = new Participant(); participant.name =
+		 * user.getSortName(); participant.uniqname = user.getId();
+		 * participant.role = member.getRole(); participant.providerRole =
+		 * member.getProviderRole(); participant.course = member.getCourse();
+		 * participant.section = member.getSection(); participant.credits =
+		 * member.getCredits(); participant.regId = member.getId();
+		 * participant.removeable = false; participants.add(participant); }
+		 * catch (UserNotDefinedException e) { // deal with missing user quietly
+		 * without throwing a // warning message } } }
+		 * 
+		 * if (!alreadyInList) { try { User user = UserDirectoryService
+		 * .getUserByEid(userString); Participant participant = new
+		 * Participant(); participant.name = user.getSortName();
+		 * participant.uniqname = user.getId(); if (r != null) {
+		 * participant.role = r.getId(); } participants.add(participant); }
+		 * catch (UserNotDefinedException e) { // deal with missing user quietly
+		 * without throwing a // warning message } } } } catch
+		 * (GroupNotDefinedException e) { M_log.warn(this + " IdUnusedException " +
+		 * realmId); }
+		 */
+		participants = prepareParticipants(realmId);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
@@ -7469,21 +7481,20 @@ public class SiteAction extends PagedResourceActionII {
 				Member g = (Member) i.next();
 				String userString = g.getUserEid();
 				Role r = g.getRole();
-					try {
-						User user = UserDirectoryService
-								.getUserByEid(userString);
-						Participant participant = new Participant();
-						participant.name = user.getSortName();
-						participant.uniqname = user.getId();
-						if (r != null) {
-							participant.role = r.getId();
-						}
-						participants.add(participant);
-					} catch (UserNotDefinedException e) {
-						// deal with missing user quietly without throwing a
-						// warning message
+				try {
+					User user = UserDirectoryService.getUserByEid(userString);
+					Participant participant = new Participant();
+					participant.name = user.getSortName();
+					participant.uniqname = user.getId();
+					if (r != null) {
+						participant.role = r.getId();
 					}
+					participants.add(participant);
+				} catch (UserNotDefinedException e) {
+					// deal with missing user quietly without throwing a
+					// warning message
 				}
+			}
 
 		} catch (GroupNotDefinedException e) {
 			M_log.warn(this + "  IdUnusedException " + realmId);
@@ -10948,20 +10959,23 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	// here, we assume that sections do not have subsections, so notice that the code
-	// did not drill down on sections.	
-	private List prepareCourseAndSectionListing(String userId, String academicSessionEid) {
+	// here, we assume that sections do not have subsections, so notice that the
+	// code
+	// did not drill down on sections.
+	private List prepareCourseAndSectionListing(String userId,
+			String academicSessionEid) {
 		List propsList = new ArrayList();
 		propsList.add("category");
 		propsList.add("eid");
-				
+
 		List list = new ArrayList();
 		// look up sections that has enrollment set, we called it lectures here
-		// bear in mind that other category of section can have enrollment set too.
+		// bear in mind that other category of section can have enrollment set
+		// too.
 		Set lectures = cms.findInstructingSections(userId, academicSessionEid);
 		SortTool sort = new SortTool();
-		Collection lecturesSorted = sort.sort(lectures, propsList); 
-				
+		Collection lecturesSorted = sort.sort(lectures, propsList);
+
 		for (Iterator i = lecturesSorted.iterator(); i.hasNext();) {
 			Section s = (Section) i.next();
 			Set sections = cms.getSections(s.getCourseOfferingEid());
@@ -10970,11 +10984,12 @@ public class SiteAction extends PagedResourceActionII {
 			Collection sectionsSorted = sort2.sort(sections, propsList);
 
 			// remove the lecture
-		    List sectionList = new ArrayList();
+			List sectionList = new ArrayList();
 			for (Iterator j = sectionsSorted.iterator(); j.hasNext();) {
 				Section s1 = (Section) j.next();
-				if (!s1.getEid().equals(s.getEid())){
-					sectionList.add(new SectionObject(s1, false, new ArrayList()));
+				if (!s1.getEid().equals(s.getEid())) {
+					sectionList.add(new SectionObject(s1, false,
+							new ArrayList()));
 				}
 			}
 			list.add(new SectionObject(s, true, sectionList));
@@ -10982,25 +10997,33 @@ public class SiteAction extends PagedResourceActionII {
 		return list;
 	}
 
-    // this object is used for displaying purposes in chef_site-newSiteCourse.vm
-	// where the section with enrollmentSet is shown with any associated sections indented.
+	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	// where the section with enrollmentSet is shown with any associated
+	// sections indented.
 	public class SectionObject {
 		public Section section;
+
 		public String eid;
+
 		public String title;
+
 		public String categoryDescription;
+
 		public boolean hasEnrollmentSet; // lecture has enrollment set
+
 		public List otherSections;
-		
-		public SectionObject(Section section, boolean hasEnrollmentSet, List otherSections){
+
+		public SectionObject(Section section, boolean hasEnrollmentSet,
+				List otherSections) {
 			this.section = section;
 			this.eid = section.getEid();
 			this.title = section.getTitle();
-			this.categoryDescription = cms.getSectionCategoryDescription(section.getCategory());
+			this.categoryDescription = cms
+					.getSectionCategoryDescription(section.getCategory());
 			this.hasEnrollmentSet = hasEnrollmentSet;
 			this.otherSections = otherSections;
 		}
-		
+
 		public Section getSection() {
 			return section;
 		}
@@ -11008,22 +11031,117 @@ public class SiteAction extends PagedResourceActionII {
 		public String getEid() {
 			return eid;
 		}
-		
+
 		public String getTitle() {
-			return eid;
+			return title;
 		}
-		
+
 		public String getCategoryDescription() {
 			return categoryDescription;
 		}
-		
+
 		public boolean getHasEnrollmentSet() {
 			return hasEnrollmentSet;
 		}
-		
+
 		public List getOtherSections() {
 			return otherSections;
 		}
+	}
+
+	/**
+	 * do called when "eventSubmit_do" is in the request parameters to c
+	 */
+	public void doShowCoursesInCurrentTerms(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		state.setAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS, "true");
+		state.setAttribute(STATE_FUTURE_TERM_SELECTED,
+				Boolean.FALSE);
+		
+		ParameterParser params = data.getParameters();
+		int index = Integer.valueOf(params.getString("template-index"))
+				.intValue();
+		actionForTemplate("continue", index, params, state);
+
+		String userId = StringUtil.trimToZero(SessionManager
+				.getCurrentSessionUserId());
+		List terms = cms.getCurrentAcademicSessions();
+
+		int totalSteps = 0;
+		boolean hasSections = false;
+		List l = new ArrayList();
+		for (int i = 0; i < terms.size(); i++) {
+			AcademicSession t = (AcademicSession) terms.get(i);
+			List sections = prepareCourseAndSectionListing(userId, t.getEid());
+
+			int weeks = 0;
+			Calendar c = (Calendar) Calendar.getInstance().clone();
+			try {
+				weeks = Integer.parseInt(ServerConfigurationService.getString(
+						"roster.available.weeks.before.term.start", "0"));
+				c.add(Calendar.DATE, weeks * 7);
+			} catch (Exception ignore) {
+			}
+
+			if (!hasSections && (sections != null && sections.size() > 0)) {
+				hasSections = true;
+			}
+			l.add(new TermSectionObject(t, sections));
+		}
+
+		state.removeAttribute(STATE_TERM_COURSE_LIST);
+		if (hasSections) {
+			state.setAttribute(STATE_TERM_COURSE_LIST, l);
+			state.setAttribute(STATE_TEMPLATE_INDEX, "52");
+			state.setAttribute(STATE_AUTO_ADD, Boolean.TRUE);
+			totalSteps = 6;
+		} else {
+			state.removeAttribute(STATE_TERM_COURSE_LIST);
+			state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+			totalSteps = 5;
+		}
+
+		if (state.getAttribute(SITE_CREATE_TOTAL_STEPS) == null) {
+			state
+					.setAttribute(SITE_CREATE_TOTAL_STEPS, new Integer(
+							totalSteps));
+		}
+
+		if (state.getAttribute(SITE_CREATE_CURRENT_STEP) == null) {
+			state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(1));
+		}
+
+	} // doShowAvailableTerms
+
+	public class TermSectionObject {
+
+		public AcademicSession term;
+		
+		public String termTitle;
+
+		public List sectionObjectList;
+
+		public TermSectionObject(AcademicSession term,
+				List sectionObjectList) {
+			this.term = term;
+			this.termTitle = term.getTitle();
+			this.sectionObjectList = sectionObjectList;
+		}
+
+		public AcademicSession getTerm() {
+			return term;
+		}
+		
+		public String getTermTitle() {
+			return termTitle;
+		}
+
+		public List getSectionObjectList() {
+			return sectionObjectList;
+		}
+		
 	}
 
 }
