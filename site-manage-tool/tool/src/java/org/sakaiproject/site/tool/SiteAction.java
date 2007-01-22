@@ -2725,10 +2725,13 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("back", "52");
 			context.put("termCourseList", state
 					.getAttribute(STATE_TERM_COURSE_LIST));
-			context.put("providerCourseList", state
-					.getAttribute(SITE_PROVIDER_COURSE_LIST));
-			context.put("manualCourseList", state
-					.getAttribute(SITE_MANUAL_COURSE_LIST));
+			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
+				context.put("selectedProviderCourse", state
+						.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN));
+			}
+			if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
+				context.put("selectedManualCourse", Boolean.TRUE);
+			}
 
 			if (((String) state.getAttribute(STATE_SITE_MODE))
 					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
