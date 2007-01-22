@@ -15,7 +15,7 @@ function toggle(toggleKey, begin, end) {
 
 function submitShowAll(){
     index = document.getElementById("index");
-    index.value=1; 
+    index.value=1;
     document.addCourseForm.back.value=0; 
     document.addCourseForm.showAll.value="true"; 
     continueButton = document.getElementById("continueButton");

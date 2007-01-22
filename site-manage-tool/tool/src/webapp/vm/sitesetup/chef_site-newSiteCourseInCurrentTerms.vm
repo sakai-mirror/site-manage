@@ -32,7 +32,7 @@ function toggle(toggleKey, begin, end) {
 		</h4>	
 
 		#set($courseNumber=0)	
-		#foreach($termSectionObject in $providerCourseList)
+		#foreach($termSectionObject in $termCourseList)
 			#if ($termSectionObject.getSectionObjectList().size()>0)
 				<h5>
 					<span class="reqStar">*</span> $tlang.getString("nscourse.acad")
@@ -76,7 +76,7 @@ function toggle(toggleKey, begin, end) {
 			#end
 		</p>
 
-		<input id="index" type="hidden" name="template-index" value="36" />
+		<input id="index" type="hidden" name="template-index" value="52" />
 		<input type="hidden" name="back" value="1" />
 		<p class="act">
 			<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
