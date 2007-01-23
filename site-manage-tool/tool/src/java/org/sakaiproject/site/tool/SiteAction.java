@@ -2501,7 +2501,11 @@ public class SiteAction extends PagedResourceActionII {
 			} else {
 				if (state.getAttribute(STATE_AUTO_ADD) != null) {
 					context.put("autoAdd", Boolean.TRUE);
-					context.put("back", "36");
+					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
+						context.put("back", "52");
+					} else {
+						context.put("back", "36");
+					}
 				} else {
 					context.put("back", "1");
 				}
@@ -4541,9 +4545,7 @@ public class SiteAction extends PagedResourceActionII {
 		// Let actionForTemplate know not to make any permanent changes before
 		// continuing to the next template
 		String direction = "back";
-		if (currentIndex != 52 ){
-			actionForTemplate(direction, currentIndex, params, state);
-		}
+		actionForTemplate(direction, currentIndex, params, state);
 
 	}// doBack
 
