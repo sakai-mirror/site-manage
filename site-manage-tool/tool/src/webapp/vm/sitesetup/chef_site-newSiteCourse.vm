@@ -13,15 +13,18 @@ function toggle(toggleKey, begin, end) {
     }
 }
 
-function submitShowAll(){
-    index = document.getElementById("index");
-    index.value=1;
-    document.addCourseForm.back.value=0; 
-    document.addCourseForm.showAll.value="true"; 
+function submitAddNotListed(){
+    manual_add = document.getElementById("manual_add");
+    manual_add.value="manual add";
     continueButton = document.getElementById("continueButton");
     continueButton.click();
     document.addCourseForm.submit(); 
     return false;
+}
+
+function submitChangeUser(){
+    index = document.getElementById("index");
+    index.value="1";
 }
 
 // -->
@@ -31,7 +34,7 @@ function submitShowAll(){
 	#if (!$!site)
 		<h3>$tlang.getString("nscourse.creating")</h3>
 		<p class="step">
-			$tlang.getString("nscourse.choose")
+			$tlang.getString("nscourse.course_sections_selection") - $term.title
 		</p>
 	#else
 		<h3>$tlang.getString("nscourse.edit") $!siteTitle...</h3>
@@ -45,16 +48,23 @@ function submitShowAll(){
 		#end
 	</p>
 	<form name = "addCourseForm" method="post" action="#toolForm($action)">
-		<h4>		
-			$tlang.getString("nscourse.cinfo")
-		</h4>	
 
 			#if (!$site)
-				<h5>
-					<span class="reqStar">*</span> $tlang.getString("nscourse.acad")
-					$term.title
-				</h5>
+				<b>
+					$tlang.getString("nscourse.current_displaying_courses_sections_for_id")
+				</b>
+				<input type="text" name="userId" value="$userId"/>
+	#*
+				<input type="hidden" id="index" name="template-index" value="1" />
+				*#
+				<input type="hidden" name="itemType" value="course" />
+				<input type="hidden" name="selectTerm" value="$term.eid" />
+				<input type="submit" accesskey="s"  class="active" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
+					onsubmit="javascript:submitChangeUser()" />
 			#else
+			<h4>		
+				$tlang.getString("nscourse.cinfo")
+			</h4>	
 				$tlang.getString("nscourse.already")
 				<ul>
 					#foreach($id in $!providerCourseList)
@@ -124,6 +134,7 @@ function submitShowAll(){
 				#end
 			#end
 			## instructor could choose to go to the manual creation page
+				#*
 				<p class="checkbox">
 					<input  type="checkbox" name="manualAdds" value="manual add" id="manual_add" #if ($!selectedManualCourse) checked="checked" #end/>
 				#if ($!providerCourseList.size() != 0 || $!requestedCourseList.size() != 0)
@@ -132,15 +143,18 @@ function submitShowAll(){
 					<label for = "manual_add">$tlang.getString("nscourse.iwould2") </label>
 				#end
 				</p>
+				*#
+				<input  type="hidden" name="manualAdds" value="x" id="manual_add"/>
+				
 
 		<input id="index" type="hidden" name="template-index" value="36" />
 		<input type="hidden" name="back" value="1" />
 		<p class="act">
 			#if (!$site)
-				<!-- Show all available terms -->
-				<input type="hidden" name="showAll" value="" />
-		                <a href="#" onclick="javascript:submitShowAll();">$tlang.getString('nscourse.showAllAvailableTerms')</a>
-				<p></p>
+				<!-- Add Not Listed Courses -->
+				<input type="hidden" name="addNotListed" value="" />
+				<a href="#" onclick="javascript:submitAddNotListed();">$tlang.getString('nscourse.add_course_not_listed')</a>
+				<p></p>			
 				<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
 				<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
 				<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')" />

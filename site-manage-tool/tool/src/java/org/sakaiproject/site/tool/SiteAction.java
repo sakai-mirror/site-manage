@@ -482,6 +482,8 @@ public class SiteAction extends PagedResourceActionII {
 	private final static String STATE_TERM_COURSE_HASH = "state_term_course_hash";
 
 	private final static String STATE_TERM_SELECTED = "state_term_selected";
+	
+	private final static String STATE_INSTRUCTOR_SELECTED = "state_instructor_selected";
 
 	private final static String STATE_FUTURE_TERM_SELECTED = "state_future_term_selected";
 
@@ -721,6 +723,7 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_TERM_COURSE_LIST);
 		state.removeAttribute(STATE_TERM_COURSE_HASH);
 		state.removeAttribute(STATE_TERM_SELECTED);
+		state.removeAttribute(STATE_INSTRUCTOR_SELECTED);
 		state.removeAttribute(STATE_FUTURE_TERM_SELECTED);
 		state.removeAttribute(STATE_ADD_CLASS_PROVIDER);
 		state.removeAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
@@ -730,7 +733,7 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
 		state.removeAttribute(SITE_CREATE_TOTAL_STEPS);
 		state.removeAttribute(SITE_CREATE_CURRENT_STEP);
-		
+
 		// added by daisyf for v2.4, case 52
 		state.removeAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS);
 
@@ -2445,6 +2448,8 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				context.put("term", (AcademicSession) state
 						.getAttribute(STATE_TERM_SELECTED));
+				context.put("userId", (String) state
+						.getAttribute(STATE_INSTRUCTOR_SELECTED));
 			}
 			if (((String) state.getAttribute(STATE_SITE_MODE))
 					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
@@ -2723,7 +2728,7 @@ public class SiteAction extends PagedResourceActionII {
 			/*
 			 * buildContextForTemplate chef_site-newSiteCourseInCurrentTerms.vm
 			 */
-			setTermListForContext(context, state, false); 
+			setTermListForContext(context, state, false);
 			// false => all possible terms
 
 			context.put("back", "52");
@@ -3771,8 +3776,12 @@ public class SiteAction extends PagedResourceActionII {
 			setNewSiteType(state, type);
 
 			if (type.equalsIgnoreCase("course")) {
-				String userId = StringUtil.trimToZero(SessionManager
+				String userId = params.getString("userId");
+				if (userId == null || "".equals(userId)){
+					userId = StringUtil.trimToZero(SessionManager
 						.getCurrentSessionUserId());
+				}
+				state.setAttribute(STATE_INSTRUCTOR_SELECTED, userId);
 				String academicSessionEid = params.getString("selectTerm");
 				AcademicSession t = cms.getAcademicSession(academicSessionEid);
 				state.setAttribute(STATE_TERM_SELECTED, t);
@@ -3811,15 +3820,13 @@ public class SiteAction extends PagedResourceActionII {
 						state.setAttribute(STATE_TERM_COURSE_LIST, sections);
 						state.setAttribute(STATE_TEMPLATE_INDEX, "36");
 						state.setAttribute(STATE_AUTO_ADD, Boolean.TRUE);
-
-						totalSteps = 6;
 					} else {
 						state.removeAttribute(STATE_TERM_COURSE_LIST);
-						state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-
-						totalSteps = 5;
 					}
-				} else {
+					state.setAttribute(STATE_TEMPLATE_INDEX, "36");
+					totalSteps = 6;
+
+				} else { // type!="course"
 					state.setAttribute(STATE_TEMPLATE_INDEX, "37");
 					totalSteps = 5;
 				}
@@ -3861,6 +3868,11 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doSite_type
+
+	
+	public void doChange_user(RunData data) {
+		doSite_type(data);
+	} // doChange_user
 
 	/**
 	 * cleanEditGroupParams clean the state parameters used by editing group
@@ -4518,7 +4530,8 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
-			} else { // a branch to show all courses, case 52 - daisyf v2.4 01/18/07
+			} else { // a branch to show all courses, case 52 - daisyf v2.4
+						// 01/18/07
 				// only chef_site-newCourseInCurrentTerms.vm has this flag
 				String showAll = params.getString("showAll");
 				if ("true".equals(showAll)) {
@@ -6855,7 +6868,8 @@ public class SiteAction extends PagedResourceActionII {
 							siteInfo = (SiteInfo) state
 									.getAttribute(STATE_SITE_INFO);
 						}
-						// site title is the title of the 1st section selected - daisyf's note 
+						// site title is the title of the 1st section selected -
+						// daisyf's note
 						if (providerChosenList.size() >= 1) {
 							siteInfo.title = getCourseTab(state,
 									(String) providerChosenList.get(0));
@@ -11062,9 +11076,8 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		state.setAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS, "true");
-		state.setAttribute(STATE_FUTURE_TERM_SELECTED,
-				Boolean.FALSE);
-		
+		state.setAttribute(STATE_FUTURE_TERM_SELECTED, Boolean.FALSE);
+
 		ParameterParser params = data.getParameters();
 		int index = Integer.valueOf(params.getString("template-index"))
 				.intValue();
@@ -11123,13 +11136,12 @@ public class SiteAction extends PagedResourceActionII {
 	public class TermSectionObject {
 
 		public AcademicSession term;
-		
+
 		public String termTitle;
 
 		public List sectionObjectList;
 
-		public TermSectionObject(AcademicSession term,
-				List sectionObjectList) {
+		public TermSectionObject(AcademicSession term, List sectionObjectList) {
 			this.term = term;
 			this.termTitle = term.getTitle();
 			this.sectionObjectList = sectionObjectList;
@@ -11138,7 +11150,7 @@ public class SiteAction extends PagedResourceActionII {
 		public AcademicSession getTerm() {
 			return term;
 		}
-		
+
 		public String getTermTitle() {
 			return termTitle;
 		}
@@ -11146,7 +11158,7 @@ public class SiteAction extends PagedResourceActionII {
 		public List getSectionObjectList() {
 			return sectionObjectList;
 		}
-		
+
 	}
 
 }
