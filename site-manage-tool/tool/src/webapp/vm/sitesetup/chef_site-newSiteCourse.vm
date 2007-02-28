@@ -15,7 +15,7 @@ function toggle(toggleKey, begin, end) {
 
 function submitAddNotListed(){
     manual_add = document.getElementById("manual_add");
-    manual_add.value="manual add";
+    manual_add.value="true";
     continueButton = document.getElementById("continueButton");
     continueButton.click();
     document.addCourseForm.submit(); 
