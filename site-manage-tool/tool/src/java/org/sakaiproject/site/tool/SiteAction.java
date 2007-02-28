@@ -6876,7 +6876,7 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						state.setAttribute(STATE_SITE_INFO, siteInfo);
 
-						if (params.getString("manualAdds") != null) {
+						if (params.getString("manualAdds") != null && ("true").equals(params.getString("manualAdds"))) {
 							// if creating a new site
 							state.setAttribute(STATE_TEMPLATE_INDEX, "37");
 							state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
