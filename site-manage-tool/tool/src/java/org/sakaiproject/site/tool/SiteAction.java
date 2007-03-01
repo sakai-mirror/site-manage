@@ -11026,6 +11026,7 @@ public class SiteAction extends PagedResourceActionII {
 	private List prepareCourseAndSectionListing(String userId,
 			String academicSessionEid) {
 		ArrayList attachedSectionList = new ArrayList();
+		// h = (courseOffering, list of sections)
 		HashMap h = prepareCourseAndSectionMap(userId, academicSessionEid);
 		List propsList = new ArrayList();
 		propsList.add("category");
@@ -11035,32 +11036,36 @@ public class SiteAction extends PagedResourceActionII {
 		SortTool sort = new SortTool();
 
 		ArrayList offeringList = new ArrayList();
+		ArrayList offeringIdList = new ArrayList();
+		HashMap offeringIdHash = new HashMap();
 		Set keys = h.keySet();
 		for (Iterator i = keys.iterator(); i.hasNext();) {
 	    	CourseOffering o = (CourseOffering) i.next();
 	    	offeringList.add(o);
+	    	offeringIdHash.put(o.getEid(), h.get(o));
 		}
+		
 		Collection offeringListSorted = sortOffering(offeringList);
 		ArrayList resultedList = new ArrayList();
 		ArrayList dealtWith = new ArrayList();
 		for (Iterator j = offeringListSorted.iterator(); j.hasNext();) {
 			CourseOffering o = (CourseOffering) j.next();
-			if (!dealtWith.contains(o)){
+			if (!dealtWith.contains(o.getEid())){
 				ArrayList l = new ArrayList();
-				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) h.get(o));
+				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) offeringIdHash.get(o.getEid()));
 				l.add(coo);
 				Set set = cms.getEquivalentCourseOfferings(o.getEid());
 				for (Iterator k = set.iterator(); k.hasNext();) {
 					CourseOffering eo = (CourseOffering) k.next();
-					if (offeringList.contains(eo)){
+					if (offeringIdHash.containsKey(eo.getEid())){
 						// => should list them together
-						CourseOfferingObject coo1 = new CourseOfferingObject(eo, (ArrayList) h.get(eo));
-						l.add(coo1);
-						dealtWith.add(eo);
+						CourseOfferingObject coo_equivalent = new CourseOfferingObject(eo, (ArrayList) offeringIdHash.get(eo.getEid()));
+						l.add(coo_equivalent);
+						dealtWith.add(eo.getEid());
 					}
 				}
 				CourseObject co = new CourseObject(o,l);
-				dealtWith.add(o);
+				dealtWith.add(o.getEid());
 				resultedList.add(co);
 			}
 		}
@@ -11287,6 +11292,7 @@ public class SiteAction extends PagedResourceActionII {
 		public List getCourseOfferingObjects() {
 			return courseOfferingObjects;
 		}
+		
 	}
 
 	public class CourseOfferingObject {
@@ -11299,7 +11305,10 @@ public class SiteAction extends PagedResourceActionII {
 			propsList.add("category");
 			propsList.add("eid");
 			SortTool sort = new SortTool();
-			this.sections = (List) sort.sort(sections, propsList);
+			if (sections !=null )
+				this.sections = (List) sort.sort(sections, propsList);
+			else
+				this.sections = null;
 			
 			this.eid = offering.getEid();
 			this.title = offering.getTitle();

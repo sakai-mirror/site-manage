@@ -109,7 +109,10 @@ function submitChangeUser(){
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
 				#foreach($courseObject in $termCourseList)
 					<p></p>
-					$courseObject.title
+					$courseObject.title 
+					#if ($!courseObject.courseOfferingObjects.size() > 1)
+						(cross-listed)
+					#end
 					#set($courseNumber=0)	
 					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
 						#set ($count=1)
