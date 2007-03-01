@@ -122,6 +122,7 @@ import org.sakaiproject.importer.api.ImportDataSource;
 import org.sakaiproject.importer.api.SakaiArchive;
 
 import org.sakaiproject.coursemanagement.api.AcademicSession;
+import org.sakaiproject.coursemanagement.api.CourseOffering;
 import org.sakaiproject.coursemanagement.api.Section;
 import org.sakaiproject.coursemanagement.api.Enrollment;
 import org.sakaiproject.coursemanagement.api.Membership;
@@ -148,7 +149,10 @@ public class SiteAction extends PagedResourceActionII {
 			.get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
 
 	private org.sakaiproject.authz.api.GroupProvider groupProvider = (org.sakaiproject.authz.api.GroupProvider) ComponentManager
-			.get(org.sakaiproject.authz.api.GroupProvider.class);
+	.get(org.sakaiproject.authz.api.GroupProvider.class);
+	
+	private org.sakaiproject.authz.api.AuthzGroupService authzGroupService = (org.sakaiproject.authz.api.AuthzGroupService) ComponentManager
+	.get(org.sakaiproject.authz.api.AuthzGroupService.class);
 
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
@@ -10977,10 +10981,104 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("selectedTerm", state.getAttribute(stateAttribute));
 		}
 	}
+	
+	private HashMap prepareCourseAndSectionMap(String userId,
+			String academicSessionEid) {
+		
+		// looking for list of courseOffering and sections that should be included in
+		// the selection list. The course offering must be offered
+		// 1. in the specific academic Session
+		// 2. that the specified user has right to attach its section to a course site
+		HashMap hash = new HashMap();
+		// map = (section.eid, sakai rolename)
+		Map map = groupProvider.getGroupRolesForUser(userId);
+	    Set keys = map.keySet();
+		for (Iterator i = keys.iterator(); i.hasNext();) {
+	    	String sectionEid = (String) i.next();
+	    	String role = (String) map.get(sectionEid);
+	    	if (includeRole(role)){
+	    		Section section = cms.getSection(sectionEid);
+	    		String courseOfferingEid = section.getCourseOfferingEid();
+	    		CourseOffering courseOffering = cms.getCourseOffering(courseOfferingEid);
+	    		String sessionEid = courseOffering.getAcademicSession().getEid();
+	    		if (academicSessionEid.equals(sessionEid)){
+	    			// a long way to the conclusion that yes, this course offering
+	    			// should be included in the selected list. 
+	    			ArrayList sectionList = (ArrayList) hash.get(courseOffering);
+	    			if (sectionList == null){
+	    				sectionList = new ArrayList();
+	    			}
+	    			sectionList.add(new SectionObject(section));
+	    			hash.put(courseOffering, sectionList);
+	    		}
+	    	}
+	    }		
+		return hash;
+	}
+
+	private boolean includeRole(String role) {
+		if (("Instructor").equals(role) ||("Teaching Assistant").equals(role) )
+			return true;
+		else
+			return false;
+	}
+
+	private List prepareCourseAndSectionListing(String userId,
+			String academicSessionEid) {
+		ArrayList attachedSectionList = new ArrayList();
+		HashMap h = prepareCourseAndSectionMap(userId, academicSessionEid);
+		List propsList = new ArrayList();
+		propsList.add("category");
+		propsList.add("eid");
+
+		List list = new ArrayList();
+		SortTool sort = new SortTool();
+
+		ArrayList offeringList = new ArrayList();
+		Set keys = h.keySet();
+		for (Iterator i = keys.iterator(); i.hasNext();) {
+	    	CourseOffering o = (CourseOffering) i.next();
+	    	offeringList.add(o);
+		}
+		Collection offeringListSorted = sortOffering(offeringList);
+		ArrayList resultedList = new ArrayList();
+		ArrayList dealtWith = new ArrayList();
+		for (Iterator j = offeringListSorted.iterator(); j.hasNext();) {
+			CourseOffering o = (CourseOffering) j.next();
+			if (!dealtWith.contains(o)){
+				ArrayList l = new ArrayList();
+				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) h.get(o));
+				l.add(coo);
+				Set set = cms.getEquivalentCourseOfferings(o.getEid());
+				for (Iterator k = set.iterator(); k.hasNext();) {
+					CourseOffering eo = (CourseOffering) k.next();
+					if (offeringList.contains(eo)){
+						// => should list them together
+						CourseOfferingObject coo1 = new CourseOfferingObject(eo, (ArrayList) h.get(eo));
+						l.add(coo1);
+						dealtWith.add(eo);
+					}
+				}
+				CourseObject co = new CourseObject(o,l);
+				dealtWith.add(o);
+				resultedList.add(co);
+			}
+		}
+		return resultedList;
+	}
+	
+	private Collection sortOffering(ArrayList offeringList) {
+		List propsList = new ArrayList();
+		propsList.add("eid");
+		propsList.add("title");
+		SortTool sort = new SortTool();
+		return sort.sort(offeringList, propsList);
+	}
 
 	// here, we assume that sections do not have subsections, so notice that the
 	// code
 	// did not drill down on sections.
+	/*
 	private List prepareCourseAndSectionListing(String userId,
 			String academicSessionEid) {
 		List propsList = new ArrayList();
@@ -11015,32 +11113,37 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		return list;
 	}
-
+*/
 	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
 	// where the section with enrollmentSet is shown with any associated
 	// sections indented.
 	public class SectionObject {
 		public Section section;
-
 		public String eid;
-
 		public String title;
-
 		public String categoryDescription;
+		public boolean isLecture; 
+		public boolean attached;
 
-		public boolean hasEnrollmentSet; // lecture has enrollment set
-
-		public List otherSections;
-
-		public SectionObject(Section section, boolean hasEnrollmentSet,
-				List otherSections) {
+		public SectionObject(Section section) {
 			this.section = section;
 			this.eid = section.getEid();
 			this.title = section.getTitle();
 			this.categoryDescription = cms
 					.getSectionCategoryDescription(section.getCategory());
-			this.hasEnrollmentSet = hasEnrollmentSet;
-			this.otherSections = otherSections;
+			if ("01.lct".equals(section.getCategory())){
+				this.isLecture = true;
+			}
+			else{
+				this.isLecture = false;
+			}
+			Set set = authzGroupService.getAuthzGroupIds(section.getEid());
+			if (set!=null && !set.isEmpty()){
+				this.attached = true;
+			}
+			else{
+				this.attached = false;
+			}		
 		}
 
 		public Section getSection() {
@@ -11059,12 +11162,12 @@ public class SiteAction extends PagedResourceActionII {
 			return categoryDescription;
 		}
 
-		public boolean getHasEnrollmentSet() {
-			return hasEnrollmentSet;
+		public boolean getIsLecture() {
+			return isLecture;
 		}
 
-		public List getOtherSections() {
-			return otherSections;
+		public boolean getAttached() {
+			return attached;
 		}
 	}
 
@@ -11159,6 +11262,60 @@ public class SiteAction extends PagedResourceActionII {
 			return sectionObjectList;
 		}
 
+	}
+
+	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	public class CourseObject {
+		public String eid;
+		public String title;
+		public List courseOfferingObjects;
+
+		public CourseObject(CourseOffering offering, List courseOfferingObjects) {
+			this.eid = offering.getEid();
+			this.title = offering.getTitle();
+			this.courseOfferingObjects = courseOfferingObjects;
+		}
+
+		public String getEid() {
+			return eid;
+		}
+
+		public String getTitle() {
+			return title;
+		}
+
+		public List getCourseOfferingObjects() {
+			return courseOfferingObjects;
+		}
+	}
+
+	public class CourseOfferingObject {
+		public String eid;
+		public String title;
+		public List sections;
+
+		public CourseOfferingObject(CourseOffering offering, List sections) {
+			List propsList = new ArrayList();
+			propsList.add("category");
+			propsList.add("eid");
+			SortTool sort = new SortTool();
+			this.sections = (List) sort.sort(sections, propsList);
+			
+			this.eid = offering.getEid();
+			this.title = offering.getTitle();
+		}
+
+		public String getEid() {
+			return eid;
+		}
+
+		public String getTitle() {
+			return title;
+		}
+
+		public List getSections() {
+			return sections;
+		}
 	}
 
 }

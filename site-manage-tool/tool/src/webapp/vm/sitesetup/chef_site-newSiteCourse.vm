@@ -107,43 +107,43 @@ function submitChangeUser(){
 				
 				## display only subject, course number and section
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
-				#set($courseNumber=0)	
-				#foreach($sectionObject in $termCourseList)
-					#set($courseNumber = $courseNumber + 1)
-					#set($toggleKey = $courseNumber - 1) 
-					#set($endKey = $courseNumber + $sectionObject.getOtherSections().size())
-					<p class="checkbox">
-					<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
-						#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
-							checked="checked"
-						#end 
-						/> 
-					<label for="course$courseNumber">
-						$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label></p>
-                                        #foreach($section in $sectionObject.otherSections)
-         		 			#set($courseNumber=$courseNumber + 1)
-                                	         <p class="checkbox">
-						 &nbsp; &nbsp;
-						 <input type="checkbox" name="providerCourseAdd" value="$section.eid" id="course$courseNumber"
-							#if ($!selectedProviderCourse.contains("$section.eid"))
-								checked="checked"
-							#end 
-						/>
-        	                                $section.eid : $section.title, $section.categoryDescription
-                                        #end
-				#end
-			#end
-			## instructor could choose to go to the manual creation page
-				#*
-				<p class="checkbox">
-					<input  type="checkbox" name="manualAdds" value="manual add" id="manual_add" #if ($!selectedManualCourse) checked="checked" #end/>
-				#if ($!providerCourseList.size() != 0 || $!requestedCourseList.size() != 0)
-					<label for = "manual_add">$tlang.getString("nscourse.iwould1") </label>
-				#else
-					<label for = "manual_add">$tlang.getString("nscourse.iwould2") </label>
-				#end
-				</p>
-				*#
+				#foreach($courseObject in $termCourseList)
+					<p></p>
+					$courseObject.title
+					#set($courseNumber=0)	
+					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
+						#set ($count=1)
+						#foreach($sectionObject in $courseOfferingObject.sections)
+							#if (!$sectionObject.isLecture)
+								&nbsp;&nbsp;
+							#end
+							#if ($count == 1)
+								#set($toggleKey = $courseNumber) 
+								#set($endKey = $courseNumber + $courseOfferingObject.getSections.size())
+								#set ($count=0)
+								<p class="checkbox">
+								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
+									#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
+										checked="checked"
+									#end 
+								/> 
+								<label for="course$courseNumber">
+									$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label></p>
+							#else
+                                		        	<p class="checkbox">
+								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber"
+								#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
+									checked="checked"
+								#end 
+								/>
+        	                                		$sectionObject.eid : $sectionObject.title, $sectionObject.categoryDescription
+                                        		#end
+							#set($courseNumber = $courseNumber + 1)
+						#end
+					#end
+				 #end
+			#end	
+				## instructor could choose to go to the manual creation page
 				<input  type="hidden" name="manualAdds" value="x" id="manual_add"/>
 				
 
