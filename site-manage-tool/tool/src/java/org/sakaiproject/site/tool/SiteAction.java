@@ -11031,7 +11031,7 @@ public class SiteAction extends PagedResourceActionII {
 	    		String sessionEid = courseOffering.getAcademicSession().getEid();
 	    		if (academicSessionEid.equals(sessionEid)){
 	    			// a long way to the conclusion that yes, this course offering
-	    			// should be included in the selected list. 
+	    			// should be included in the selected list. Sigh... -daisyf
 	    			ArrayList sectionList = (ArrayList) sectionHash.get(courseOffering.getEid());
 	    			if (sectionList == null){
 	    				sectionList = new ArrayList();
@@ -11057,7 +11057,15 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	/**
-	 * for 2.4
+	 * Here, we will preapre two HashMap: 
+	 * 1. courseOfferingHash stores courseOfferingId and CourseOffering
+	 * 2. sectionHash stores courseOfferingId and a list of its Section
+	 * We sorted the CourseOffering by its eid & title and went through them one
+	 * at a time to construct the CourseObject that is used for the displayed
+	 * in velocity. Each CourseObject will contains a list of CourseOfferingObject(again
+	 * used for vm display). Usually, a CourseObject would only contain one CourseOfferingObject.
+	 * A CourseObject containing multiple CourseOfferingObject implies that this is a cross-listing
+	 * situation.
 	 * @param userId
 	 * @param academicSessionEid
 	 * @return
@@ -11069,6 +11077,7 @@ public class SiteAction extends PagedResourceActionII {
 		HashMap courseOfferingHash = new HashMap();
 		HashMap sectionHash = new HashMap();
 		prepareCourseAndSectionMap(userId, academicSessionEid, courseOfferingHash, sectionHash);
+		// courseOfferingHash & sectionHash should now be filled with stuffs
 
 		ArrayList offeringList = new ArrayList();
 		Set keys = courseOfferingHash.keySet();
@@ -11079,19 +11088,26 @@ public class SiteAction extends PagedResourceActionII {
 		
 		Collection offeringListSorted = sortOffering(offeringList);
 		ArrayList resultedList = new ArrayList();
-		ArrayList dealtWith = new ArrayList();
+		
+		// use this to keep track of courseOffering that we have dealt with already
+		// this is important 'cos cross-listed offering is dealt with together with its 
+		// equivalents
+		ArrayList dealtWith = new ArrayList(); 
+		
 		for (Iterator j = offeringListSorted.iterator(); j.hasNext();) {
 			CourseOffering o = (CourseOffering) j.next();
 			if (!dealtWith.contains(o.getEid())){
+				// 1. construct list of CourseOfferingObject for CourseObject
 				ArrayList l = new ArrayList();
-				ArrayList test = (ArrayList) sectionHash.get(o.getEid());
 				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) sectionHash.get(o.getEid()));
 				l.add(coo);
+				
+				// 2. check if course offering is cross-listed
 				Set set = cms.getEquivalentCourseOfferings(o.getEid());
 				for (Iterator k = set.iterator(); k.hasNext();) {
 					CourseOffering eo = (CourseOffering) k.next();
 					if (courseOfferingHash.containsKey(eo.getEid())){
-						// => should list them together
+						// => cross-listed, then list them together
 						CourseOfferingObject coo_equivalent = new CourseOfferingObject(eo, (ArrayList) sectionHash.get(eo.getEid()));
 						l.add(coo_equivalent);
 						dealtWith.add(eo.getEid());
@@ -11102,19 +11118,6 @@ public class SiteAction extends PagedResourceActionII {
 				resultedList.add(co);
 			}
 		}
-
-		/*
-	   	System.out.println("*******************************");
-		for (int m=0; m<resultedList.size(); m++) {
-			CourseObject co = (CourseObject)resultedList.get(m);
-			List l = (List)co.getCourseOfferingObjects();
-			for (int n=0; n<l.size(); n++) {
-				CourseOfferingObject coo = (CourseOfferingObject)l.get(n);
-				List sl = (List)coo.getSections();
-		    	System.out.println(coo.getEid() +",section size="+sl.size());
-			}
-		}
-		*/
 		return resultedList;
 	}
 	
@@ -11131,45 +11134,6 @@ public class SiteAction extends PagedResourceActionII {
 		return sort.sort(offeringList, propsList);
 	}
 
-	// here, we assume that sections do not have subsections, so notice that the
-	// code
-	// did not drill down on sections.
-	/*
-	private List prepareCourseAndSectionListing(String userId,
-			String academicSessionEid) {
-		List propsList = new ArrayList();
-		propsList.add("category");
-		propsList.add("eid");
-
-		List list = new ArrayList();
-		// look up sections that has enrollment set, we called it lectures here
-		// bear in mind that other category of section can have enrollment set
-		// too.
-		Set lectures = cms.findInstructingSections(userId, academicSessionEid);
-		SortTool sort = new SortTool();
-		Collection lecturesSorted = sort.sort(lectures, propsList);
-
-		for (Iterator i = lecturesSorted.iterator(); i.hasNext();) {
-			Section s = (Section) i.next();
-			Set sections = cms.getSections(s.getCourseOfferingEid());
-			// sort sections
-			SortTool sort2 = new SortTool();
-			Collection sectionsSorted = sort2.sort(sections, propsList);
-
-			// remove the lecture
-			List sectionList = new ArrayList();
-			for (Iterator j = sectionsSorted.iterator(); j.hasNext();) {
-				Section s1 = (Section) j.next();
-				if (!s1.getEid().equals(s.getEid())) {
-					sectionList.add(new SectionObject(s1, false,
-							new ArrayList()));
-				}
-			}
-			list.add(new SectionObject(s, true, sectionList));
-		}
-		return list;
-	}
-*/
 
 	/**
 	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
