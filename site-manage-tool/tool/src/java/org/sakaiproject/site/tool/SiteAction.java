@@ -2474,7 +2474,10 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			context.put("termCourseList", state
 					.getAttribute(STATE_TERM_COURSE_LIST));
-
+			
+			// added for 2.4 -daisyf
+			context.put("campusDirectory", getCampusDirectory());
+			
 			return (String) getContext(data).get("template") + TEMPLATE[36];
 		case 37:
 			/*
@@ -11001,6 +11004,13 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 	
+	/**
+	 * rewrote for 2.4
+	 * @param userId
+	 * @param academicSessionEid
+	 * @param courseOfferingHash
+	 * @param sectionHash
+	 */
 	private void prepareCourseAndSectionMap(String userId,
 			String academicSessionEid, HashMap courseOfferingHash, HashMap sectionHash) {
 		
@@ -11034,6 +11044,11 @@ public class SiteAction extends PagedResourceActionII {
 	    }		
 	}
 
+	/**
+	 * for 2.4
+	 * @param role
+	 * @return
+	 */
 	private boolean includeRole(String role) {
 		if (("Instructor").equals(role) ||("Teaching Assistant").equals(role) )
 			return true;
@@ -11041,6 +11056,12 @@ public class SiteAction extends PagedResourceActionII {
 			return false;
 	}
 
+	/**
+	 * for 2.4
+	 * @param userId
+	 * @param academicSessionEid
+	 * @return
+	 */
 	private List prepareCourseAndSectionListing(String userId,
 			String academicSessionEid) {
 		// courseOfferingHash = (courseOfferingEid, vourseOffering)
@@ -11097,6 +11118,11 @@ public class SiteAction extends PagedResourceActionII {
 		return resultedList;
 	}
 	
+	/**
+	 * Sort CourseOffering by order of eid, title uisng velocity SortTool
+	 * @param offeringList
+	 * @return
+	 */
 	private Collection sortOffering(ArrayList offeringList) {
 		List propsList = new ArrayList();
 		propsList.add("eid");
@@ -11144,9 +11170,10 @@ public class SiteAction extends PagedResourceActionII {
 		return list;
 	}
 */
-	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
-	// where the section with enrollmentSet is shown with any associated
-	// sections indented.
+
+	/**
+	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	 */ 
 	public class SectionObject {
 		public Section section;
 		public String eid;
@@ -11302,7 +11329,9 @@ public class SiteAction extends PagedResourceActionII {
 	}
 	*/
 	
-	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	/**
+	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	 */ 
 	public class CourseObject {
 		public String eid;
 		public String title;
@@ -11328,6 +11357,9 @@ public class SiteAction extends PagedResourceActionII {
 		
 	}
 
+	/**
+	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
+	 */ 
 	public class CourseOfferingObject {
 		public String eid;
 		public String title;
@@ -11359,4 +11391,8 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
+	private String getCampusDirectory() {
+		return ServerConfigurationService.getString(
+				"site-manage.campusUserDirectory", "");
+	}
 }
