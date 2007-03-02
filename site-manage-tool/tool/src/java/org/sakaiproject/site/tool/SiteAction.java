@@ -213,7 +213,10 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51
+			
+			/* TO BE DELETED - daisyf 03/02/07
 			"-newSiteCourseInCurrentTerms"// 52 - new for v2.4
+			*/
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -574,9 +577,11 @@ public class SiteAction extends PagedResourceActionII {
 	// Special tool id for Home page
 	private static final String HOME_TOOL_ID = "home";
 
+	/* TO BE DELETED - daisyf 03/02/07
 	// added by daisyf for v2.4, case 52
 	private static final String STATE_SHOW_ALL_IN_CURRENT_TERMS = "state_show_all_in_current_terms";
-
+	*/
+	
 	/**
 	 * Populate the state object, if needed.
 	 */
@@ -738,9 +743,11 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(SITE_CREATE_TOTAL_STEPS);
 		state.removeAttribute(SITE_CREATE_CURRENT_STEP);
 
+		/* TO BE DELETED - daisyf 03/02/07
 		// added by daisyf for v2.4, case 52
 		state.removeAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS);
-
+		*/
+		
 	} // cleanState
 
 	/**
@@ -1100,12 +1107,15 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
 					context.put("back", "37");
 				} else {
+					context.put("back", "36");
+					/* TO BE DELETED - daisyf 03/02/07
 					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
 						// show courses in terms that is defined as current
 						context.put("back", "52");
 					} else { // show course in one term only
 						context.put("back", "36");
 					}
+					*/
 				}
 
 				context.put("skins", state.getAttribute(STATE_ICONS));
@@ -2510,11 +2520,14 @@ public class SiteAction extends PagedResourceActionII {
 			} else {
 				if (state.getAttribute(STATE_AUTO_ADD) != null) {
 					context.put("autoAdd", Boolean.TRUE);
+					context.put("back", "36");
+					/* TO BE DELETED - daisyf 03/02/07
 					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
 						context.put("back", "52");
 					} else {
 						context.put("back", "36");
 					}
+					*/
 				} else {
 					context.put("back", "1");
 				}
@@ -2728,10 +2741,9 @@ public class SiteAction extends PagedResourceActionII {
 							.asList((String[]) state
 									.getAttribute(STATE_GROUP_REMOVE))));
 			return (String) getContext(data).get("template") + TEMPLATE[51];
+			
+			/* TO BE DELETED - daisyf 03/02/07
 		case 52:
-			/*
-			 * buildContextForTemplate chef_site-newSiteCourseInCurrentTerms.vm
-			 */
 			setTermListForContext(context, state, false);
 			// false => all possible terms
 
@@ -2754,6 +2766,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("backIndex", "");
 			}
 			return (String) getContext(data).get("template") + TEMPLATE[52];
+			*/
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
@@ -4534,14 +4547,18 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
-			} else { // a branch to show all courses, case 52 - daisyf v2.4
+				
+			} 
+			/* TO BE DELETED - daisyf 03/02/07
+			else { // a branch to show all courses, case 52 - daisyf v2.4
 						// 01/18/07
 				// only chef_site-newCourseInCurrentTerms.vm has this flag
 				String showAll = params.getString("showAll");
 				if ("true".equals(showAll)) {
 					doShowCoursesInCurrentTerms(data);
 				}
-			}
+				
+			}*/
 		}
 	}// doContinue
 
@@ -6842,7 +6859,9 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 33:
 			break;
+			/* TO BE DELETED - daisyf 03/02/07
 		case 52:
+			 */
 		case 36:
 			/*
 			 * actionForTemplate chef_site-newSiteCourse.vm
@@ -11188,9 +11207,9 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 
-	/**
+	/* TO BE DELETED - daisyf 03/02/07
 	 * do called when "eventSubmit_do" is in the request parameters to c
-	 */
+	 * 
 	public void doShowCoursesInCurrentTerms(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
@@ -11252,7 +11271,9 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doShowAvailableTerms
-
+	 */
+	
+	/* TO BE DELETED - daisyf 03/02/07
 	public class TermSectionObject {
 
 		public AcademicSession term;
@@ -11278,9 +11299,9 @@ public class SiteAction extends PagedResourceActionII {
 		public List getSectionObjectList() {
 			return sectionObjectList;
 		}
-
 	}
-
+	*/
+	
 	// this object is used for displaying purposes in chef_site-newSiteCourse.vm
 	public class CourseObject {
 		public String eid;
