@@ -13,6 +13,20 @@ function toggle(toggleKey, begin, end) {
     }
 }
 
+function selectAll(begin, end) {
+    var checkboxes = document.getElementsByName("providerCourseAdd");
+    for (i=begin; i<end; i++){
+		checkboxes[i].checked = true;
+    }
+}
+
+function unselectAll(begin, end) {
+    var checkboxes = document.getElementsByName("providerCourseAdd");
+    for (i=begin; i<end; i++){
+		checkboxes[i].checked = false;
+    }
+}
+
 function submitAddNotListed(){
     manual_add = document.getElementById("manual_add");
     manual_add.value="true";
@@ -54,9 +68,6 @@ function submitChangeUser(){
 					$tlang.getString("nscourse.current_displaying_courses_sections_for_id")
 				</b>
 				<input type="text" name="userId" value="$userId"/>
-	#*
-				<input type="hidden" id="index" name="template-index" value="1" />
-				*#
 				<input type="hidden" name="itemType" value="course" />
 				<input type="hidden" name="selectTerm" value="$term.eid" />
 				<input type="submit" accesskey="s"  class="active" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
@@ -107,41 +118,43 @@ function submitChangeUser(){
 				
 				## display only subject, course number and section
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
+				#set($crosslisted=0)	
 				#foreach($courseObject in $termCourseList)
-					<p></p>
+					<p>
 					$courseObject.title 
 					#if ($!courseObject.courseOfferingObjects.size() > 1)
 						(cross-listed)
+						#set($crosslisted=1)	
 					#end
+					</p>
 					#set($courseNumber=0)	
 					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
-						#set ($count=1)
+						#set($endKey = $courseNumber + $!courseOfferingObject.sections.size())
+						#if ($!courseOfferingObject.sections.size() > 1)
+							#if ($!crosslisted == 0)
+								<a href="#" onclick="javascript:selectAll($courseNumber, $endKey)" >Select All Sections/</a>
+								<a href="#" onclick="javascript:unselectAll($courseNumber, $endKey)" >Unselect All Sections</a>
+							#else
+								<a href="#" onclick="javascript:selectAll($courseNumber, $endKey)" >Select Group of Sections/</a>
+								<a href="#" onclick="javascript:unselectAll($courseNumber, $endKey)" >Unselect Group Of Sections</a>
+							#end
+							<p></p>
+						#end
 						#foreach($sectionObject in $courseOfferingObject.sections)
 							<p class="checkbox">
 							#if (!$sectionObject.isLecture)
 								&nbsp;&nbsp;
 							#end
-							#if ($count == 1)
-								#set($toggleKey = $courseNumber) 
-								#set($endKey = $courseNumber + $courseOfferingObject.getSections.size())
-								#set ($count=0)
-								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
-									#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
-										checked="checked"
-									#end 
-								/> 
-							#else
-								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber"
-								#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
-									checked="checked"
-								#end 
-								/>
-                                        		#end
-							<label for="course$courseNumber">
+							<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber"
+							#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
+								checked="checked"
+							#end 
+							/>
+ 							<label for="course$courseNumber">
 								$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label>
-							#set($courseNumber = $courseNumber + 1)
 							</p>
 						#end
+						#set($courseNumber = $!endKey)						
 					#end
 				 #end
 			#end	
