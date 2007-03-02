@@ -80,14 +80,28 @@ function submitChangeUser(){
 	<form name = "addCourseForm" method="post" action="#toolForm($action)">
 
 			#if (!$site)
-				<b>
-					$tlang.getString("nscourse.current_displaying_courses_sections_for_id")
-				</b>
-				<input type="text" name="userId" value="$userId"/>
-				<input type="hidden" name="itemType" value="course" />
-				<input type="hidden" name="selectTerm" value="$term.eid" />
-				<input type="submit" accesskey="s"  class="active" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
+				<table>
+				<tr>
+					<td>
+						<b>$tlang.getString("nscourse.current_displaying_courses_sections_for_id")</b>
+					</td>
+					<td>
+						<input type="text" name="userId" value="$userId"/>
+						<input type="hidden" name="itemType" value="course" />
+						<input type="hidden" name="selectTerm" value="$term.eid" />
+						<input type="submit" accesskey="s"  class="active" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
 					onsubmit="javascript:submitChangeUser()" />
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<small><p>$tlang.getString("nscourse.change_this_ID")</p>
+							   <p><a href="#" onclick="javascript:window.open('$campusDirectory','new_window'); return false;">$tlang.getString("nscourse.look_up_an_username")...</a></p>
+						</small>
+					</td>
+				</tr>
+				</table>
 			#else
 			<h4>		
 				$tlang.getString("nscourse.cinfo")
