@@ -10982,14 +10982,13 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 	
-	private HashMap prepareCourseAndSectionMap(String userId,
-			String academicSessionEid) {
+	private void prepareCourseAndSectionMap(String userId,
+			String academicSessionEid, HashMap courseOfferingHash, HashMap sectionHash) {
 		
 		// looking for list of courseOffering and sections that should be included in
 		// the selection list. The course offering must be offered
 		// 1. in the specific academic Session
 		// 2. that the specified user has right to attach its section to a course site
-		HashMap hash = new HashMap();
 		// map = (section.eid, sakai rolename)
 		Map map = groupProvider.getGroupRolesForUser(userId);
 	    Set keys = map.keySet();
@@ -11004,16 +11003,16 @@ public class SiteAction extends PagedResourceActionII {
 	    		if (academicSessionEid.equals(sessionEid)){
 	    			// a long way to the conclusion that yes, this course offering
 	    			// should be included in the selected list. 
-	    			ArrayList sectionList = (ArrayList) hash.get(courseOffering);
+	    			ArrayList sectionList = (ArrayList) sectionHash.get(courseOffering.getEid());
 	    			if (sectionList == null){
 	    				sectionList = new ArrayList();
 	    			}
 	    			sectionList.add(new SectionObject(section));
-	    			hash.put(courseOffering, sectionList);
+	    			sectionHash.put(courseOffering.getEid(), sectionList);
+		    		courseOfferingHash.put(courseOffering.getEid(), courseOffering);
 	    		}
 	    	}
 	    }		
-		return hash;
 	}
 
 	private boolean includeRole(String role) {
@@ -11025,24 +11024,17 @@ public class SiteAction extends PagedResourceActionII {
 
 	private List prepareCourseAndSectionListing(String userId,
 			String academicSessionEid) {
-		ArrayList attachedSectionList = new ArrayList();
-		// h = (courseOffering, list of sections)
-		HashMap h = prepareCourseAndSectionMap(userId, academicSessionEid);
-		List propsList = new ArrayList();
-		propsList.add("category");
-		propsList.add("eid");
-
-		List list = new ArrayList();
-		SortTool sort = new SortTool();
+		// courseOfferingHash = (courseOfferingEid, vourseOffering)
+		// sectionHash = (courseOfferingEid, list of sections)
+		HashMap courseOfferingHash = new HashMap();
+		HashMap sectionHash = new HashMap();
+		prepareCourseAndSectionMap(userId, academicSessionEid, courseOfferingHash, sectionHash);
 
 		ArrayList offeringList = new ArrayList();
-		ArrayList offeringIdList = new ArrayList();
-		HashMap offeringIdHash = new HashMap();
-		Set keys = h.keySet();
+		Set keys = courseOfferingHash.keySet();
 		for (Iterator i = keys.iterator(); i.hasNext();) {
-	    	CourseOffering o = (CourseOffering) i.next();
+	    	CourseOffering o = (CourseOffering) courseOfferingHash.get((String)i.next());
 	    	offeringList.add(o);
-	    	offeringIdHash.put(o.getEid(), h.get(o));
 		}
 		
 		Collection offeringListSorted = sortOffering(offeringList);
@@ -11052,14 +11044,15 @@ public class SiteAction extends PagedResourceActionII {
 			CourseOffering o = (CourseOffering) j.next();
 			if (!dealtWith.contains(o.getEid())){
 				ArrayList l = new ArrayList();
-				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) offeringIdHash.get(o.getEid()));
+				ArrayList test = (ArrayList) sectionHash.get(o.getEid());
+				CourseOfferingObject coo = new CourseOfferingObject(o, (ArrayList) sectionHash.get(o.getEid()));
 				l.add(coo);
 				Set set = cms.getEquivalentCourseOfferings(o.getEid());
 				for (Iterator k = set.iterator(); k.hasNext();) {
 					CourseOffering eo = (CourseOffering) k.next();
-					if (offeringIdHash.containsKey(eo.getEid())){
+					if (courseOfferingHash.containsKey(eo.getEid())){
 						// => should list them together
-						CourseOfferingObject coo_equivalent = new CourseOfferingObject(eo, (ArrayList) offeringIdHash.get(eo.getEid()));
+						CourseOfferingObject coo_equivalent = new CourseOfferingObject(eo, (ArrayList) sectionHash.get(eo.getEid()));
 						l.add(coo_equivalent);
 						dealtWith.add(eo.getEid());
 					}
@@ -11069,6 +11062,19 @@ public class SiteAction extends PagedResourceActionII {
 				resultedList.add(co);
 			}
 		}
+
+		/*
+	   	System.out.println("*******************************");
+		for (int m=0; m<resultedList.size(); m++) {
+			CourseObject co = (CourseObject)resultedList.get(m);
+			List l = (List)co.getCourseOfferingObjects();
+			for (int n=0; n<l.size(); n++) {
+				CourseOfferingObject coo = (CourseOfferingObject)l.get(n);
+				List sl = (List)coo.getSections();
+		    	System.out.println(coo.getEid() +",section size="+sl.size());
+			}
+		}
+		*/
 		return resultedList;
 	}
 	
@@ -11126,6 +11132,7 @@ public class SiteAction extends PagedResourceActionII {
 		public Section section;
 		public String eid;
 		public String title;
+		public String category;
 		public String categoryDescription;
 		public boolean isLecture; 
 		public boolean attached;
@@ -11134,6 +11141,7 @@ public class SiteAction extends PagedResourceActionII {
 			this.section = section;
 			this.eid = section.getEid();
 			this.title = section.getTitle();
+			this.category = section.getCategory();
 			this.categoryDescription = cms
 					.getSectionCategoryDescription(section.getCategory());
 			if ("01.lct".equals(section.getCategory())){
@@ -11163,6 +11171,10 @@ public class SiteAction extends PagedResourceActionII {
 			return title;
 		}
 
+		public String getCategory() {
+			return category;
+		}
+		
 		public String getCategoryDescription() {
 			return categoryDescription;
 		}
@@ -11300,16 +11312,15 @@ public class SiteAction extends PagedResourceActionII {
 		public String title;
 		public List sections;
 
-		public CourseOfferingObject(CourseOffering offering, List sections) {
+		public CourseOfferingObject(CourseOffering offering, List unsortedSections) {
 			List propsList = new ArrayList();
 			propsList.add("category");
 			propsList.add("eid");
 			SortTool sort = new SortTool();
-			if (sections !=null )
-				this.sections = (List) sort.sort(sections, propsList);
-			else
-				this.sections = null;
-			
+			this.sections = new ArrayList();
+			if (unsortedSections !=null ){
+				this.sections = (List) sort.sort(unsortedSections, propsList);
+			}			
 			this.eid = offering.getEid();
 			this.title = offering.getTitle();
 		}

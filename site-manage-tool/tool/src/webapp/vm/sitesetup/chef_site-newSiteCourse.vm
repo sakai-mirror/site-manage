@@ -117,6 +117,7 @@ function submitChangeUser(){
 					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
 						#set ($count=1)
 						#foreach($sectionObject in $courseOfferingObject.sections)
+							<p class="checkbox">
 							#if (!$sectionObject.isLecture)
 								&nbsp;&nbsp;
 							#end
@@ -124,24 +125,22 @@ function submitChangeUser(){
 								#set($toggleKey = $courseNumber) 
 								#set($endKey = $courseNumber + $courseOfferingObject.getSections.size())
 								#set ($count=0)
-								<p class="checkbox">
 								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber" onclick="toggle($toggleKey, $courseNumber, $endKey);"
 									#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
 										checked="checked"
 									#end 
 								/> 
-								<label for="course$courseNumber">
-									$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label></p>
 							#else
-                                		        	<p class="checkbox">
 								<input type="checkbox" name="providerCourseAdd" value="$sectionObject.eid" id="course$courseNumber"
 								#if ($!selectedProviderCourse.contains("$sectionObject.eid"))
 									checked="checked"
 								#end 
 								/>
-        	                                		$sectionObject.eid : $sectionObject.title, $sectionObject.categoryDescription
                                         		#end
+							<label for="course$courseNumber">
+								$validator.escapeHtml($sectionObject.eid) : $sectionObject.title, $sectionObject.categoryDescription</label>
 							#set($courseNumber = $courseNumber + 1)
+							</p>
 						#end
 					#end
 				 #end
