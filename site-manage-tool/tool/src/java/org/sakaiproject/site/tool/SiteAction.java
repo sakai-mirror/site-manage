@@ -11393,6 +11393,6 @@ public class SiteAction extends PagedResourceActionII {
 
 	private String getCampusDirectory() {
 		return ServerConfigurationService.getString(
-				"site-manage.campusUserDirectory", "");
+				"site-manage.campusUserDirectory", null);
 	}
 }
