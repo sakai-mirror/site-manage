@@ -4538,10 +4538,6 @@ public class SiteAction extends PagedResourceActionII {
 		// continuing to the next template
 		String direction = "continue";
 		
-		
-		// check if any section need to be removed
-		removeAnyFlagedSection(state, params);				
-		
 		actionForTemplate(direction, index, params, state);
 		if (state.getAttribute(STATE_MESSAGE) == null) {
 			if (index == 9) {
@@ -4556,7 +4552,10 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
-				
+				if (("3").equals(params.getString("continue"))){
+					// check if any section need to be removed
+					removeAnyFlagedSection(state, params);									
+				}				
 			} 
 			/* TO BE DELETED - daisyf 03/02/07
 			else { // a branch to show all courses, case 52 - daisyf v2.4
