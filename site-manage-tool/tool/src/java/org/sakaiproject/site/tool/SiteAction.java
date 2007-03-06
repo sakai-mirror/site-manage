@@ -213,10 +213,6 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51
-			
-			/* TO BE DELETED - daisyf 03/02/07
-			"-newSiteCourseInCurrentTerms"// 52 - new for v2.4
-			*/
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -576,11 +572,6 @@ public class SiteAction extends PagedResourceActionII {
 
 	// Special tool id for Home page
 	private static final String HOME_TOOL_ID = "home";
-
-	/* TO BE DELETED - daisyf 03/02/07
-	// added by daisyf for v2.4, case 52
-	private static final String STATE_SHOW_ALL_IN_CURRENT_TERMS = "state_show_all_in_current_terms";
-	*/
 	
 	/**
 	 * Populate the state object, if needed.
@@ -743,11 +734,6 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(SITE_CREATE_TOTAL_STEPS);
 		state.removeAttribute(SITE_CREATE_CURRENT_STEP);
 
-		/* TO BE DELETED - daisyf 03/02/07
-		// added by daisyf for v2.4, case 52
-		state.removeAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS);
-		*/
-		
 	} // cleanState
 
 	/**
@@ -1113,17 +1099,7 @@ public class SiteAction extends PagedResourceActionII {
 					else {
 						context.put("back", "0");
 						context.put("template-index", "37");
-						//return doCase37(data, context, state, site, params, siteInfo);
 					}
-
-					/* TO BE DELETED - daisyf 03/02/07
-					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
-						// show courses in terms that is defined as current
-						context.put("back", "52");
-					} else { // show course in one term only
-						context.put("back", "36");
-					}
-					*/
 				}
 
 				context.put("skins", state.getAttribute(STATE_ICONS));
@@ -2497,7 +2473,63 @@ public class SiteAction extends PagedResourceActionII {
 			/*
 			 * buildContextForTemplate chef_site-newSiteCourseManual.vm
 			 */
-			return doCase37(data, context, state, site, params, siteInfo);
+			if (site != null) {
+				context.put("site", site);
+				context.put("siteTitle", site.getTitle());
+				coursesIntoContext(state, context, site);
+			}
+			buildInstructorSectionsList(state, params, context);
+			context.put("form_requiredFields", CourseIdGenerator
+					.getCourseIdRequiredFields());
+			context.put("form_requiredFieldsSizes", CourseIdGenerator
+					.getCourseIdRequiredFieldsSizes());
+			context.put("form_additional", siteInfo.additional);
+			context.put("form_title", siteInfo.title);
+			context.put("form_description", siteInfo.description);
+			context.put("noEmailInIdAccountName", ServerConfigurationService
+					.getString("noEmailInIdAccountName", ""));
+			context.put("value_uniqname", state
+					.getAttribute(STATE_SITE_QUEST_UNIQNAME));
+			int number = 1;
+			if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
+				number = ((Integer) state
+						.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
+						.intValue();
+				context.put("currentNumber", new Integer(number));
+			}
+			context.put("currentNumber", new Integer(number));
+			context.put("listSize", new Integer(number - 1));
+			context.put("fieldValues", state
+					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
+
+			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
+				List l = (List) state
+						.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+				context.put("selectedProviderCourse", l);
+				context.put("size", new Integer(l.size() - 1));
+			}
+			
+			// v2.4 - added  & modified by daisyf
+			if (courseManagementIsImplemented()){
+				context.put("back", "36");
+			}
+			else{
+				context.put("back", "1");
+			}				
+
+			if (site == null) {
+				if (state.getAttribute(STATE_AUTO_ADD) != null) {
+					context.put("autoAdd", Boolean.TRUE);
+					//context.put("back", "36");
+				} else {
+					context.put("back", "1");
+				}
+			}
+			context.put("isFutureTerm", state
+					.getAttribute(STATE_FUTURE_TERM_SELECTED));
+			context.put("weeksAhead", ServerConfigurationService.getString(
+					"roster.available.weeks.before.term.start", "0"));
+			return (String) getContext(data).get("template") + TEMPLATE[37];
 		case 42:
 			/*
 			 * buildContextForTemplate chef_site-gradtoolsConfirm.vm
@@ -2703,31 +2735,6 @@ public class SiteAction extends PagedResourceActionII {
 									.getAttribute(STATE_GROUP_REMOVE))));
 			return (String) getContext(data).get("template") + TEMPLATE[51];
 			
-			/* TO BE DELETED - daisyf 03/02/07
-		case 52:
-			setTermListForContext(context, state, false);
-			// false => all possible terms
-
-			context.put("back", "52");
-			context.put("termCourseList", state
-					.getAttribute(STATE_TERM_COURSE_LIST));
-			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
-				context.put("selectedProviderCourse", state
-						.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN));
-			}
-			if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
-				context.put("selectedManualCourse", Boolean.TRUE);
-			}
-
-			if (((String) state.getAttribute(STATE_SITE_MODE))
-					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
-				context.put("backIndex", "1");
-			} else if (((String) state.getAttribute(STATE_SITE_MODE))
-					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
-				context.put("backIndex", "");
-			}
-			return (String) getContext(data).get("template") + TEMPLATE[52];
-			*/
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
@@ -4523,16 +4530,6 @@ public class SiteAction extends PagedResourceActionII {
 					removeAnyFlagedSection(state, params);									
 				}	
 			} 
-			/* TO BE DELETED - daisyf 03/02/07
-			else { // a branch to show all courses, case 52 - daisyf v2.4
-						// 01/18/07
-				// only chef_site-newCourseInCurrentTerms.vm has this flag
-				String showAll = params.getString("showAll");
-				if ("true".equals(showAll)) {
-					doShowCoursesInCurrentTerms(data);
-				}
-				
-			}*/
 		}
 	}// doContinue
 
@@ -6833,9 +6830,6 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 33:
 			break;
-			/* TO BE DELETED - daisyf 03/02/07
-		case 52:
-			 */
 		case 36:
 			/*
 			 * actionForTemplate chef_site-newSiteCourse.vm
@@ -11145,100 +11139,6 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	} // SectionObject constructor
 
-	/* TO BE DELETED - daisyf 03/02/07
-	 * do called when "eventSubmit_do" is in the request parameters to c
-	 * 
-	public void doShowCoursesInCurrentTerms(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-
-		state.setAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS, "true");
-		state.setAttribute(STATE_FUTURE_TERM_SELECTED, Boolean.FALSE);
-
-		ParameterParser params = data.getParameters();
-		int index = Integer.valueOf(params.getString("template-index"))
-				.intValue();
-		actionForTemplate("continue", index, params, state);
-
-		String userId = StringUtil.trimToZero(SessionManager
-				.getCurrentSessionUserId());
-		List terms = cms.getCurrentAcademicSessions();
-
-		int totalSteps = 0;
-		boolean hasSections = false;
-		List l = new ArrayList();
-		for (int i = 0; i < terms.size(); i++) {
-			AcademicSession t = (AcademicSession) terms.get(i);
-			List sections = prepareCourseAndSectionListing(userId, t.getEid());
-
-			int weeks = 0;
-			Calendar c = (Calendar) Calendar.getInstance().clone();
-			try {
-				weeks = Integer.parseInt(ServerConfigurationService.getString(
-						"roster.available.weeks.before.term.start", "0"));
-				c.add(Calendar.DATE, weeks * 7);
-			} catch (Exception ignore) {
-			}
-
-			if (!hasSections && (sections != null && sections.size() > 0)) {
-				hasSections = true;
-			}
-			l.add(new TermSectionObject(t, sections));
-		}
-
-		state.removeAttribute(STATE_TERM_COURSE_LIST);
-		if (hasSections) {
-			state.setAttribute(STATE_TERM_COURSE_LIST, l);
-			state.setAttribute(STATE_TEMPLATE_INDEX, "52");
-			state.setAttribute(STATE_AUTO_ADD, Boolean.TRUE);
-			totalSteps = 6;
-		} else {
-			state.removeAttribute(STATE_TERM_COURSE_LIST);
-			state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-			totalSteps = 5;
-		}
-
-		if (state.getAttribute(SITE_CREATE_TOTAL_STEPS) == null) {
-			state
-					.setAttribute(SITE_CREATE_TOTAL_STEPS, new Integer(
-							totalSteps));
-		}
-
-		if (state.getAttribute(SITE_CREATE_CURRENT_STEP) == null) {
-			state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(1));
-		}
-
-	} // doShowAvailableTerms
-	 */
-	
-	/* TO BE DELETED - daisyf 03/02/07
-	public class TermSectionObject {
-
-		public AcademicSession term;
-
-		public String termTitle;
-
-		public List sectionObjectList;
-
-		public TermSectionObject(AcademicSession term, List sectionObjectList) {
-			this.term = term;
-			this.termTitle = term.getTitle();
-			this.sectionObjectList = sectionObjectList;
-		}
-
-		public AcademicSession getTerm() {
-			return term;
-		}
-
-		public String getTermTitle() {
-			return termTitle;
-		}
-
-		public List getSectionObjectList() {
-			return sectionObjectList;
-		}
-	}
-	*/
 	
 	/**
 	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
@@ -11386,79 +11286,17 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	}
 	
+	/**
+	 * By default, courseManagement is implemented
+	 * @return
+	 */
 	private boolean courseManagementIsImplemented(){
-		boolean returnValue = false;
+		boolean returnValue = true;
 		String isImplemented = ServerConfigurationService.getString(
-				"site-manage.courseManagementSystemImplemented", null);		
-		if (isImplemented!=null && ("true").equals(isImplemented))
-			returnValue = true;
+				"site-manage.courseManagementSystemImplemented", "true");		
+		if (("false").equals(isImplemented))
+			returnValue = false;
 		return returnValue;
 	}
 	
-	private String doCase37(RunData data, Context context, SessionState state, Site site, ParameterParser params, SiteInfo siteInfo){
-		if (site != null) {
-			context.put("site", site);
-			context.put("siteTitle", site.getTitle());
-			coursesIntoContext(state, context, site);
-		}
-		buildInstructorSectionsList(state, params, context);
-		context.put("form_requiredFields", CourseIdGenerator
-				.getCourseIdRequiredFields());
-		context.put("form_requiredFieldsSizes", CourseIdGenerator
-				.getCourseIdRequiredFieldsSizes());
-		context.put("form_additional", siteInfo.additional);
-		context.put("form_title", siteInfo.title);
-		context.put("form_description", siteInfo.description);
-		context.put("noEmailInIdAccountName", ServerConfigurationService
-				.getString("noEmailInIdAccountName", ""));
-		context.put("value_uniqname", state
-				.getAttribute(STATE_SITE_QUEST_UNIQNAME));
-		int number = 1;
-		if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
-			number = ((Integer) state
-					.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
-					.intValue();
-			context.put("currentNumber", new Integer(number));
-		}
-		context.put("currentNumber", new Integer(number));
-		context.put("listSize", new Integer(number - 1));
-		context.put("fieldValues", state
-				.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-
-		if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
-			List l = (List) state
-					.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
-			context.put("selectedProviderCourse", l);
-			context.put("size", new Integer(l.size() - 1));
-		}
-		
-		// v2.4 - added  & modified by daisyf
-		if (courseManagementIsImplemented()){
-			context.put("back", "36");
-		}
-		else{
-			context.put("back", "1");
-		}				
-
-		if (site == null) {
-			if (state.getAttribute(STATE_AUTO_ADD) != null) {
-				context.put("autoAdd", Boolean.TRUE);
-				//context.put("back", "36");
-				/* TO BE DELETED - daisyf 03/02/07
-				if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
-					context.put("back", "52");
-				} else {
-					context.put("back", "36");
-				}
-				*/
-			} else {
-				context.put("back", "1");
-			}
-		}
-		context.put("isFutureTerm", state
-				.getAttribute(STATE_FUTURE_TERM_SELECTED));
-		context.put("weeksAhead", ServerConfigurationService.getString(
-				"roster.available.weeks.before.term.start", "0"));
-		return (String) getContext(data).get("template") + TEMPLATE[37];
-	}
 }
