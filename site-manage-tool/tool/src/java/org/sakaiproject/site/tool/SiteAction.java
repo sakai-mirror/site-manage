@@ -1107,7 +1107,15 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
 					context.put("back", "37");
 				} else {
-					context.put("back", "36");
+					if (courseManagementIsImplemented()){
+						context.put("back", "36");
+					}
+					else {
+						context.put("back", "0");
+						context.put("template-index", "37");
+						//return doCase37(data, context, state, site, params, siteInfo);
+					}
+
 					/* TO BE DELETED - daisyf 03/02/07
 					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
 						// show courses in terms that is defined as current
@@ -1154,8 +1162,13 @@ public class SiteAction extends PagedResourceActionII {
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-			
-			return (String) getContext(data).get("template") + TEMPLATE[2];
+			if (courseManagementIsImplemented()){
+				// v2.4 added by daisyf
+				return (String) getContext(data).get("template") + TEMPLATE[37];
+			}
+			else{
+				return (String) getContext(data).get("template") + TEMPLATE[2];
+			}
 		case 3:
 			/*
 			 * buildContextForTemplate chef_site-newSiteFeatures.vm
@@ -2484,63 +2497,7 @@ public class SiteAction extends PagedResourceActionII {
 			/*
 			 * buildContextForTemplate chef_site-newSiteCourseManual.vm
 			 */
-			if (site != null) {
-				context.put("site", site);
-				context.put("siteTitle", site.getTitle());
-				coursesIntoContext(state, context, site);
-			}
-			buildInstructorSectionsList(state, params, context);
-			context.put("form_requiredFields", CourseIdGenerator
-					.getCourseIdRequiredFields());
-			context.put("form_requiredFieldsSizes", CourseIdGenerator
-					.getCourseIdRequiredFieldsSizes());
-			context.put("form_additional", siteInfo.additional);
-			context.put("form_title", siteInfo.title);
-			context.put("form_description", siteInfo.description);
-			context.put("noEmailInIdAccountName", ServerConfigurationService
-					.getString("noEmailInIdAccountName", ""));
-			context.put("value_uniqname", state
-					.getAttribute(STATE_SITE_QUEST_UNIQNAME));
-			int number = 1;
-			if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
-				number = ((Integer) state
-						.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
-						.intValue();
-				context.put("currentNumber", new Integer(number));
-			}
-			context.put("currentNumber", new Integer(number));
-			context.put("listSize", new Integer(number - 1));
-			context.put("fieldValues", state
-					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-
-			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
-				List l = (List) state
-						.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
-				context.put("selectedProviderCourse", l);
-				context.put("size", new Integer(l.size() - 1));
-			}
-			if (site != null) {
-				context.put("back", "36");
-			} else {
-				if (state.getAttribute(STATE_AUTO_ADD) != null) {
-					context.put("autoAdd", Boolean.TRUE);
-					context.put("back", "36");
-					/* TO BE DELETED - daisyf 03/02/07
-					if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
-						context.put("back", "52");
-					} else {
-						context.put("back", "36");
-					}
-					*/
-				} else {
-					context.put("back", "1");
-				}
-			}
-			context.put("isFutureTerm", state
-					.getAttribute(STATE_FUTURE_TERM_SELECTED));
-			context.put("weeksAhead", ServerConfigurationService.getString(
-					"roster.available.weeks.before.term.start", "0"));
-			return (String) getContext(data).get("template") + TEMPLATE[37];
+			return doCase37(data, context, state, site, params, siteInfo);
 		case 42:
 			/*
 			 * buildContextForTemplate chef_site-gradtoolsConfirm.vm
@@ -3844,8 +3801,15 @@ public class SiteAction extends PagedResourceActionII {
 					} else {
 						state.removeAttribute(STATE_TERM_COURSE_LIST);
 					}
-					state.setAttribute(STATE_TEMPLATE_INDEX, "36");
-					totalSteps = 6;
+					// v2.4 added by daisyf
+					if (courseManagementIsImplemented()){
+						state.setAttribute(STATE_TEMPLATE_INDEX, "36");
+						totalSteps = 5;
+					}
+					else{
+						state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+						totalSteps = 6;
+					}
 
 				} else { // type!="course"
 					state.setAttribute(STATE_TEMPLATE_INDEX, "37");
@@ -4553,7 +4517,9 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
 				if (("3").equals(params.getString("continue"))){
-					// check if any section need to be removed
+					// v2.4 - condition added by daisyf
+					// Remove Section: check if any section need to be removed
+					// this is the scenerio when there is only provider courses present
 					removeAnyFlagedSection(state, params);									
 				}	
 			} 
@@ -6899,7 +6865,10 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			break;
 		case 52:
-			// remove any selected course before continue - daisyf
+			// v2.4 - added by daisyf
+			// RemoveSection - remove any selected course before continue
+			// this is the scenerio during manual add when a list of provider courses
+			// is also present
 			if (("true").equals(params.getString("manualAdds"))){
 				// check if any section need to be removed
 				removeAnyFlagedSection(state, params);									
@@ -11415,5 +11384,81 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 		}
+	}
+	
+	private boolean courseManagementIsImplemented(){
+		boolean returnValue = false;
+		String isImplemented = ServerConfigurationService.getString(
+				"site-manage.courseManagementSystemImplemented", null);		
+		if (isImplemented!=null && ("true").equals(isImplemented))
+			returnValue = true;
+		return returnValue;
+	}
+	
+	private String doCase37(RunData data, Context context, SessionState state, Site site, ParameterParser params, SiteInfo siteInfo){
+		if (site != null) {
+			context.put("site", site);
+			context.put("siteTitle", site.getTitle());
+			coursesIntoContext(state, context, site);
+		}
+		buildInstructorSectionsList(state, params, context);
+		context.put("form_requiredFields", CourseIdGenerator
+				.getCourseIdRequiredFields());
+		context.put("form_requiredFieldsSizes", CourseIdGenerator
+				.getCourseIdRequiredFieldsSizes());
+		context.put("form_additional", siteInfo.additional);
+		context.put("form_title", siteInfo.title);
+		context.put("form_description", siteInfo.description);
+		context.put("noEmailInIdAccountName", ServerConfigurationService
+				.getString("noEmailInIdAccountName", ""));
+		context.put("value_uniqname", state
+				.getAttribute(STATE_SITE_QUEST_UNIQNAME));
+		int number = 1;
+		if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
+			number = ((Integer) state
+					.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
+					.intValue();
+			context.put("currentNumber", new Integer(number));
+		}
+		context.put("currentNumber", new Integer(number));
+		context.put("listSize", new Integer(number - 1));
+		context.put("fieldValues", state
+				.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
+
+		if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
+			List l = (List) state
+					.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+			context.put("selectedProviderCourse", l);
+			context.put("size", new Integer(l.size() - 1));
+		}
+		
+		// v2.4 - added  & modified by daisyf
+		if (courseManagementIsImplemented()){
+			context.put("back", "36");
+		}
+		else{
+			context.put("back", "1");
+		}				
+
+		if (site == null) {
+			if (state.getAttribute(STATE_AUTO_ADD) != null) {
+				context.put("autoAdd", Boolean.TRUE);
+				//context.put("back", "36");
+				/* TO BE DELETED - daisyf 03/02/07
+				if (state.getAttribute(STATE_SHOW_ALL_IN_CURRENT_TERMS) != null) {
+					context.put("back", "52");
+				} else {
+					context.put("back", "36");
+				}
+				*/
+			} else {
+				context.put("back", "1");
+			}
+		}
+		context.put("isFutureTerm", state
+				.getAttribute(STATE_FUTURE_TERM_SELECTED));
+		context.put("weeksAhead", ServerConfigurationService.getString(
+				"roster.available.weeks.before.term.start", "0"));
+		return (String) getContext(data).get("template") + TEMPLATE[37];
 	}
 }
