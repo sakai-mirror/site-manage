@@ -64,7 +64,7 @@
 			#foreach ($item in $!selectedProviderCourse)
 				<li>$item 
 					<!-- Remove Section -->
-					<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>
+					(<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>)
 					<input type="hidden" id="removeSection$item" name="removeSection$item" value="" />
 				</li>
 			#end

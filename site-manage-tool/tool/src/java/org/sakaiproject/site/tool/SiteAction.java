@@ -4553,18 +4553,9 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
 				if (("3").equals(params.getString("continue"))){
-					// this is redundant for index=52 'cos removal should be done
-					// before arriving here. Anyhow this doesn't cause any harm
 					// check if any section need to be removed
 					removeAnyFlagedSection(state, params);									
 				}	
-				/*
-				if (("4").equals(params.getString("continue")) 
-						&& ("").equals(params.getString("returnToManualAdd"))){
-					// check if any section need to be removed
-					removeAnyFlagedSection(state, params);									
-				}	
-				*/			
 			} 
 			/* TO BE DELETED - daisyf 03/02/07
 			else { // a branch to show all courses, case 52 - daisyf v2.4

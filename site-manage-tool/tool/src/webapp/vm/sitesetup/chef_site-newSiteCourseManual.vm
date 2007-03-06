@@ -41,7 +41,7 @@
 					<p class="indnt2">
 						$id 
 						<!-- Remove Section -->
-						<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>
+						(<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>)
 						<input type="hidden" id="removeSection$item" name="removeSection$id" value="" />
 					</p>
 				#end
@@ -49,7 +49,7 @@
 					<p class="indnt2">
 						$id <span class="highlight">$tlang.getString("man.requested")</span>
 						<!-- Remove Section -->
-						<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>
+						(<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>)
 						<input type="hidden" id="removeSection$id" name="removeSection$item" value="" />
 					</p>
 				#end
@@ -61,7 +61,7 @@
 					#foreach ($item in $!selectedProviderCourse)
 						<li>$item 
 							<!-- Remove Section -->
-							<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>
+							(<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>)
 							<input type="hidden" id="removeSection$item" name="removeSection$item" value="" />
 						</li>
 					#end
