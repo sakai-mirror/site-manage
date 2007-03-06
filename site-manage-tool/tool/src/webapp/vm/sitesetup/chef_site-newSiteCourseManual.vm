@@ -1,5 +1,25 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-newSiteCourseManual.vm,v 1.4 2005/06/03 14:08:16 gsilver.umich.edu Exp $ -->
+<script type="text/javascript">
+	function submitRemoveSection(index){
+		id = "removeSection"+index;
+		removeSection = document.getElementById(id);
+		removeSection.value="true";
+
+		manualAdds = document.getElementById("manualAdds");
+		manualAdds.value="true";
+		
+		document.removeSectionForm.submit();
+		return false;
+}
+</script>
+
 <div class="portletBody">
+	<form name = "removeSectionForm" method="post" action="#toolForm($action)">
+		<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+		<input type="hidden" name="manualAdds" value="x" id="manualAdds"/>
+		<input type="hidden" name="back" value="1" id="back" />
+		<input type="hidden" name="template-index" value="52"  />
+	
 	##if($menu)#toolbar($menu)#end<br/><br/>
 		#if (!$!site)
 			<h3>$tlang.getString("man.creat")</h3>
@@ -20,26 +40,38 @@
 				#foreach($id in $!providerCourseList)
 					<p class="indnt2">
 						$id 
+						<!-- Remove Section -->
+						<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>
+						<input type="hidden" id="removeSection$item" name="removeSection$id" value="" />
 					</p>
 				#end
 				#foreach($id in $!manualCourseList)
 					<p class="indnt2">
 						$id <span class="highlight">$tlang.getString("man.requested")</span>
+						<!-- Remove Section -->
+						<a href="#" onclick="javascript:submitRemoveSection('$id');">Remove</a>
+						<input type="hidden" id="removeSection$id" name="removeSection$item" value="" />
 					</p>
 				#end
 			#end
-			<form name = "requestCourseForm" method = "post" action="#toolForm("$action")">
-				<input type="hidden" name="option" value="add" />
-				<input type="hidden" name="eventSubmit_doManual_add_course" value="x" />
+
 				#if ($!selectedProviderCourse)
 				<p class="instruction">$tlang.getString("man.sofar") #if($!site) $tlang.getString("man.toaddto") #else $tlang.getString("java.for") #end $tlang.getString("man.this")</p> 
 				<ul>
 					#foreach ($item in $!selectedProviderCourse)
-						<li>$item </li>
+						<li>$item 
+							<!-- Remove Section -->
+							<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>
+							<input type="hidden" id="removeSection$item" name="removeSection$item" value="" />
+						</li>
 					#end
 				</ul>
-
 				#end
+	</form>
+				
+	<form name = "requestCourseForm" method = "post" action="#toolForm("$action")">
+				<input type="hidden" name="option" value="add" />
+				<input type="hidden" name="eventSubmit_doManual_add_course" value="x" />
 				<p class="instruction">
 					#if (!$!isFutureTerm)
 						$tlang.getString("man.please_enter")
@@ -128,10 +160,10 @@
 				#end
 			#set ($count = $count + 1)
 			<input type="hidden" name="back" value="$back" />
-			<input type="hidden" name="template-index" value="37" />
+			<input type="hidden" name="template-index" value="37"  />
 			<input type="hidden" name="continue" value="4" />
 			<p class="act">
-				<input type="button" name="Add" 
+				<input type="button" name="Add" id="addButton"
 						value="$tlang.getString('gen.continue')" 
 						class="active" 
 						accesskey="s" 

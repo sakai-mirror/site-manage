@@ -4533,7 +4533,7 @@ public class SiteAction extends PagedResourceActionII {
 		ParameterParser params = data.getParameters();
 		int index = Integer.valueOf(params.getString("template-index"))
 				.intValue();
-
+		
 		// Let actionForTemplate know to make any permanent changes before
 		// continuing to the next template
 		String direction = "continue";
@@ -4553,9 +4553,18 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
 				if (("3").equals(params.getString("continue"))){
+					// this is redundant for index=52 'cos removal should be done
+					// before arriving here. Anyhow this doesn't cause any harm
 					// check if any section need to be removed
 					removeAnyFlagedSection(state, params);									
-				}				
+				}	
+				/*
+				if (("4").equals(params.getString("continue")) 
+						&& ("").equals(params.getString("returnToManualAdd"))){
+					// check if any section need to be removed
+					removeAnyFlagedSection(state, params);									
+				}	
+				*/			
 			} 
 			/* TO BE DELETED - daisyf 03/02/07
 			else { // a branch to show all courses, case 52 - daisyf v2.4
@@ -6892,50 +6901,23 @@ public class SiteAction extends PagedResourceActionII {
 						state.setAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN,
 								providerChosenList);
 					}
-
-					if (state.getAttribute(STATE_MESSAGE) == null) {
-						siteInfo = new SiteInfo();
-						if (state.getAttribute(STATE_SITE_INFO) != null) {
-							siteInfo = (SiteInfo) state
-									.getAttribute(STATE_SITE_INFO);
-						}
-						// site title is the title of the 1st section selected -
-						// daisyf's note
-						if (providerChosenList.size() >= 1) {
-							siteInfo.title = getCourseTab(state,
-									(String) providerChosenList.get(0));
-						}
-						state.setAttribute(STATE_SITE_INFO, siteInfo);
-
-						if (params.getString("manualAdds") != null && ("true").equals(params.getString("manualAdds"))) {
-							// if creating a new site
-							state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-							state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
-									new Integer(1));
-						} else {
-							// no manual add
-							state
-									.removeAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
-							state
-									.removeAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
-							state.removeAttribute(STATE_SITE_QUEST_UNIQNAME);
-
-							if (getStateSite(state) != null) {
-								// if revising a site, go to the confirmation
-								// page of adding classes
-								state.setAttribute(STATE_TEMPLATE_INDEX, "44");
-							} else {
-								// if creating a site, go the the site
-								// information entry page
-								state.setAttribute(STATE_TEMPLATE_INDEX, "2");
-							}
-						}
-					}
+					collectNewSiteInfo(siteInfo, state, params, providerChosenList);					
 				}
-
 				// next step
 				state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(2));
 			}
+			break;
+		case 52:
+			// remove any selected course before continue - daisyf
+			if (("true").equals(params.getString("manualAdds"))){
+				// check if any section need to be removed
+				removeAnyFlagedSection(state, params);									
+			}	
+
+			List providerChosenList = (List) state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+			collectNewSiteInfo(siteInfo, state, params, providerChosenList);
+			// next step
+			state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(2));
 			break;
 		case 38:
 			break;
@@ -11375,7 +11357,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (providerCourseList!=null){
 			all.addAll(providerCourseList);
 		}
-		List manualCourseList = (List) state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
+		List manualCourseList = (List) state.getAttribute(SITE_MANUAL_COURSE_LIST);
 		if (manualCourseList!=null){
 			all.addAll(manualCourseList);
 		}
@@ -11400,5 +11382,47 @@ public class SiteAction extends PagedResourceActionII {
 			manualCourseList = null;
 		if (providerCourseList != null && providerCourseList.size()==0)
 			providerCourseList = null;
+	}
+	
+	private void collectNewSiteInfo(SiteInfo siteInfo, SessionState state, ParameterParser params, List providerChosenList){
+		if (state.getAttribute(STATE_MESSAGE) == null) {
+			siteInfo = new SiteInfo();
+			if (state.getAttribute(STATE_SITE_INFO) != null) {
+				siteInfo = (SiteInfo) state
+						.getAttribute(STATE_SITE_INFO);
+			}
+						
+			// site title is the title of the 1st section selected -
+			// daisyf's note
+			if (providerChosenList!=null && providerChosenList.size() >= 1) {
+				siteInfo.title = getCourseTab(state,
+						(String) providerChosenList.get(0));
+			}
+			state.setAttribute(STATE_SITE_INFO, siteInfo);
+
+			if (params.getString("manualAdds") != null && ("true").equals(params.getString("manualAdds"))) {
+				// if creating a new site
+				state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+				state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
+						new Integer(1));
+			} else {
+				// no manual add
+				state
+						.removeAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
+				state
+						.removeAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
+				state.removeAttribute(STATE_SITE_QUEST_UNIQNAME);
+
+				if (getStateSite(state) != null) {
+					// if revising a site, go to the confirmation
+					// page of adding classes
+					state.setAttribute(STATE_TEMPLATE_INDEX, "44");
+				} else {
+					// if creating a site, go the the site
+					// information entry page
+					state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+				}
+			}
+		}
 	}
 }

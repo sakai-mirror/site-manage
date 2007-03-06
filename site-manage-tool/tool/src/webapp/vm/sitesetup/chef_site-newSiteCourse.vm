@@ -214,7 +214,6 @@ function submitChangeUser(){
 		<p class="act">
 			#if (!$site)
 				<!-- Add Not Listed Courses -->
-				<input type="hidden" name="addNotListed" value="" />
 				<a href="#" onclick="javascript:submitAddNotListed();">$tlang.getString('nscourse.add_course_not_listed')</a>
 				<p></p>			
 				<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
