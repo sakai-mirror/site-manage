@@ -1138,13 +1138,7 @@ public class SiteAction extends PagedResourceActionII {
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-			if (courseManagementIsImplemented()){
-				// v2.4 added by daisyf
-				return (String) getContext(data).get("template") + TEMPLATE[37];
-			}
-			else{
-				return (String) getContext(data).get("template") + TEMPLATE[2];
-			}
+			return (String) getContext(data).get("template") + TEMPLATE[2];
 		case 3:
 			/*
 			 * buildContextForTemplate chef_site-newSiteFeatures.vm
