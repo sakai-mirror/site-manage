@@ -1093,7 +1093,7 @@ public class SiteAction extends PagedResourceActionII {
 			if (siteType.equalsIgnoreCase("course")) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("isProjectSite", Boolean.FALSE);
-
+				
 				if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
 					context.put("selectedProviderCourse", state
 							.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN));
@@ -1154,7 +1154,7 @@ public class SiteAction extends PagedResourceActionII {
 					.getCourseIdRequiredFields());
 			context.put("fieldValues", state
 					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-
+			
 			return (String) getContext(data).get("template") + TEMPLATE[2];
 		case 3:
 			/*
@@ -1226,6 +1226,7 @@ public class SiteAction extends PagedResourceActionII {
 					null, null, null, SortType.TITLE_ASC, null));
 			context.put("import", state.getAttribute(STATE_IMPORT));
 			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
+			
 			return (String) getContext(data).get("template") + TEMPLATE[3];
 		case 4:
 			/*
@@ -4536,6 +4537,11 @@ public class SiteAction extends PagedResourceActionII {
 		// Let actionForTemplate know to make any permanent changes before
 		// continuing to the next template
 		String direction = "continue";
+		
+		
+		// check if any section need to be removed
+		removeAnyFlagedSection(state, params);				
+		
 		actionForTemplate(direction, index, params, state);
 		if (state.getAttribute(STATE_MESSAGE) == null) {
 			if (index == 9) {
@@ -10982,7 +10988,7 @@ public class SiteAction extends PagedResourceActionII {
 			toolsOnImportList.add("sakai.news");
 
 		return toolsOnImportList;
-	}
+	} // getToolsAvailableForImport
 
 	private void setTermListForContext(Context context, SessionState state,
 			boolean upcomingOnly) {
@@ -10995,14 +11001,14 @@ public class SiteAction extends PagedResourceActionII {
 		if (terms != null && terms.size() > 0) {
 			context.put("termList", terms);
 		}
-	}
+	} // setTermListForContext
 
 	private void setSelectedTermForContext(Context context, SessionState state,
 			String stateAttribute) {
 		if (state.getAttribute(stateAttribute) != null) {
 			context.put("selectedTerm", state.getAttribute(stateAttribute));
 		}
-	}
+	} // setSelectedTermForContext
 	
 	/**
 	 * rewrote for 2.4
@@ -11042,7 +11048,7 @@ public class SiteAction extends PagedResourceActionII {
 	    		}
 	    	}
 	    }		
-	}
+	} // prepareCourseAndSectionMap
 
 	/**
 	 * for 2.4
@@ -11054,7 +11060,7 @@ public class SiteAction extends PagedResourceActionII {
 			return true;
 		else
 			return false;
-	}
+	} // includeRole
 
 	/**
 	 * Here, we will preapre two HashMap: 
@@ -11119,7 +11125,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 		return resultedList;
-	}
+	} // prepareCourseAndSectionListing
 	
 	/**
 	 * Sort CourseOffering by order of eid, title uisng velocity SortTool
@@ -11132,7 +11138,7 @@ public class SiteAction extends PagedResourceActionII {
 		propsList.add("title");
 		SortTool sort = new SortTool();
 		return sort.sort(offeringList, propsList);
-	}
+	} // sortOffering
 
 
 	/**
@@ -11196,7 +11202,7 @@ public class SiteAction extends PagedResourceActionII {
 		public boolean getAttached() {
 			return attached;
 		}
-	}
+	} // SectionObject constructor
 
 	/* TO BE DELETED - daisyf 03/02/07
 	 * do called when "eventSubmit_do" is in the request parameters to c
@@ -11319,7 +11325,7 @@ public class SiteAction extends PagedResourceActionII {
 			return courseOfferingObjects;
 		}
 		
-	}
+	} // CourseObject constructor
 
 	/**
 	 * this object is used for displaying purposes in chef_site-newSiteCourse.vm
@@ -11353,10 +11359,47 @@ public class SiteAction extends PagedResourceActionII {
 		public List getSections() {
 			return sections;
 		}
-	}
+	} // CourseOfferingObject constructor
 
+	/**
+	 * get campus user directory for dispaly in chef_newSiteCourse.vm
+	 * @return
+	 */
 	private String getCampusDirectory() {
 		return ServerConfigurationService.getString(
 				"site-manage.campusUserDirectory", null);
+	} // getCampusDirectory
+	
+	private void removeAnyFlagedSection(SessionState state, ParameterParser params){
+		List all = new ArrayList();
+		List providerCourseList = (List) state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+		if (providerCourseList!=null){
+			all.addAll(providerCourseList);
+		}
+		List manualCourseList = (List) state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
+		if (manualCourseList!=null){
+			all.addAll(manualCourseList);
+		}
+		
+		for (int i =0; i<all.size();i++){
+			String eid = (String) all.get(i);
+			String field = "removeSection"+eid;
+			String toRemove = params.getString(field);
+			if ("true".equals(toRemove)){
+				// eid is in either providerCourseList or manualCourseList
+				// either way, just remove it
+				if (providerCourseList != null)
+					providerCourseList.remove(eid);
+				if (manualCourseList != null)
+					manualCourseList.remove(eid);
+			}
+		}
+		
+		// if list is empty, set to null. This is important 'cos null is
+		// the indication that the list is empty in the code. See case 2 on line 1081
+		if (manualCourseList != null && manualCourseList.size()==0)
+			manualCourseList = null;
+		if (providerCourseList != null && providerCourseList.size()==0)
+			providerCourseList = null;
 	}
 }

@@ -17,6 +17,16 @@
 	    
 	  	return result;
 	}
+	
+	function submitRemoveSection(index){
+		id = "removeSection"+index;
+    	removeSection = document.getElementById(id);
+		removeSection.value="true";
+    	continueButton = document.getElementById("continueButton");
+    	continueButton.click();
+     	return false;
+}
+	
 </script>
 <div class="portletBody">
 	#if ($!isProjectSite)
@@ -45,11 +55,18 @@
 		<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>
 		<div class="clear"></div>
 	#end
+	
+		<form action="#toolForm("$action")" method="post">
+	
 	#if ($isCourseSite)
 		$tlang.getString("sinfo.youare")
 		<ul>
 			#foreach ($item in $!selectedProviderCourse)
-				<li>$item </li>
+				<li>$item 
+					<!-- Remove Section -->
+					<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>
+					<input type="hidden" id="removeSection$item" name="removeSection$item" value="" />
+				</li>
 			#end
 		</ul>
 		#if ($!manualAddNumber)
@@ -70,7 +87,6 @@
 	<p class="instruction">
 		$tlang.getString("sinfo.enter3")#if ($!isProjectSite) $tlang.getString("sinfo.simplea") <span class ="reqStarInline">*</span> $tlang.getString("sinfo.means") #end
 	</p>
-	<form action="#toolForm("$action")" method="post">
 		<p class="shorttext required">
 			#if ($!titleEditableSiteType.contains($!type))
 			<span class="reqStar">*</span>
@@ -144,7 +160,7 @@
 		<input type="hidden" name="template-index" value="2" />
 		<input type="hidden" name="continue" value="3" />
 		<p class="act">
-			<input type="submit" accesskey="s" class="active" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+			<input id="continueButton" type="submit" accesskey="s" class="active" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
 			#if ($!siteTypes.size() > 1)
 				<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
 			#end
