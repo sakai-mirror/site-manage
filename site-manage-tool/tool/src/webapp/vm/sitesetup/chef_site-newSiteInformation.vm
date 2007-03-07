@@ -22,9 +22,11 @@
 		id = "removeSection"+index;
     	removeSection = document.getElementById(id);
 		removeSection.value="true";
-    	continueButton = document.getElementById("continueButton");
-    	continueButton.click();
-     	return false;
+    	//continueButton = document.getElementById("continueButton");
+    	//continueButton.click();
+
+		document.removeSectionForm.submit();
+		return false;
 }
 	
 </script>
@@ -56,7 +58,10 @@
 		<div class="clear"></div>
 	#end
 	
-		<form action="#toolForm("$action")" method="post">
+	<form name = "removeSectionForm" method="post" action="#toolForm($action)">
+		<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+		<input type="hidden" name="back" value="1" />
+		<input type="hidden" name="template-index" value="52" />
 	
 	#if ($isCourseSite)
 		$tlang.getString("sinfo.youare")
@@ -84,6 +89,9 @@
 			</ul>
 		#end
 	#end
+	</form>
+	
+	<form action="#toolForm("$action")" method="post">	
 	<p class="instruction">
 		$tlang.getString("sinfo.enter3")#if ($!isProjectSite) $tlang.getString("sinfo.simplea") <span class ="reqStarInline">*</span> $tlang.getString("sinfo.means") #end
 	</p>

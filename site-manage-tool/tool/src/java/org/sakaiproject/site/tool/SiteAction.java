@@ -4517,12 +4517,6 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
-				if (("3").equals(params.getString("continue"))){
-					// v2.4 - condition added by daisyf
-					// Remove Section: check if any section need to be removed
-					// this is the scenerio when there is only provider courses present
-					removeAnyFlagedSection(state, params);									
-				}	
 			} 
 		}
 	}// doContinue
@@ -6854,13 +6848,9 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 52:
 			// v2.4 - added by daisyf
-			// RemoveSection - remove any selected course before continue
-			// this is the scenerio during manual add when a list of provider courses
-			// is also present
-			if (("true").equals(params.getString("manualAdds"))){
-				// check if any section need to be removed
-				removeAnyFlagedSection(state, params);									
-			}	
+			// RemoveSection - remove any selected course from a list of provider courses
+			// check if any section need to be removed
+			removeAnyFlagedSection(state, params);									
 
 			List providerChosenList = (List) state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
 			collectNewSiteInfo(siteInfo, state, params, providerChosenList);

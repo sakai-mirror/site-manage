@@ -5,9 +5,6 @@
 		removeSection = document.getElementById(id);
 		removeSection.value="true";
 
-		manualAdds = document.getElementById("manualAdds");
-		manualAdds.value="true";
-		
 		document.removeSectionForm.submit();
 		return false;
 }
@@ -16,7 +13,6 @@
 <div class="portletBody">
 	<form name = "removeSectionForm" method="post" action="#toolForm($action)">
 		<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
-		<input type="hidden" name="manualAdds" value="x" id="manualAdds"/>
 		<input type="hidden" name="back" value="1" id="back" />
 		<input type="hidden" name="template-index" value="52"  />
 	
