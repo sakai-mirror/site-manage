@@ -27,6 +27,11 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/import-api"/>
 	<classpathentry kind="src" path="/cm-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/cm-impl"/>
-	<classpathentry kind="lib" path="/Users/daisyflemming/.maven/repository/velocity-tools/jars/velocity-tools-1.2.jar"/>
+	<classpathentry kind="lib" path="MAVEN_REPO/velocity-tools/jars/velocity-tools-1.2.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/component-impl"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/entity-impl"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/entity-util"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/event-impl"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/event-util"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
