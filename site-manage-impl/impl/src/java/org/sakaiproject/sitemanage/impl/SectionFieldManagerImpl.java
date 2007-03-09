@@ -26,6 +26,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.coursemanagement.api.AcademicSession;
+import org.sakaiproject.entity.api.Entity;
+import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SectionFieldManager;
 import org.sakaiproject.util.ResourceLoader;
@@ -63,6 +65,12 @@ public class SectionFieldManagerImpl implements SectionFieldManager {
 		String sectionEid = resourceLoader.getFormattedMessage("section_eid", values);
 		if(log.isDebugEnabled()) log.debug("Generated section eid = " + sectionEid);
 		return sectionEid;
+	}
+
+	public void init() {
+	}
+
+	public void destroy() {
 	}
 
 }

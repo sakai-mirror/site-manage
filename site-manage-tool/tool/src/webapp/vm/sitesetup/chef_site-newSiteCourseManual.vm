@@ -98,7 +98,7 @@
 							#foreach ($fieldCount in [0..$!bound])
 								#set($field = $!form_requiredFields.get($fieldCount))
 								#set($fieldSize = 8)
-								#set($fieldSize = $!form_requiredFieldsSizes.get($fieldCount))
+								#set($fieldSize = $!form_requiredFieldsSizes.get($fieldCount).getMaxSize())
 								
 								<td headers="$field" class="shorttext">
 									<label  for="id-$field$rowcount" class="skip">$field</label>
