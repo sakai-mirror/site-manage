@@ -26,8 +26,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.coursemanagement.api.AcademicSession;
-import org.sakaiproject.entity.api.Entity;
-import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SectionFieldManager;
 import org.sakaiproject.util.ResourceLoader;
@@ -38,11 +36,11 @@ public class SectionFieldManagerImpl implements SectionFieldManager {
 	protected static final ResourceLoader resourceLoader;
 	
 	static {
-		fieldList.add(new SectionFieldImpl("required_fields_subject", null, 8));
-		fieldList.add(new SectionFieldImpl("required_fields_course", null, 3));
-		fieldList.add(new SectionFieldImpl("required_fields_section", null, 3));		
-
 		resourceLoader = new ResourceLoader("SectionFields");
+
+		fieldList.add(new SectionFieldImpl(resourceLoader.getString("required_fields_subject"), null, 8));
+		fieldList.add(new SectionFieldImpl(resourceLoader.getString("required_fields_course"), null, 3));
+		fieldList.add(new SectionFieldImpl(resourceLoader.getString("required_fields_section"), null, 3));		
 	}
 
 	public List<SectionField> getRequiredFields() {

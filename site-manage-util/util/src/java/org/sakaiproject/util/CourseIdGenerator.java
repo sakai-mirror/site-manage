@@ -18,33 +18,6 @@ public class CourseIdGenerator {
 	private static ResourceLoader rb = new ResourceLoader(
 			"SampleCourseManagementProvider");
 
-	public static String getCourseId(AcademicSession a, List requiredFields) {
-		String delimiter = ServerConfigurationService.getString(
-				"site-manage.courseId.delimiter", ",");
-		String format = ServerConfigurationService.getString(
-				"site-manage.courseId.format", null);
-
-		String rv = new String("");
-		if (a != null && format == null) {
-			// default courseId format = 2007,WINTER,SMPL,001,001
-			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			String dateString = dateFormat.format(a.getStartDate());
-			String year = dateString.substring(0, 4);
-			rv = rv.concat(year + delimiter + a.getTitle());
-		} else {
-			rv = rv.concat(delimiter + delimiter);
-		}
-		for (int i = 0; i < requiredFields.size(); i++) {
-			if ("".equals(rv)) {
-				rv = (String) requiredFields.get(i);
-			} else {
-				rv = rv.concat(delimiter)
-						.concat((String) requiredFields.get(i));
-			}
-		}
-		return rv;
-	} // getCourseId
-
 	/*
 	 * making assumption that sectionEid = "subject course section
 	 * academicSession.eid"
@@ -69,30 +42,6 @@ public class CourseIdGenerator {
 		return subject;
 	} // getSubject
 
-	public static List getCourseIdRequiredFields() {
-		String format = ServerConfigurationService
-				.getString("site-manage.courseId.requiredFields.format",
-						"required_fields_courseId");
-		String[] required_fields = format.split(",");
-
-		List rv = new Vector();
-		for (int i = 0; i < required_fields.length; i++) {
-			rv.add(rb.getString(required_fields[i].trim()));
-		}
-		return rv;
-
-	}
-
-	public static List getCourseIdRequiredFieldsSizes() {
-		String formatSize = ServerConfigurationService.getString(
-				"site-manage.courseId.requiredFields.size", "40");
-		String[] required_fields = formatSize.split(",");
-		List rv = new Vector();
-		for (int i = 0; i < required_fields.length; i++) {
-			rv.add(new Integer(required_fields[i].trim()));
-		}
-		return rv;
-	}
 
 	// courseName is made up of required fields only and separated by " "
 	public static String getCourseName(String courseId) {
@@ -118,22 +67,4 @@ public class CourseIdGenerator {
 		return name;
 	}
 
-	public static String getProviderId (List providerIdList)
-	{
-		String rv = "";
-		
-		for (int i = 0; i < providerIdList.size(); i++)
-		{
-			// concatinate list items by "+"
-			if (i > 0)
-			{
-				rv = rv.concat("+").concat((String) providerIdList.get(i));
-			}
-			else
-			{
-				rv = rv.concat((String) providerIdList.get(i));
-			}
-		}
-		return rv;
-	}
 }

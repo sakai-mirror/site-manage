@@ -90,6 +90,7 @@ import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SectionFieldManager;
 import org.sakaiproject.util.SubjectAffiliates;
 import org.sakaiproject.time.api.Time;
@@ -4274,17 +4275,19 @@ public class SiteAction extends PagedResourceActionII {
 
 			// iterate through all required fields
 			for (int k = 0; k < requiredFields.size(); k++) {
-				String field = (String) requiredFields.get(k);
+				SectionField sectionField = (SectionField) requiredFields
+						.get(k);
+				String fieldLabel = sectionField.getLabelKey();
 				String fieldInput = StringUtil.trimToZero(params
-						.getString(field + i));
-				aCourseInputs.add(fieldInput);
+						.getString(fieldLabel + i));
+				sectionField.setValue(fieldInput);
+				aCourseInputs.add(sectionField);
 				if (fieldInput.length() == 0) {
 					// is this an empty String input?
 					emptyInputNum++;
 				}
+				// add to the multiCourseInput vector
 			}
-
-			// add to the multiCourseInput vector
 			multiCourseInputs.add(i, aCourseInputs);
 
 			// is any input invalid?
@@ -4320,7 +4323,7 @@ public class SiteAction extends PagedResourceActionII {
 					List aCourseInputs = new Vector();
 					// iterate through all required fields
 					for (int m = 0; m < requiredFields.size(); m++) {
-						aCourseInputs.add("");
+						aCourseInputs = sectionFieldManager.getRequiredFields();
 					}
 					multiCourseInputs.add(aCourseInputs);
 				}
@@ -4359,7 +4362,7 @@ public class SiteAction extends PagedResourceActionII {
 					(List) multiCourseInputs.get(0));
 			String title = "";
 			try {
-				title = cms.getSection(courseId).getTitle();
+                title = CourseIdGenerator.getCourseName(courseId);
 			} catch (Exception e) {
 				// ignore
 			}
@@ -4620,8 +4623,13 @@ public class SiteAction extends PagedResourceActionII {
 				if (manualAddNumber != 0) {
 					// set the manual sections to the site property
 					String manualSections = "";
+
+					// manualCourseInputs is a list of a list of SectionField
 					List manualCourseInputs = (List) state
 							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
+
+					// but we want to feed a list of a list of String (input of
+					// the required fields)
 					for (int j = 0; j < manualAddNumber; j++) {
 						manualSections = manualSections.concat(
 								sectionFieldManager.getSectionEid(term,
@@ -9116,7 +9124,7 @@ public class SiteAction extends PagedResourceActionII {
 		StringBuffer tab = new StringBuffer();
 
 		try {
-			String courseName = cms.getSection(id).getTitle();
+			String courseName = CourseIdGenerator.getCourseName(id);
 			if (courseName != null && courseName.length() > 0) {
 				tab.append(courseName);
 				return appendTermInSiteTitle(state, tab.toString());

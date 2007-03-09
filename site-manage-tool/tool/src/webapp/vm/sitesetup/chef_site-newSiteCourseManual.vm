@@ -84,8 +84,9 @@
 						</th>
 						#foreach ($fieldCount in [0..$!bound])
 								#set($field = $!form_requiredFields.get($fieldCount))
-									<th id="$!field">	
-										<span class ="reqStarInline">*</span>$field
+								#set($fieldLabel = $!form_requiredFields.get($fieldCount).labelKey)
+									<th id="$!fieldLabel">	
+										<span class ="reqStarInline">*</span>$fieldLabel
 									</th>
 						#end
 					</tr>
@@ -97,12 +98,13 @@
 							<td headers="rownNum">$rowcount</td>
 							#foreach ($fieldCount in [0..$!bound])
 								#set($field = $!form_requiredFields.get($fieldCount))
+								#set($fieldLabel = $!form_requiredFields.get($fieldCount).labelKey)
 								#set($fieldSize = 8)
 								#set($fieldSize = $!form_requiredFieldsSizes.get($fieldCount).getMaxSize())
 								
-								<td headers="$field" class="shorttext">
-									<label  for="id-$field$rowcount" class="skip">$field</label>
-									<input type="text" name="$field$k"  tabindex="$count" size="$!fieldSize" maxlength="$!fieldSize" value="$!courseFieldValues.get($fieldCount)"  id="id-$field$rowcount" /> 
+								<td headers="$fieldLabel" class="shorttext">
+									<label  for="id-$fieldLabel$rowcount" class="skip">$fieldLabel</label>
+									<input type="text" name="$fieldLabel$k"  tabindex="$count" size="$!fieldSize" maxlength="$!fieldSize" value="$!courseFieldValues.get($fieldCount).getValue()"  id="id-$fieldLabel$rowcount" /> 
 									#set ($count = $count + 1)
 
 								</td>
