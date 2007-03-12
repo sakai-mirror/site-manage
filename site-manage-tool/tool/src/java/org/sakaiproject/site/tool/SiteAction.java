@@ -107,7 +107,7 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.api.UserPermissionException;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.ArrayUtil;
-import org.sakaiproject.util.CourseIdGenerator;
+//import org.sakaiproject.util.CourseIdGenerator;
 import org.sakaiproject.util.FileItem;
 import org.sakaiproject.util.ParameterParser;
 import org.sakaiproject.util.ResourceLoader;
@@ -4434,11 +4434,12 @@ public class SiteAction extends PagedResourceActionII {
 				&& multiCourseInputs.size() > 0) {
 			AcademicSession t = (AcademicSession) state
 					.getAttribute(STATE_TERM_SELECTED);
-			String courseId = sectionFieldManager.getSectionEid(t,
+			String courseId = sectionFieldManager.getSectionEid(t.getEid(),
 					(List) multiCourseInputs.get(0));
 			String title = "";
 			try {
-                title = CourseIdGenerator.getCourseName(courseId);
+                //instead of making up a name, Josh & I decided to use the section.eid instead
+				title = courseId;
 			} catch (Exception e) {
 				// ignore
 			}
@@ -4690,8 +4691,9 @@ public class SiteAction extends PagedResourceActionII {
 						addAlert(state, this + rb.getString("java.problem"));
 						return;
 					}
-
-					addSubjectAffliates(state, providerCourseList);
+					
+					// talk to Zhen, agreed to mve this call out of SiteAction
+					//addSubjectAffliates(state, providerCourseList);
 
 					sendSiteNotification(state, providerCourseList);
 				}
@@ -4708,7 +4710,7 @@ public class SiteAction extends PagedResourceActionII {
 					// the required fields)
 					for (int j = 0; j < manualAddNumber; j++) {
 						manualSections = manualSections.concat(
-								sectionFieldManager.getSectionEid(term,
+								sectionFieldManager.getSectionEid(term.getEid(),
 										(List) manualCourseInputs.get(j)))
 								.concat("+");
 					}
@@ -4765,6 +4767,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	}// doFinish
 
+	/* talked to Zhen and we agreed that this shoudl be moved out of SiteAction - daisyf, 03/12/07
 	private void addSubjectAffliates(SessionState state, List providerCourseList) {
 		Vector subjAffiliates = new Vector();
 		Vector affiliates = new Vector();
@@ -4778,8 +4781,9 @@ public class SiteAction extends PagedResourceActionII {
 			try {
 				Section c = cms.getSection(courseId);
 				if (c != null)
-					subject = CourseIdGenerator.getSubject(c.getEid());
-
+					// comment this out so at least this method won't break
+					//subject = CourseIdGenerator.getSubject(c.getEid());
+					subject = c.getEid();
 				subjAffiliates.add(subject);
 			} catch (Exception e) {
 				// M_log.warn(this + " cannot find course " + courseId + ". ");
@@ -4829,7 +4833,8 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // addSubjectAffliates
-
+*/
+	
 	/**
 	 * @params - SessionState state
 	 * @params - String subject is the University's Subject code
@@ -7020,7 +7025,7 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(STATE_TERM_SELECTED);
 					for (int m = 0; m < manualAddNumber && a != null; m++) {
 						String manualAddClassId = sectionFieldManager
-								.getSectionEid(a, (List) manualAddFields.get(m));
+								.getSectionEid(a.getEid(), (List) manualAddFields.get(m));
 						manualList.add(manualAddClassId);
 					}
 					state.setAttribute(SITE_MANUAL_COURSE_LIST, manualList);
@@ -9200,7 +9205,7 @@ public class SiteAction extends PagedResourceActionII {
 		StringBuffer tab = new StringBuffer();
 
 		try {
-			String courseName = CourseIdGenerator.getCourseName(id);
+			String courseName = cms.getSection(id).getTitle();
 			if (courseName != null && courseName.length() > 0) {
 				tab.append(courseName);
 				return appendTermInSiteTitle(state, tab.toString());
@@ -11499,7 +11504,7 @@ public class SiteAction extends PagedResourceActionII {
 	private void prepFindPage(SessionState state)
 	{
 		final List
-			cmLevels = CourseIdGenerator.getCourseIdRequiredFields(),//  getCourseCatalogLevels(),
+			cmLevels = sectionFieldManager.getRequiredFields(),//  getCourseCatalogLevels(),
 			selections = (List)state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
 		int
 			lvlSz = 0;
