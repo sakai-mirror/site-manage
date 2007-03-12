@@ -22,7 +22,6 @@ package org.sakaiproject.sitemanage.api;
 
 import java.util.List;
 
-import org.sakaiproject.coursemanagement.api.AcademicSession;
 
 /**
  * The site management applications allow installations to configure a variable
@@ -45,7 +44,7 @@ public interface SectionFieldManager {
 	 * @param fields
 	 * @return
 	 */
-	public String getSectionEid(AcademicSession academicSession, List<SectionField> fields);
+	public String getSectionEid(String academicSessionEid, List<SectionField> fields);
 
 	/**
 	 * Gets the List of SectionFields to use in the UI.

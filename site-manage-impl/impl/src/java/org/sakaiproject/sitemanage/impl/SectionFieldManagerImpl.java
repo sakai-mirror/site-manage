@@ -25,7 +25,6 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.coursemanagement.api.AcademicSession;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SectionFieldManager;
 import org.sakaiproject.util.ResourceLoader;
@@ -47,7 +46,7 @@ public class SectionFieldManagerImpl implements SectionFieldManager {
 		return fieldList;
 	}
 
-	public String getSectionEid(AcademicSession academicSession, List<SectionField> fields) {
+	public String getSectionEid(String academicSessionEid, List<SectionField> fields) {
 		if(fields == null || fields.isEmpty()) {
 			if(log.isDebugEnabled()) log.debug("Returning an empty sectionEID for an empty (or null) list of fields");
 			return "";
@@ -58,7 +57,7 @@ public class SectionFieldManagerImpl implements SectionFieldManager {
 			SectionField sf = fields.get(i);
 			values[i] = sf.getValue();
 		}
-		values[fields.size()] = academicSession.getEid();
+		values[fields.size()] = academicSessionEid;
 		
 		String sectionEid = resourceLoader.getFormattedMessage("section_eid", values);
 		if(log.isDebugEnabled()) log.debug("Generated section eid = " + sectionEid);

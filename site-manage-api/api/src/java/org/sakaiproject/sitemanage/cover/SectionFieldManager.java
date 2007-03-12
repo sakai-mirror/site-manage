@@ -23,7 +23,6 @@ package org.sakaiproject.sitemanage.cover;
 import java.util.List;
 
 import org.sakaiproject.component.cover.ComponentManager;
-import org.sakaiproject.coursemanagement.api.AcademicSession;
 import org.sakaiproject.sitemanage.api.SectionField;
 
 public class SectionFieldManager {
@@ -36,8 +35,8 @@ public class SectionFieldManager {
 		return getInstance().getRequiredFields();
 	}
 
-	public static final String getSectionEid(AcademicSession academicSession, List<SectionField>fields) {
-			return getInstance().getSectionEid(academicSession, fields);
+	public static final String getSectionEid(String academicSessionEid, List<SectionField>fields) {
+			return getInstance().getSectionEid(academicSessionEid, fields);
 	}
 
 }
