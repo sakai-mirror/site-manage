@@ -8,5 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/util-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
 	<classpathentry kind="var" path="MAVEN_REPO/commons-beanutils/jars/commons-beanutils-1.7.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/cm-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

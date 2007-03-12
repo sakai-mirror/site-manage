@@ -214,6 +214,7 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51
+			"-findCourse" //52
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -573,6 +574,15 @@ public class SiteAction extends PagedResourceActionII {
 
 	// Special tool id for Home page
 	private static final String HOME_TOOL_ID = "home";
+
+	private static final String STATE_CM_LEVELS = "site.cm.levels";
+	private static final String STATE_CM_LEVEL_SELECTIONS = "site.cm.level.selections";
+
+	private static final String STATE_CM_MANUAL_SELECTED = "site.cm.manualSelected";
+
+	private String cmSubjectCategory;
+
+	private boolean warnedNoSubjectCategory = false;
 
 	/**
 	 * Populate the state object, if needed.
@@ -2725,6 +2735,72 @@ public class SiteAction extends PagedResourceActionII {
 							.asList((String[]) state
 									.getAttribute(STATE_GROUP_REMOVE))));
 			return (String) getContext(data).get("template") + TEMPLATE[51];
+		case 52:
+		    {
+				/*
+				 * build context for chef_site-findCourse.vm
+				 */
+				
+				org.sakaiproject.coursemanagement.api.CourseManagementService
+					cms = getCMService();
+				
+				AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+				
+				boolean useManualEntry = false;
+							
+				Boolean
+					manualSelected = (Boolean)state.getAttribute(STATE_CM_MANUAL_SELECTED);
+				
+				final List 
+					cmLevels = (List)state.getAttribute(STATE_CM_LEVELS),
+					selections = (List)state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
+				
+				if (courseManagementIsImplemented() && cms != null)
+				{
+					context.put("cmsAvailable", new Boolean(true));
+				}
+				
+				if (cms == null || !courseManagementIsImplemented() ||
+					cmLevels == null || cmLevels.size() < 1 ||
+					(manualSelected != null && manualSelected.booleanValue()))
+				{
+					useManualEntry = true;
+				}
+				else
+				{
+					Object
+						levelOpts[] = new Object[cmLevels.size()];
+					int
+						numSelections = 0;
+					
+					if (selections != null)
+						numSelections = selections.size();
+					
+					//populate options for dropdown lists
+					switch (numSelections)
+					{
+						/* execution will fall through these statements based 
+						   on number of selections already made
+						 */
+						case 3:
+							//intentionally blank
+						case 2:
+							levelOpts[2] = getCMSections((String)selections.get(1));
+						case 1:
+							levelOpts[1] = getCMCourseOfferings((String)selections.get(0), t.getEid());
+						default:
+							levelOpts[0] = getCMSubjects();
+					}
+			
+					context.put("cmLevelOptions", Arrays.asList(levelOpts));
+				}
+				
+				context.put("cmLevels", cmLevels);
+				context.put("cmLevelSelections", selections);		
+				context.put("manualEntry", new Boolean(useManualEntry));
+				
+				return (String) getContext(data).get("template") + TEMPLATE[52];
+			}
 
 		}
 		// should never be reached
@@ -11283,9 +11359,13 @@ public class SiteAction extends PagedResourceActionII {
 			if (params.getString("manualAdds") != null
 					&& ("true").equals(params.getString("manualAdds"))) {
 				// if creating a new site
-				state.setAttribute(STATE_TEMPLATE_INDEX, "37");
-				state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER, new Integer(
-						1));
+				//DRG - changed to findCourse page - manual add is now incorporated
+				//state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+				
+				//state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
+				//		new Integer(1));
+				prepFindPage(state);
+				
 			} else {
 				// no manual add
 				state.removeAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
@@ -11319,4 +11399,170 @@ public class SiteAction extends PagedResourceActionII {
 		return returnValue;
 	}
 
+	private org.sakaiproject.coursemanagement.api.CourseManagementService 
+	  	getCMService() 
+	  {
+			return (org.sakaiproject.coursemanagement.api.CourseManagementService) 
+				ComponentManager.get (org.sakaiproject.coursemanagement.api.CourseManagementService.class);
+	  }
+
+
+	private List getCMSubjects() 
+	{
+		org.sakaiproject.coursemanagement.api.CourseManagementService
+			cms = getCMService();
+		String 
+			subjectCategory = getCMSubjectCategory();
+	
+		if (cms == null || subjectCategory == null)
+		{
+			return new ArrayList(0);
+		}
+		
+		return cms.findCourseSets(subjectCategory);
+	
+	}
+
+	private List getCMSections (String offeringEid)
+	{
+		if (offeringEid == null || offeringEid.trim().length() == 0)
+			return null;
+		
+		org.sakaiproject.coursemanagement.api.CourseManagementService
+			cms = getCMService();
+		
+		if (cms != null)
+		{
+			Set
+				sections = cms.getSections(offeringEid); 
+			return new ArrayList(sections);
+		}
+
+		return new ArrayList(0);
+	}
+
+	private List getCMCourseOfferings (String subjectEid, String termID)
+	{
+		if (subjectEid == null || subjectEid.trim().length() == 0 ||
+			termID == null || termID.trim().length() == 0)
+			return null;
+		
+		org.sakaiproject.coursemanagement.api.CourseManagementService
+			cms = getCMService();
+		
+		if (cms != null)
+		{
+			Set
+				offerings = cms.getCourseOfferingsInCourseSet(subjectEid);//, termID);
+			ArrayList
+				returnList = new ArrayList();
+			Iterator
+				coIt = offerings.iterator();
+			
+			while (coIt.hasNext())
+			{
+				CourseOffering
+					co = (CourseOffering)coIt.next();
+				AcademicSession
+					as = co.getAcademicSession();
+				if (as != null && as.getEid().equals(termID))
+					returnList.add(co);
+			}
+			
+			return returnList;
+		}
+
+		return new ArrayList(0);
+	}
+	
+	private String getCMSubjectCategory() 
+	{
+		if (cmSubjectCategory == null)
+		{
+			cmSubjectCategory = ServerConfigurationService.getString("site-manage.cms.subject.category");
+			
+			if (cmSubjectCategory == null)
+			{
+				if (warnedNoSubjectCategory)
+					M_log.debug(rb.getString("nscourse.cm.configure.log.nosubjectcat"));
+				else
+				{
+					M_log.info(rb.getString("nscourse.cm.configure.log.nosubjectcat"));
+					warnedNoSubjectCategory = true;
+				}
+			}
+		}
+		
+		return cmSubjectCategory;		
+	}
+
+	private void prepFindPage(SessionState state)
+	{
+		final List
+			cmLevels = CourseIdGenerator.getCourseIdRequiredFields(),//  getCourseCatalogLevels(),
+			selections = (List)state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
+		int
+			lvlSz = 0;
+		
+		if (cmLevels == null || (lvlSz = cmLevels.size()) < 1)
+		{
+			//TODO: no cm levels configured, redirect to manual add
+			return;
+		}
+		
+
+		if (selections != null && selections.size() == lvlSz)
+		{
+			// should have all the IDs needed to get a Section
+			//  get the section and add it to the roster
+		}
+		
+		state.setAttribute(STATE_CM_LEVELS, cmLevels);
+		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
+		
+		state.setAttribute(STATE_TEMPLATE_INDEX, "52");
+	}
+	
+	public void doFind_course(RunData data)
+	{
+		final SessionState 
+			state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		final ParameterParser 
+			params = data.getParameters();
+		final List
+			selections = new ArrayList(3);
+		
+		for (int i = 0; i < 3; i++)
+		{
+			String
+				val = params.get("idField_" + i);
+			
+			if (val == null)
+			{
+				break;
+			}
+			
+			selections.add(val);
+		}
+
+		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
+		
+		final String
+			option = params.get("option");
+		
+		if (option != null)
+			if (option.equals("manual"))
+			{
+				state.setAttribute(STATE_CM_MANUAL_SELECTED, new Boolean(true));
+			}
+			else if (option.equals("useCMS"))
+			{
+				state.removeAttribute(STATE_CM_MANUAL_SELECTED);
+			}
+
+		
+		prepFindPage(state);
+	}
+	
 }
