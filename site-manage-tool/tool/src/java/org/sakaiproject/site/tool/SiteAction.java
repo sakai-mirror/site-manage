@@ -7442,47 +7442,6 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		/*
-		 * if (providerCourseList != null) { for (int k = 0; k <
-		 * providerCourseList.size(); k++) { String courseId = (String)
-		 * providerCourseList.get(k); try {
-		 * members.addAll(CourseManagementService .getCourseMembers(courseId)); }
-		 * catch (Exception e) { // M_log.warn(this + " Cannot find course " + //
-		 * courseId); } } }
-		 * 
-		 * try { AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-		 * Set grants = realm.getMembers(); // Collections.sort(users); for
-		 * (Iterator i = grants.iterator(); i.hasNext();) { Member g = (Member)
-		 * i.next(); String userString = g.getUserEid(); Role r = g.getRole();
-		 * 
-		 * boolean alreadyInList = false; for (Iterator p = members.iterator();
-		 * p.hasNext() && !alreadyInList;) { CourseMember member =
-		 * (CourseMember) p.next(); String memberUniqname =
-		 * member.getUniqname(); if
-		 * (userString.equalsIgnoreCase(memberUniqname)) { alreadyInList = true;
-		 * if (r != null) { member.setRole(r.getId()); }
-		 * 
-		 * try { User user = UserDirectoryService .getUserByEid(memberUniqname);
-		 * Participant participant = new Participant(); participant.name =
-		 * user.getSortName(); participant.uniqname = user.getId();
-		 * participant.role = member.getRole(); participant.providerRole =
-		 * member.getProviderRole(); participant.course = member.getCourse();
-		 * participant.section = member.getSection(); participant.credits =
-		 * member.getCredits(); participant.regId = member.getId();
-		 * participant.removeable = false; participants.add(participant); }
-		 * catch (UserNotDefinedException e) { // deal with missing user quietly
-		 * without throwing a // warning message } } }
-		 * 
-		 * if (!alreadyInList) { try { User user = UserDirectoryService
-		 * .getUserByEid(userString); Participant participant = new
-		 * Participant(); participant.name = user.getSortName();
-		 * participant.uniqname = user.getId(); if (r != null) {
-		 * participant.role = r.getId(); } participants.add(participant); }
-		 * catch (UserNotDefinedException e) { // deal with missing user quietly
-		 * without throwing a // warning message } } } } catch
-		 * (GroupNotDefinedException e) { M_log.warn(this + " IdUnusedException " +
-		 * realmId); }
-		 */
 		participants = prepareParticipants(realmId, providerCourseList);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
