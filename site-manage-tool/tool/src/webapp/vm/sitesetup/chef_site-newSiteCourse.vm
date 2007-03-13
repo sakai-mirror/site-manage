@@ -151,15 +151,15 @@ function submitChangeUser(){
 				## display only subject, course number and section
 				##and finally - the labels work, but having commas in the id does not validate. Can we concatenate or replace with underscore? Here is reqs on ids and labels: an id attribute value must begin with a letter (A-Z or a-z) and consist of the following characters: (A-Z), (a-z), (0-9), hyphens (-), underscores (_), colons (:), and periods (.).
 				#set($crosslisted=0)	
+				#set($courseNumber=0)	
 				#foreach($courseObject in $termCourseList)
-					<p>
+					<h4>
 					$courseObject.eid : $courseObject.title 
 					#if ($!courseObject.courseOfferingObjects.size() > 1)
 						(cross-listed)
 						#set($crosslisted=1)	
 					#end
-					</p>
-					#set($courseNumber=0)	
+					</h4>
 					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
 						#set($endKey = $courseNumber + $!courseOfferingObject.sections.size())
 						#if ($!courseOfferingObject.sections.size() > 1)
@@ -201,7 +201,6 @@ function submitChangeUser(){
 							</p>
 							#set ($courseNumber = $courseNumber +1)
 						#end
-						#set($courseNumber = $!endKey)						
 					#end
 				 #end
 			#end	
