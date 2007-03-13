@@ -7483,14 +7483,15 @@ public class SiteAction extends PagedResourceActionII {
 		 * (GroupNotDefinedException e) { M_log.warn(this + " IdUnusedException " +
 		 * realmId); }
 		 */
-		participants = prepareParticipants(realmId);
+		participants = prepareParticipants(realmId, providerCourseList);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
 
 	} // getParticipantList
 
-	private Vector prepareParticipants(String realmId) {
+	private Vector prepareParticipants(String realmId, List providerCourseList) {
+		HashMap officialMembership = getOfficialMemebershipInProviderList(providerCourseList);
 		Vector participants = new Vector();
 		try {
 			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
@@ -7508,6 +7509,14 @@ public class SiteAction extends PagedResourceActionII {
 					if (r != null) {
 						participant.role = r.getId();
 					}
+					if (officialMembership.get(user.getEid()) != null){
+						// official member, can't delete
+						participant.removeable = false;
+						Membership m = (Membership) officialMembership.get(user.getEid());
+					}
+					else{
+						participant.removeable = true;
+					}
 					participants.add(participant);
 				} catch (UserNotDefinedException e) {
 					// deal with missing user quietly without throwing a
@@ -7519,6 +7528,27 @@ public class SiteAction extends PagedResourceActionII {
 			M_log.warn(this + "  IdUnusedException " + realmId);
 		}
 		return participants;
+	}
+	
+	private HashMap getOfficialMemebershipInProviderList(List providerCourseList) {
+		HashMap officialMembership= new HashMap();
+		if (providerCourseList != null) {
+			for (int k = 0; k < providerCourseList.size(); k++) {
+				String sectionEid = (String) providerCourseList.get(k);
+				try {
+					Set membershipSet = cms.getSectionMemberships(sectionEid);
+					for (Iterator i = membershipSet.iterator(); i.hasNext();){
+						Membership m = (Membership) i.next();
+						// WHAT TODO
+						// hmm... can we assume a person can have only one role in a site? - daisyf
+						officialMembership.put(m.getUserId(), m);
+					}
+				} catch (Exception e) {
+					M_log.warn(this + " Cannot find course " + sectionEid);
+				}
+			}
+		}
+		return officialMembership;
 	}
 
 	/**
