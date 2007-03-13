@@ -7450,7 +7450,6 @@ public class SiteAction extends PagedResourceActionII {
 	} // getParticipantList
 
 	private Vector prepareParticipants(String realmId, List providerCourseList) {
-		HashMap officialMembership = getOfficialMemebershipInProviderList(providerCourseList);
 		Vector participants = new Vector();
 		try {
 			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
@@ -7468,10 +7467,9 @@ public class SiteAction extends PagedResourceActionII {
 					if (r != null) {
 						participant.role = r.getId();
 					}
-					if (officialMembership.get(user.getEid()) != null){
+					if (g.isProvided()){
 						// official member, can't delete
 						participant.removeable = false;
-						Membership m = (Membership) officialMembership.get(user.getEid());
 					}
 					else{
 						participant.removeable = true;
@@ -7489,27 +7487,6 @@ public class SiteAction extends PagedResourceActionII {
 		return participants;
 	}
 	
-	private HashMap getOfficialMemebershipInProviderList(List providerCourseList) {
-		HashMap officialMembership= new HashMap();
-		if (providerCourseList != null) {
-			for (int k = 0; k < providerCourseList.size(); k++) {
-				String sectionEid = (String) providerCourseList.get(k);
-				try {
-					Set membershipSet = cms.getSectionMemberships(sectionEid);
-					for (Iterator i = membershipSet.iterator(); i.hasNext();){
-						Membership m = (Membership) i.next();
-						// WHAT TODO
-						// hmm... can we assume a person can have only one role in a site? - daisyf
-						officialMembership.put(m.getUserId(), m);
-					}
-				} catch (Exception e) {
-					M_log.warn(this + " Cannot find course " + sectionEid);
-				}
-			}
-		}
-		return officialMembership;
-	}
-
 	/**
 	 * getRoles
 	 * 
