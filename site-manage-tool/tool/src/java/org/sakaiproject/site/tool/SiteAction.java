@@ -11037,10 +11037,11 @@ public class SiteAction extends PagedResourceActionII {
 		// map = (section.eid, sakai rolename)
 		Map map = groupProvider.getGroupRolesForUser(userId);
 		Set keys = map.keySet();
+		Set roleSet = getRolesAllowedToAttachSection();
 		for (Iterator i = keys.iterator(); i.hasNext();) {
 			String sectionEid = (String) i.next();
 			String role = (String) map.get(sectionEid);
-			if (includeRole(role)) {
+			if (includeRole(role, roleSet)) {
 				Section section = cms.getSection(sectionEid);
 				String courseOfferingEid = section.getCourseOfferingEid();
 				CourseOffering courseOffering = cms
@@ -11071,12 +11072,32 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param role
 	 * @return
 	 */
-	private boolean includeRole(String role) {
-		if (("Instructor").equals(role) || ("Teaching Assistant").equals(role))
-			return true;
-		else
-			return false;
+	private boolean includeRole(String role, Set roleSet) {
+		boolean includeRole = false;
+		for (Iterator i = roleSet.iterator(); i.hasNext();) {
+			String r = (String) i.next();
+			if (r.equals(role)) {
+				includeRole = true;
+				break;
+			}
+		}
+		return includeRole;
 	} // includeRole
+
+	protected Set getRolesAllowedToAttachSection() {
+		// Use !site.template.[site_type]
+		String azgId = "!site.template.course";
+		AuthzGroup azgTemplate;
+		try {
+			azgTemplate = AuthzGroupService.getAuthzGroup(azgId);
+		} catch (GroupNotDefinedException e) {
+			M_log.warn("Could not find authz group " + azgId);
+			return new HashSet();
+		}
+		Set roles = azgTemplate.getRolesIsAllowed("site.upd");
+		roles.addAll(azgTemplate.getRolesIsAllowed("realm.upd"));
+		return roles;
+	} // getRolesAllowedToAttachSection
 
 	/**
 	 * Here, we will preapre two HashMap: 1. courseOfferingHash stores
