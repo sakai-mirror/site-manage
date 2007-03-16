@@ -52,6 +52,15 @@ function submitAddNotListed(){
     return false;
 }
 
+function submitFindCourse(){
+    find_course = document.getElementById("find_course");
+    find_course.value="true";
+    continueButton = document.getElementById("continueButton");
+    continueButton.click();
+    document.addCourseForm.submit(); 
+    return false;
+}
+
 function submitChangeUser(){
     index = document.getElementById("index");
     index.value="1";
@@ -206,6 +215,7 @@ function submitChangeUser(){
 			#end	
 				## instructor could choose to go to the manual creation page
 				<input  type="hidden" name="manualAdds" value="x" id="manual_add"/>
+				<input type="hidden" name="findCourse" value="x" id="find_course"/>
 				
 
 		<input id="index" type="hidden" name="template-index" value="36" />
@@ -213,7 +223,7 @@ function submitChangeUser(){
 		<p class="act">
 			#if (!$site)
 				<!-- Add Not Listed Courses -->
-				<a href="#" onclick="javascript:submitAddNotListed();">$tlang.getString('nscourse.add_course_not_listed')</a>
+				<a href="#" onclick="javascript:submitFindCourse();">$tlang.getString('nscourse.add_course_not_listed')</a>
 				<p></p>			
 				<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
 				<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />

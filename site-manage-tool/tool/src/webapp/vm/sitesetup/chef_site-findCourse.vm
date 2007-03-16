@@ -16,12 +16,23 @@
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
 	<p class="instruction">
 		<!-- add if statement to determine if the following should show -->
-		$tlang.getString("nscourse.already")
-			<!-- loop through courses -->
-			<ul>
-				<li>PSYCH 213 - 01 : Mind, Culture and Society, Lecture</li>
-			</ul>
-			<!-- end loop -->
+				$tlang.getString("nscourse.already")
+				<ul>
+					#foreach($id in $!selectedProviderCourse)
+						<li>
+							<label for = "$id">
+								$id
+							</label>
+						</li>
+					#end
+					#foreach($id in $!selectedRequestedCourse)
+						<li>
+							<label for = "$id">
+								$id
+							</label>
+						</li>
+					#end
+				</ul>
 		<!-- end if -->
 		$tlang.getString("nscourse.findInstruction")
 	</p>
@@ -40,28 +51,37 @@
 			  ${level}
 			</td>
 			<td>
-			  #if ($manualEntry)
-			    <!-- text entry field for manual entry-->
-			  	<input type="text" name="$fieldName"
-			  	#if ($cmLevelSelections.size() > $i)
-				 value="$cmLevelSelections.get($i)"
-				#end
-				/>
-				#if($i == 2 && $cmsAvailable)
-				<a href="#" onclick="javascript:blur();document.findCourseForm.option.value='useCMS';document.findCourseForm.submit();">
-				   $tlang.getString("nscourse.findCourse.useCMS")
-				</a>
-				#end
-				
-				<br/>
-			  #else
+			
+##   Removed the manual entry page.  This is handled instead by template #37 from within
+##   SiteAction.  This was preserved because of its ability to handle multiple levels
+##   of ID fields, whereas find course is spec'd to use only three levels:
+##			CourseSet (filtered to match deployer configured category)
+##			CourseOffering
+##			Section
+##
+##
+##			  #if ($manualEntry)
+##			    <!-- text entry field for manual entry-->
+##			  	<input type="text" name="$fieldName"
+##			  	#if ($cmLevelSelections.size() > $i)
+##				 value="$cmLevelSelections.get($i)"
+##				#end
+##				/>
+##				#if($i == 2 && $cmsAvailable)
+##				<a href="#" onclick="javascript:blur();document.findCourseForm.option.value='useCMS';document.findCourseForm.submit();">
+##				   $tlang.getString("nscourse.findCourse.useCMS")
+##				</a>
+##				#end
+##				
+##				<br/>
+##			  #else
 			  	<!-- use dropdown list to select from coursemanagement service provided options -->
 				  #if ($i == 0 || $i < $cmLevelSelections.size() + 1)
 					  <select name="$fieldName" onchange="blur();document.findCourseForm.submit();">
 				  #else
 				  	  <select name="$fieldName" disabled="true">
 				  #end
-				  <option value="">$tlang.getString("nscourse.findCourse.select") $level</option>
+				  <option value="">$tlang.getString("nscourse.findCourse.select")</option>
 				  #if ($i < $cmLevelOptions.size())
 				      #foreach ($coursething in $cmLevelOptions.get($i))
 				        #if ($i < $cmLevelSelections.size())
@@ -83,9 +103,9 @@
 				     <a href="#" onclick="javascript:blur();document.findCourseForm.option.value='manual';document.findCourseForm.submit();">
 				        $tlang.getString("nscourse.findCourse.stillNotFound")
 				     </a>
-				  #end
+				#end
 				      <br/>
-			  #end
+##			  #end
 			</td>
 	      </tr>
 			  <!-- end creation of select box -->
@@ -94,7 +114,13 @@
 		   <!-- end loop through fields-->
 		  <tr>
 		    <td>$tlang.getString("nscourse.findCourse.selected")</td>
-		    <td>None</td>
+		    <td>
+			    #if ($selectedCourse)
+			        $selectedCourse.title
+			    #else
+				    None
+			    #end
+			</td>
 		  </tr>
 		</table>
 		
@@ -130,7 +156,7 @@
 		
 
 		<input id="index" type="hidden" name="template-index" value="53" />
-		<input type="hidden" name="back" value="52" />
+		<input type="hidden" name="back" value="$backIndex" />
 		<input type="hidden" name="eventSubmit_doFind_course" value="x" />
 		<input type="hidden" name="option" value="find"/>
 		<p class="act">

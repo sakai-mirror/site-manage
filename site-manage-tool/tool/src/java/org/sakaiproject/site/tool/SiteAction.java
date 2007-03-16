@@ -213,8 +213,9 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importMtrlCopyConfirmMsg", // 48
 			"-siteInfo-group", // 49
 			"-siteInfo-groupedit", // 50
-			"-siteInfo-groupDeleteConfirm", // 51
-			"-findCourse" // 52
+			"-siteInfo-groupDeleteConfirm", // 51,
+			"", //52 - no template; used by daisyf. for remove course section
+			"-findCourse" // 53
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -579,11 +580,13 @@ public class SiteAction extends PagedResourceActionII {
 
 	private static final String STATE_CM_LEVEL_SELECTIONS = "site.cm.level.selections";
 
-	private static final String STATE_CM_MANUAL_SELECTED = "site.cm.manualSelected";
+	private static final String STATE_CM_SELECTED_SECTION = "site.cm.selectedSection";
 
 	private String cmSubjectCategory;
 
 	private boolean warnedNoSubjectCategory = false;
+
+	private List<String> cmLevels;
 
 	/**
 	 * Populate the state object, if needed.
@@ -2736,7 +2739,7 @@ public class SiteAction extends PagedResourceActionII {
 							.asList((String[]) state
 									.getAttribute(STATE_GROUP_REMOVE))));
 			return (String) getContext(data).get("template") + TEMPLATE[51];
-		case 52: {
+		case 53: {
 			/*
 			 * build context for chef_site-findCourse.vm
 			 */
@@ -2746,13 +2749,12 @@ public class SiteAction extends PagedResourceActionII {
 			AcademicSession t = (AcademicSession) state
 					.getAttribute(STATE_TERM_SELECTED);
 
-			boolean useManualEntry = false;
-
-			Boolean manualSelected = (Boolean) state
-					.getAttribute(STATE_CM_MANUAL_SELECTED);
-
-			final List cmLevels = (List) state.getAttribute(STATE_CM_LEVELS), selections = (List) state
+			final List 
+				cmLevels = (List) state.getAttribute(STATE_CM_LEVELS), selections = (List) state
 					.getAttribute(STATE_CM_LEVEL_SELECTIONS);
+			
+			Section 
+				selectedSect = (Section)state.getAttribute(STATE_CM_SELECTED_SECTION);
 
 			if (courseManagementIsImplemented() && cms != null) {
 				context.put("cmsAvailable", new Boolean(true));
@@ -2761,10 +2763,12 @@ public class SiteAction extends PagedResourceActionII {
 			if (cms == null
 					|| !courseManagementIsImplemented()
 					|| cmLevels == null
-					|| cmLevels.size() < 1
-					|| (manualSelected != null && manualSelected.booleanValue())) {
-				useManualEntry = true;
-			} else {
+					|| cmLevels.size() < 1) 
+			{
+				//TODO: redirect to manual entry: case #37
+			}
+			else 
+			{
 				Object levelOpts[] = new Object[cmLevels.size()];
 				int numSelections = 0;
 
@@ -2790,12 +2794,37 @@ public class SiteAction extends PagedResourceActionII {
 
 				context.put("cmLevelOptions", Arrays.asList(levelOpts));
 			}
+			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
+				context.put("selectedProviderCourse", state
+						.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN));
+			}
+			if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
+				int courseInd = ((Integer) state
+						.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
+						.intValue();
+				context.put("manualAddNumber", new Integer(courseInd - 1));
+				context.put("manualAddFields", state
+						.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
+				context.put("back", "37");
+			}			
+
+			context.put("term", (AcademicSession) state
+					.getAttribute(STATE_TERM_SELECTED));
 
 			context.put("cmLevels", cmLevels);
 			context.put("cmLevelSelections", selections);
-			context.put("manualEntry", new Boolean(useManualEntry));
+			context.put("selectedCourse", selectedSect);
 
-			return (String) getContext(data).get("template") + TEMPLATE[52];
+			if (((String) state.getAttribute(STATE_SITE_MODE))
+					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
+				context.put("backIndex", "36");
+			}
+			//else if (((String) state.getAttribute(STATE_SITE_MODE))
+			//		.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
+			//	context.put("backIndex", "");
+			//}
+			
+			return (String) getContext(data).get("template") + TEMPLATE[53];
 		}
 
 		}
@@ -11323,15 +11352,19 @@ public class SiteAction extends PagedResourceActionII {
 			if (params.getString("manualAdds") != null
 					&& ("true").equals(params.getString("manualAdds"))) {
 				// if creating a new site
-				// DRG - changed to findCourse page - manual add is now
-				// incorporated
-				// state.setAttribute(STATE_TEMPLATE_INDEX, "37");
+				state.setAttribute(STATE_TEMPLATE_INDEX, "37");
 
-				// state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
-				// new Integer(1));
+				 state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER,
+				 new Integer(1));
+
+			}
+			else if (params.getString("findCourse") != null
+						&& ("true").equals(params.getString("findCourse")))
+			{
+				state.setAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN, providerChosenList);
 				prepFindPage(state);
-
-			} else {
+			}
+			else {
 				// no manual add
 				state.removeAttribute(STATE_MANUAL_ADD_COURSE_NUMBER);
 				state.removeAttribute(STATE_MANUAL_ADD_COURSE_FIELDS);
@@ -11443,9 +11476,49 @@ public class SiteAction extends PagedResourceActionII {
 		return cmSubjectCategory;
 	}
 
-	private void prepFindPage(SessionState state) {
-		final List cmLevels = sectionFieldManager.getRequiredFields(), // getCourseCatalogLevels(),
-		selections = (List) state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
+	private List<String> getCMLevelLabels()
+	{
+		if (cmLevels == null || cmLevels.size() == 0)
+		{
+			String
+				level = null;
+			
+			cmLevels = new ArrayList<String>(3);
+			
+			level = ServerConfigurationService.getString("site-manage.cms.subject.label");
+			if (level == null)
+			{
+				M_log.warn("site-manage.cms.subject.label is not set in sakai.properties.");
+//				return cmLevels;
+			}
+
+			cmLevels.add(level);
+			
+			level = rb.getString("nscourse.cms.courseoffering.label");
+			if (level == null)
+			{
+				M_log.warn("nscourse.cms.courseoffering.label is not set in sitesetupgeneric.properties.");
+//				return cmLevels;
+			}
+			cmLevels.add(level);
+
+			level = rb.getString("nscourse.cms.section.label");
+			if (level == null)
+			{
+				M_log.warn("nscourse.cms.section.label is not set in sitesetupgeneric.properties.");
+//				return cmLevels;
+			}
+			cmLevels.add(level);
+		}
+		
+		return cmLevels;
+	}
+	
+	private void prepFindPage(SessionState state) 
+	{
+		final List 
+			cmLevels = getCMLevelLabels(), 
+			selections = (List) state.getAttribute(STATE_CM_LEVEL_SELECTIONS);
 		int lvlSz = 0;
 
 		if (cmLevels == null || (lvlSz = cmLevels.size()) < 1) {
@@ -11453,15 +11526,18 @@ public class SiteAction extends PagedResourceActionII {
 			return;
 		}
 
-		if (selections != null && selections.size() == lvlSz) {
-			// should have all the IDs needed to get a Section
-			// get the section and add it to the roster
+		if (selections != null && selections.size() == lvlSz) 
+		{
+			Section 
+				sect = cms.getSection((String) selections.get(selections.size() - 1));
+			
+			state.setAttribute(STATE_CM_SELECTED_SECTION, sect);
 		}
 
 		state.setAttribute(STATE_CM_LEVELS, cmLevels);
 		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
 
-		state.setAttribute(STATE_TEMPLATE_INDEX, "52");
+		state.setAttribute(STATE_TEMPLATE_INDEX, "53");
 	}
 
 	public void doFind_course(RunData data) {
@@ -11473,7 +11549,7 @@ public class SiteAction extends PagedResourceActionII {
 		for (int i = 0; i < 3; i++) {
 			String val = params.get("idField_" + i);
 
-			if (val == null) {
+			if (val == null || val.trim().length() < 1) {
 				break;
 			}
 
@@ -11485,10 +11561,9 @@ public class SiteAction extends PagedResourceActionII {
 		final String option = params.get("option");
 
 		if (option != null)
-			if (option.equals("manual")) {
-				state.setAttribute(STATE_CM_MANUAL_SELECTED, new Boolean(true));
-			} else if (option.equals("useCMS")) {
-				state.removeAttribute(STATE_CM_MANUAL_SELECTED);
+			if (option.equals("manual")) 
+			{
+				//TODO: send to case 37
 			}
 
 		prepFindPage(state);
