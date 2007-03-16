@@ -4,9 +4,6 @@
 		id = "removeSection"+index;
     	removeSection = document.getElementById(id);
 		removeSection.value="true";
-    	//continueButton = document.getElementById("continueButton");
-    	//continueButton.click();
-
 		document.removeSectionForm.submit();
 		return false;
 	}
