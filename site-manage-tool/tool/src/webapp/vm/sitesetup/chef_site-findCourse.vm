@@ -1,5 +1,15 @@
 <SCRIPT LANGUAGE=JAVASCRIPT>
 <!-- hide from non-JS browsers
+	function submitRemoveSection(index){
+		id = "removeSection"+index;
+    	removeSection = document.getElementById(id);
+		removeSection.value="true";
+    	//continueButton = document.getElementById("continueButton");
+    	//continueButton.click();
+
+		document.removeSectionForm.submit();
+		return false;
+	}
 // -->
 </SCRIPT>
 
@@ -17,22 +27,34 @@
 	<p class="instruction">
 		<!-- add if statement to determine if the following should show -->
 				$tlang.getString("nscourse.already")
-				<ul>
-					#foreach($id in $!selectedProviderCourse)
-						<li>
-							<label for = "$id">
-								$id
-							</label>
-						</li>
-					#end
-					#foreach($id in $!selectedRequestedCourse)
-						<li>
-							<label for = "$id">
-								$id
-							</label>
-						</li>
-					#end
-				</ul>
+				<form name = "removeSectionForm" method="post" action="#toolForm($action)">
+					<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+					<input type="hidden" name="eventSubmit_doFind_course" value="x" />
+					<input type="hidden" name="option" value="remove" />
+					
+<!--					<input type="hidden" name="back" value="1" />
+					<input type="hidden" name="template-index" value="52" />				
+-->
+					<ul>
+						#foreach($item in $!selectedProviderCourse)
+							<li>
+								<label for = "$id">
+									$item
+									<!-- Remove Section -->
+									(<a href="#" onclick="javascript:submitRemoveSection('$item');">Remove</a>)
+									<input type="hidden" id="removeSection$item" name="removeSection$item" value="" />
+								</label>
+							</li>
+						#end
+						#foreach($id in $!selectedRequestedCourse)
+							<li>
+								<label for = "$id">
+									$id
+								</label>
+							</li>
+						#end
+					</ul>
+				</form>
 		<!-- end if -->
 		$tlang.getString("nscourse.findInstruction")
 	</p>

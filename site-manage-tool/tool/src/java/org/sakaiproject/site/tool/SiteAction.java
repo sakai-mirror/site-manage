@@ -11533,6 +11533,8 @@ public class SiteAction extends PagedResourceActionII {
 			
 			state.setAttribute(STATE_CM_SELECTED_SECTION, sect);
 		}
+		else
+			state.removeAttribute(STATE_CM_SELECTED_SECTION);
 
 		state.setAttribute(STATE_CM_LEVELS, cmLevels);
 		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
@@ -11561,10 +11563,14 @@ public class SiteAction extends PagedResourceActionII {
 		final String option = params.get("option");
 
 		if (option != null)
+		{
 			if (option.equals("manual")) 
 			{
 				//TODO: send to case 37
 			}
+			else if (option.equals("remove"))
+				removeAnyFlagedSection(state, params);
+		}
 
 		prepFindPage(state);
 	}
