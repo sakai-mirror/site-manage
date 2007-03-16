@@ -10,6 +10,12 @@
 		document.removeSectionForm.submit();
 		return false;
 	}
+	
+	function resetOption(action){
+		document.findCourseForm.option.value=action;
+		document.findCourseForm.submit();
+		return false;
+	}
 // -->
 </SCRIPT>
 
@@ -182,9 +188,12 @@
 		<input type="hidden" name="eventSubmit_doFind_course" value="x" />
 		<input type="hidden" name="option" value="find"/>
 		<p class="act">
-			<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
-			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" />
-			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')" />
+			<input id="continueButton" type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" 
+				value="$tlang.getString('gen.continue')" onclick="resetOption('continue');" />
+			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" 
+				onclick="resetOption('back');" />
+			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')"
+				onclick="resetOption('cancel');" />
 		</p>
 
 	</form>

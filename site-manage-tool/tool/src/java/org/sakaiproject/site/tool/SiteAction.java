@@ -11546,6 +11546,20 @@ public class SiteAction extends PagedResourceActionII {
 		final SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		final ParameterParser params = data.getParameters();
+		final String option = params.get("option");
+		if ("continue".equals(option)){
+			doContinue(data);
+			return;
+		}
+		if ("back".equals(option)){
+			doBack(data);
+			return;
+		}
+		if ("cancel".equals(option)){
+			doCancel(data);
+			return;
+		}
+		
 		final List selections = new ArrayList(3);
 
 		for (int i = 0; i < 3; i++) {
@@ -11559,8 +11573,6 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		state.setAttribute(STATE_CM_LEVEL_SELECTIONS, selections);
-
-		final String option = params.get("option");
 
 		if (option != null)
 		{
