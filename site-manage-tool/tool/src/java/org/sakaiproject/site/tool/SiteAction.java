@@ -2744,8 +2744,6 @@ public class SiteAction extends PagedResourceActionII {
 			 * build context for chef_site-findCourse.vm
 			 */
 
-			org.sakaiproject.coursemanagement.api.CourseManagementService cms = getCMService();
-
 			AcademicSession t = (AcademicSession) state
 					.getAttribute(STATE_TERM_SELECTED);
 
@@ -2753,8 +2751,8 @@ public class SiteAction extends PagedResourceActionII {
 				cmLevels = (List) state.getAttribute(STATE_CM_LEVELS), selections = (List) state
 					.getAttribute(STATE_CM_LEVEL_SELECTIONS);
 			
-			Section 
-				selectedSect = (Section)state.getAttribute(STATE_CM_SELECTED_SECTION);
+			SectionObject
+				selectedSect = (SectionObject)state.getAttribute(STATE_CM_SELECTED_SECTION);
 
 			if (courseManagementIsImplemented() && cms != null) {
 				context.put("cmsAvailable", new Boolean(true));
@@ -11397,13 +11395,7 @@ public class SiteAction extends PagedResourceActionII {
 		return returnValue;
 	}
 
-	private org.sakaiproject.coursemanagement.api.CourseManagementService getCMService() {
-		return (org.sakaiproject.coursemanagement.api.CourseManagementService) ComponentManager
-				.get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
-	}
-
 	private List getCMSubjects() {
-		org.sakaiproject.coursemanagement.api.CourseManagementService cms = getCMService();
 		String subjectCategory = getCMSubjectCategory();
 
 		if (cms == null || subjectCategory == null) {
@@ -11418,8 +11410,6 @@ public class SiteAction extends PagedResourceActionII {
 		if (offeringEid == null || offeringEid.trim().length() == 0)
 			return null;
 
-		org.sakaiproject.coursemanagement.api.CourseManagementService cms = getCMService();
-
 		if (cms != null) {
 			Set sections = cms.getSections(offeringEid);
 			return new ArrayList(sections);
@@ -11432,8 +11422,6 @@ public class SiteAction extends PagedResourceActionII {
 		if (subjectEid == null || subjectEid.trim().length() == 0
 				|| termID == null || termID.trim().length() == 0)
 			return null;
-
-		org.sakaiproject.coursemanagement.api.CourseManagementService cms = getCMService();
 
 		if (cms != null) {
 			Set offerings = cms.getCourseOfferingsInCourseSet(subjectEid);// ,
@@ -11530,8 +11518,10 @@ public class SiteAction extends PagedResourceActionII {
 		{
 			Section 
 				sect = cms.getSection((String) selections.get(selections.size() - 1));
+			SectionObject
+				so = new SectionObject(sect);
 			
-			state.setAttribute(STATE_CM_SELECTED_SECTION, sect);
+			state.setAttribute(STATE_CM_SELECTED_SECTION, so);
 		}
 		else
 			state.removeAttribute(STATE_CM_SELECTED_SECTION);
