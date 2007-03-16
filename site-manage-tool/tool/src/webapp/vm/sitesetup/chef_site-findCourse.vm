@@ -31,16 +31,13 @@
 		
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
 	<p class="instruction">
-		<!-- add if statement to determine if the following should show -->
+		    #if ($selectedProviderCourse)
 				$tlang.getString("nscourse.already")
 				<form name = "removeSectionForm" method="post" action="#toolForm($action)">
 					<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
 					<input type="hidden" name="eventSubmit_doFind_course" value="x" />
 					<input type="hidden" name="option" value="remove" />
-					
-<!--					<input type="hidden" name="back" value="1" />
-					<input type="hidden" name="template-index" value="52" />				
--->
+
 					<ul>
 						#foreach($item in $!selectedProviderCourse)
 							<li>
@@ -61,7 +58,8 @@
 						#end
 					</ul>
 				</form>
-		<!-- end if -->
+			#end
+			<!-- end if section for selected courses -->
 		$tlang.getString("nscourse.findInstruction")
 	</p>
 	<form name = "findCourseForm" method="post" action="#toolForm($action)">
