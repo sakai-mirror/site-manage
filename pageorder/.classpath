@@ -13,5 +13,6 @@
 	<classpathentry kind="var" path="MAVEN_REPO/ponderutilcore/jars/ponderutilcore-1.2.jar"/>
 	<classpathentry kind="var" path="MAVEN_REPO/sakairsf/jars/sakairsf-0.7-sakai_2.2.x.jar"/>
 	<classpathentry kind="var" path="MAVEN_REPO/rsfutil/jars/rsfutil-0.7.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
