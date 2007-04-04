@@ -6366,12 +6366,6 @@ public class SiteAction extends PagedResourceActionII {
 							}
 
 							boolean fromProvider = !participant.isRemoveable();
-							if (fromProvider
-									&& !roleId.equals(participant
-											.getProviderRole())) {
-
-								fromProvider = false;
-							}
 							realmEdit.addMember(id, roleId, activeGrant,
 									fromProvider);
 						}
