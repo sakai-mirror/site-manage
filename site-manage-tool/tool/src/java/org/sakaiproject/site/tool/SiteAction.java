@@ -247,7 +247,7 @@ public class SiteAction extends PagedResourceActionII {
 	private final static String PROP_SITE_CONTACT_NAME = "contact-name";
 
 	private final static String PROP_SITE_TERM = "term";
-	
+
 	private final static String PROP_SITE_TERM_EID = "term_eid";
 
 	/**
@@ -750,7 +750,8 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_CM_CURRENT_USERID);
 		state.removeAttribute(STATE_CM_AUTHORIZER_LIST);
 		state.removeAttribute(STATE_CM_AUTHORIZER_SECTIONS);
-		state.removeAttribute(FORM_ADDITIONAL); // don't we need to clena this too? -daisyf
+		state.removeAttribute(FORM_ADDITIONAL); // don't we need to clena this
+		// too? -daisyf
 
 	} // cleanState
 
@@ -1475,6 +1476,14 @@ public class SiteAction extends PagedResourceActionII {
 				if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
 					context.put("selectedProviderCourse", state
 							.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN));
+				}
+				if (state.getAttribute(STATE_CM_AUTHORIZER_SECTIONS) != null) {
+					context.put("selectedAuthorizerCourse", state
+							.getAttribute(STATE_CM_AUTHORIZER_SECTIONS));
+				}
+				if (state.getAttribute(STATE_CM_REQUESTED_SECTIONS) != null) {
+					context.put("selectedRequestedCourse", state
+							.getAttribute(STATE_CM_REQUESTED_SECTIONS));
 				}
 				if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
 					int number = ((Integer) state
@@ -2500,23 +2509,38 @@ public class SiteAction extends PagedResourceActionII {
 				// v2.4 daisyf
 				if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null
 						|| state.getAttribute(STATE_CM_AUTHORIZER_SECTIONS) != null) {
-					List<String> totalList = (List<String>) state
+					List<String> providerSectionList = (List<String>) state
 							.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+					if (providerSectionList != null) {
+						/*
+						List list1 = prepareSectionObject(providerSectionList,
+								(String) state
+										.getAttribute(STATE_CM_CURRENT_USERID));
+										*/
+						context.put("selectedProviderCourse", providerSectionList);
+					}
+
 					List<SectionObject> authorizerSectionList = (List<SectionObject>) state
 							.getAttribute(STATE_CM_AUTHORIZER_SECTIONS);
-					ArrayList list = new ArrayList();
-					if (authorizerSectionList!=null){
+					if (authorizerSectionList != null) {
+						List authorizerList = (List) state
+								.getAttribute(STATE_CM_AUTHORIZER_LIST);
+						//authorizerList is a list of SectionObject
+						/*
+						String userId = null;
+						if (authorizerList != null) {
+							userId = (String) authorizerList.get(0);
+						}
+						List list2 = prepareSectionObject(
+								authorizerSectionList, userId);
+								*/
+						ArrayList list2 = new ArrayList();
 						for (int i=0; i<authorizerSectionList.size();i++){
 							SectionObject so = (SectionObject)authorizerSectionList.get(i);
-							list.add(so.getEid());
+							list2.add(so.getEid());
 						}
+						context.put("selectedAuthorizerCourse", list2);
 					}
-					if (totalList == null) {
-						totalList = list;
-					} else {
-						totalList.addAll(list);
-					}
-					context.put("selectedProviderCourse", totalList);
 				}
 
 				if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
@@ -2524,8 +2548,6 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				context.put("term", (AcademicSession) state
 						.getAttribute(STATE_TERM_SELECTED));
-				context.put("userId", (String) state
-						.getAttribute(STATE_INSTRUCTOR_SELECTED));
 				context.put("currentUserId", (String) state
 						.getAttribute(STATE_CM_CURRENT_USERID));
 				context.put("form_additional", (String) state
@@ -2539,17 +2561,20 @@ public class SiteAction extends PagedResourceActionII {
 					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
 				context.put("backIndex", "");
 			}
+			List ll = (List) state.getAttribute(STATE_TERM_COURSE_LIST);
 			context.put("termCourseList", state
 					.getAttribute(STATE_TERM_COURSE_LIST));
 
 			// added for 2.4 -daisyf
 			context.put("campusDirectory", getCampusDirectory());
-			/* for measuring how long it takes to load sections
-			java.util.Date date = new java.util.Date();
-			M_log.debug("***2. finish at: "+date);
-			M_log.debug("***3. userId:"+(String) state
-                                                .getAttribute(STATE_INSTRUCTOR_SELECTED));
-			*/
+			context.put("userId", (String) state
+					.getAttribute(STATE_INSTRUCTOR_SELECTED));
+			/*
+			 * for measuring how long it takes to load sections java.util.Date
+			 * date = new java.util.Date(); M_log.debug("***2. finish at:
+			 * "+date); M_log.debug("***3. userId:"+(String) state
+			 * .getAttribute(STATE_INSTRUCTOR_SELECTED));
+			 */
 			return (String) getContext(data).get("template") + TEMPLATE[36];
 		case 37:
 			/*
@@ -3910,10 +3935,11 @@ public class SiteAction extends PagedResourceActionII {
 	 * do called when "eventSubmit_do" is in the request parameters to c
 	 */
 	public void doSite_type(RunData data) {
-	    /* for measuring how long it takes to load sections
-	    java.util.Date date = new java.util.Date();
-	    M_log.debug("***1. start preparing section:"+date);
-	    */
+		/*
+		 * for measuring how long it takes to load sections java.util.Date date =
+		 * new java.util.Date(); M_log.debug("***1. start preparing
+		 * section:"+date);
+		 */
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
@@ -4700,15 +4726,32 @@ public class SiteAction extends PagedResourceActionII {
 				} else {
 					state.setAttribute(STATE_TEMPLATE_INDEX, "17");
 				}
-			} else if (index == 36 && ("add").equals(option)){
+			} else if (index == 36 && ("add").equals(option)) {
 				// this is the Add extra Roster(s) case after a site is created
-				state.setAttribute(STATE_TEMPLATE_INDEX, "44");	
+				state.setAttribute(STATE_TEMPLATE_INDEX, "44");
 			} else if (params.getString("continue") != null) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params
 						.getString("continue"));
 			}
 		}
 	}// doContinue
+	
+	/**
+	 * handle with continue add new course site options
+	 * 
+	 */
+	public void doContinue_new_course(RunData data) {
+		String option = data.getParameters().getString("option");
+		if (option.equals("continue")) {
+			doContinue(data);
+		} else if (option.equals("cancel")) {
+			doCancel_create(data);
+		} else if (option.equals("back")) {
+			doBack(data);
+		} else if (option.equals("cancel")) {
+			doCancel_create(data);
+		}
+	} // doContinue_new_course
 
 	/**
 	 * doBack is called when "eventSubmit_doBack" is in the request parameters
@@ -5256,17 +5299,16 @@ public class SiteAction extends PagedResourceActionII {
 
 			String sessionUserName = cUser.getDisplayName();
 			String additional = NULL_STRING;
-			
-			/* I don't understand the following logic, why isn't aditional info be
-			 * included when it is a new request? -daisyf
+
+			/*
+			 * I don't understand the following logic, why isn't aditional info
+			 * be included when it is a new request? -daisyf
 			 */
-			/* So I am commented this out
-			if (request.equals("new")) {
-				additional = siteInfo.getAdditional();
-			} else {
-				additional = (String) state.getAttribute(FORM_ADDITIONAL);
-			}
-			*/
+			/*
+			 * So I am commented this out if (request.equals("new")) {
+			 * additional = siteInfo.getAdditional(); } else { additional =
+			 * (String) state.getAttribute(FORM_ADDITIONAL); }
+			 */
 			additional = (String) state.getAttribute(FORM_ADDITIONAL);
 
 			boolean isFutureTerm = false;
@@ -5421,8 +5463,8 @@ public class SiteAction extends PagedResourceActionII {
 
 			if (!isFutureTerm) {
 				if (sendEmailToRequestee) {
-					buf.append(rb.getString("java.authoriz") + " " + requestUserId
-							+ " " + rb.getString("java.asreq"));
+					buf.append(rb.getString("java.authoriz") + " "
+							+ requestUserId + " " + rb.getString("java.asreq"));
 				} else {
 					buf.append(rb.getString("java.thesiteemail") + " "
 							+ requestUserId + " " + rb.getString("java.asreq"));
@@ -6021,8 +6063,10 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		Site site = getStateSite(state);
-		String termEid = site.getProperties().getProperty(PROP_SITE_TERM_EID);		
-		state.setAttribute(STATE_TERM_SELECTED, cms.getAcademicSession(termEid));
+		String termEid = site.getProperties().getProperty(PROP_SITE_TERM_EID);
+		state
+				.setAttribute(STATE_TERM_SELECTED, cms
+						.getAcademicSession(termEid));
 		state.setAttribute(STATE_TEMPLATE_INDEX, "36");
 
 	} // doMenu_siteInfo_addClass
@@ -7272,9 +7316,9 @@ public class SiteAction extends PagedResourceActionII {
 						String currentUserId = (String) state
 								.getAttribute(STATE_CM_CURRENT_USERID);
 
-						// for Add extra Roster(s) case, userId == null -daisyf, Sigh...
-						// so many conditions here & there.
-						if (userId == null || (userId != null && userId.equals(currentUserId))) {
+						if (userId == null
+								|| (userId != null && userId
+										.equals(currentUserId))) {
 							state.setAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN,
 									providerChosenList);
 							state.removeAttribute(STATE_CM_AUTHORIZER_SECTIONS);
@@ -7294,7 +7338,8 @@ public class SiteAction extends PagedResourceActionII {
 									sectionObjectList);
 							state
 									.removeAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
-							// set special instruction & we will keep STATE_CM_AUTHORIZER_LIST
+							// set special instruction & we will keep
+							// STATE_CM_AUTHORIZER_LIST
 							String additional = StringUtil.trimToZero(params
 									.getString("additional"));
 							state.setAttribute(FORM_ADDITIONAL, additional);
@@ -11716,7 +11761,7 @@ public class SiteAction extends PagedResourceActionII {
 			ParameterParser params) {
 		List all = new ArrayList();
 		List providerCourseList = (List) state
-		.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+				.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
 		if (providerCourseList != null) {
 			all.addAll(providerCourseList);
 		}
@@ -11761,7 +11806,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		List<SectionObject> authorizerSections = (List<SectionObject>) state
-		.getAttribute(STATE_CM_AUTHORIZER_SECTIONS);
+				.getAttribute(STATE_CM_AUTHORIZER_SECTIONS);
 		if (authorizerSections != null) {
 			for (int i = 0; i < authorizerSections.size(); i++) {
 				SectionObject so = (SectionObject) authorizerSections.get(i);
@@ -11778,8 +11823,6 @@ public class SiteAction extends PagedResourceActionII {
 			if (authorizerSections.size() == 0)
 				state.removeAttribute(STATE_CM_AUTHORIZER_SECTIONS);
 		}
-
-
 
 		// if list is empty, set to null. This is important 'cos null is
 		// the indication that the list is empty in the code. See case 2 on line
