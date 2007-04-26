@@ -8740,9 +8740,6 @@ public class SiteAction extends PagedResourceActionII {
 
 			} // for
 
-			// import
-			importToolIntoSite(chosenList, importTools, site);
-
 			// add home tool
 			if (hasHome) {
 				// Home is a special case, with several tools on the page.
@@ -8854,6 +8851,9 @@ public class SiteAction extends PagedResourceActionII {
 		// commit
 		commitSite(site);
 
+		// import
+		importToolIntoSite(chosenList, importTools, site);
+		
 	} // addFeatures
 
 	// import tool content into site
