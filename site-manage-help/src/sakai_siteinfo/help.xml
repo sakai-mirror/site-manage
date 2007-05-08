@@ -15,6 +15,18 @@
       <property name="location"><value>/sakai_siteinfo/araw.html</value></property>
    </bean>
    
+   <bean id="editTools" class="org.sakaiproject.component.app.help.model.ResourceBean">
+      <property name="docId"><value>ardx</value></property>
+      <property name="name"><value>Add or remove tools</value></property>
+      <property name="location"><value>/sakai_siteinfo/ardx.html</value></property>
+   </bean>
+   
+   <bean id="manageGroups" class="org.sakaiproject.component.app.help.model.ResourceBean">
+      <property name="docId"><value>atcs</value></property>
+      <property name="name"><value>Manage Groups</value></property>
+      <property name="location"><value>/sakai_siteinfo/atcs.html</value></property>
+   </bean>
+   
    <bean id="grantGlobalAccess" class="org.sakaiproject.component.app.help.model.ResourceBean">
       <property name="docId"><value>arci</value></property>
       <property name="name"><value>Control Access</value></property>
@@ -65,7 +77,7 @@
    
    <bean id="importToSite" class="org.sakaiproject.component.app.help.model.ResourceBean">
       <property name="docId"><value>arao</value></property>
-      <property name="name"><value>Import to Site</value></property>
+      <property name="name"><value>Import from Site</value></property>
       <property name="location"><value>/sakai_siteinfo/arao.html</value></property>
    </bean>
    
@@ -81,7 +93,12 @@
       <property name="location"><value>/sakai_siteinfo/aral.html</value></property>
    </bean>
 
-   
+   <bean id="emailTools" class="org.sakaiproject.component.app.help.model.ResourceBean">
+      <property name="docId"><value>aueu</value></property>
+      <property name="name"><value>Tools for managing email</value></property>
+      <property name="location"><value>/sakai_siteinfo/aueu.html</value></property>
+   </bean>
+
     <bean id="org.sakaiproject.api.app.help.TableOfContents" 
           class="org.sakaiproject.component.app.help.model.TableOfContentsBean">
       <property name="name"><value>root</value></property>
@@ -93,6 +110,8 @@
                   <list>
                      <ref bean="siteInfo"/>
                      <ref bean="editASite"/>
+                     <ref bean="editTools"/>
+                     <ref bean="manageGroups"/>
                      <ref bean="grantGlobalAccess"/>
                      <ref bean="addRemoveParticipant"/>
                      <ref bean="permissionRoleOverview"/>
@@ -104,6 +123,7 @@
                      <ref bean="importToSite"/>
                      <ref bean="viewSiteInfo"/>
                      <ref bean="duplicateSite"/>
+                     <ref bean="emailTools"/>
                   </list>
                </property>
             </bean>
