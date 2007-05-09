@@ -189,6 +189,7 @@ function redirectBasedOnSelection(){
 			</select> 
 		</p>
 		#else
+		#if ($enableCourseCreationForUser )
 		<table>
 			<tr>
 			<td>
@@ -213,6 +214,7 @@ function redirectBasedOnSelection(){
 			</td>
 			</tr>
 		</table>
+		#end
 		#end
 
 
