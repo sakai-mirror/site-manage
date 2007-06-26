@@ -7867,14 +7867,13 @@ public class SiteAction extends PagedResourceActionII {
 						{
 							// add provided participant
 							Participant participant = new Participant();
-							participant.course = cms.getSection(providerCourseEid).getTitle();
 							participant.credits = e.getCredits();
 							participant.name = user.getSortName();
 							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
 							participant.regId = "";
 							participant.removeable = false;
 							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.section = providerCourseEid;
+							participant.section = cms.getSection(providerCourseEid).getTitle();
 							participant.uniqname = user.getId();
 							participants.add(participant);
 						}
@@ -10497,12 +10496,12 @@ public class SiteAction extends PagedResourceActionII {
 				// sort by whether the site is joinable or not
 				String s1 = null;
 				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getCourse();
+					s1 = ((Participant) o1).getSection();
 				}
 
 				String s2 = null;
 				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getCourse();
+					s2 = ((Participant) o2).getSection();
 				}
 
 				result = compareString(s1, s2);
@@ -10755,9 +10754,6 @@ public class SiteAction extends PagedResourceActionII {
 		/** The member credits */
 		protected String credits = NULL_STRING;
 
-		/** The course */
-		public String course = NULL_STRING;
-
 		/** The section */
 		public String section = NULL_STRING;
 
@@ -10791,10 +10787,6 @@ public class SiteAction extends PagedResourceActionII {
 		public String getCredits() {
 			return credits;
 		} // getCredits
-
-		public String getCourse() {
-			return course;
-		} // getCourse
 
 		public String getSection() {
 			return section;
