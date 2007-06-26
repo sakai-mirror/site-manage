@@ -4161,7 +4161,7 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_GROUP_MEMBERS, gMemberSet);
 		} else if (option.equals("cancel")) {
 			// cancel from the update the group member process
-			doCancel_create(data);
+			doCancel(data);
 			cleanEditGroupParams(state);
 
 		} else if (option.equals("save")) {
