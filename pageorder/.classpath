@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="tool/src/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="MAVEN_REPO/commons-lang/jars/commons-lang-2.1.jar"/>
-	<classpathentry kind="var" path="MAVEN_REPO/commons-logging/jars/commons-logging-1.0.4.jar"/>
-	<classpathentry kind="src" path="/site-api"/>
-	<classpathentry kind="src" path="/tool-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/entity-api"/>
-	<classpathentry kind="src" path="/authz-api"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
-	<classpathentry kind="src" path="/util-api"/>
-	<classpathentry kind="var" path="MAVEN_REPO/ponderutilcore/jars/ponderutilcore-1.2.jar"/>
-	<classpathentry kind="var" path="MAVEN_REPO/sakairsf/jars/sakairsf-0.7-sakai_2.2.x.jar"/>
-	<classpathentry kind="var" path="MAVEN_REPO/rsfutil/jars/rsfutil-0.7.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
-	<classpathentry kind="output" path="bin"/>
+  <classpathentry kind="src" path="tool/src/java"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.1/commons-lang-2.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar"/>
+  <classpathentry kind="src" path="/site-api"/>
+  <classpathentry kind="src" path="/tool-api"/>
+  <classpathentry combineaccessrules="false" kind="src" path="/entity-api"/>
+  <classpathentry kind="src" path="/authz-api"/>
+  <classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
+  <classpathentry kind="src" path="/util-api"/>
+  <classpathentry kind="var" path="M2_REPO/uk/org/ponder/ponderutilcore/1.2/ponderutilcore-1.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/uk/org/ponder/sakairsf/SakaiRSF/0.7-sakai_2.2.x/SakaiRSF-0.7-sakai_2.2.x.jar"/>
+  <classpathentry kind="var" path="M2_REPO/uk/org/ponder/rsfutil/rsfutil/0.7/rsfutil-0.7.jar"/>
+  <classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
+  <classpathentry kind="output" path="bin"/>
 </classpath>
