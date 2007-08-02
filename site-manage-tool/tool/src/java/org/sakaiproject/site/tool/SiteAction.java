@@ -1620,31 +1620,18 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("allowUpdateSiteMembership", Boolean
 						.valueOf(allowUpdateSiteMembership));
 
-				Menu b = new MenuImpl(portlet, data, (String) state
-						.getAttribute(STATE_ACTION));
-				if (allowUpdateSite) 
-				{
+				if (allowUpdateSite) {
 					// top menu bar
+					Menu b = new MenuImpl(portlet, data, (String) state
+							.getAttribute(STATE_ACTION));
+
 					if (!isMyWorkspace) {
 						b.add(new MenuEntry(rb.getString("java.editsite"),
 								"doMenu_edit_site_info"));
 					}
 					b.add(new MenuEntry(rb.getString("java.edittools"),
 							"doMenu_edit_site_tools"));
-				}
 
-				if (allowUpdateSiteMembership) 
-				{
-					// show add participant menu
-					if (!isMyWorkspace) {
-						// show the Add Participant menu
-						b.add(new MenuEntry(rb.getString("java.addp"),
-								"doMenu_siteInfo_addParticipant"));
-					}
-				}
-				
-				if (allowUpdateGroupMembership) {
-					// show Manage Groups menu
 					if (!isMyWorkspace
 							&& (ServerConfigurationService
 									.getString("wsetup.group.support") == "" || ServerConfigurationService
@@ -1655,10 +1642,6 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.group"),
 								"doMenu_group"));
 					}
-				}
-				
-				if (allowUpdateSite) 
-				{
 					if (!isMyWorkspace) {
 						List gradToolsSiteTypes = (List) state
 								.getAttribute(GRADTOOLS_SITE_TYPES);
@@ -1675,6 +1658,8 @@ public class SiteAction extends PagedResourceActionII {
 									rb.getString("java.siteaccess"),
 									"doMenu_edit_site_access"));
 						}
+						b.add(new MenuEntry(rb.getString("java.addp"),
+								"doMenu_siteInfo_addParticipant"));
 						if (siteType != null && siteType.equals("course")) {
 							b.add(new MenuEntry(rb.getString("java.editc"),
 									"doMenu_siteInfo_editClass"));
@@ -1724,11 +1709,35 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.orderpages"),
 								"doPageOrderHelper"));
 					}
+					context.put("menu", b);
 				}
-				
-				if (b.size() > 0)
-				{
-					// add the menus to vm
+
+				if (allowUpdateGroupMembership) {
+					// show Manage Groups menu
+					Menu b = new MenuImpl(portlet, data, (String) state
+							.getAttribute(STATE_ACTION));
+					if (!isMyWorkspace
+							&& (ServerConfigurationService
+									.getString("wsetup.group.support") == "" || ServerConfigurationService
+									.getString("wsetup.group.support")
+									.equalsIgnoreCase(Boolean.TRUE.toString()))) {
+						// show the group toolbar unless configured
+						// to not support group
+						b.add(new MenuEntry(rb.getString("java.group"),
+								"doMenu_group"));
+					}
+					context.put("menu", b);
+				}
+
+				if (allowUpdateSiteMembership) {
+					// show add participant menu
+					Menu b = new MenuImpl(portlet, data, (String) state
+							.getAttribute(STATE_ACTION));
+					if (!isMyWorkspace) {
+						// show the Add Participant menu
+						b.add(new MenuEntry(rb.getString("java.addp"),
+								"doMenu_siteInfo_addParticipant"));
+					}
 					context.put("menu", b);
 				}
 
