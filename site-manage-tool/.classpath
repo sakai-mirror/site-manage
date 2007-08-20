@@ -26,8 +26,6 @@
   <classpathentry kind="src" path="/site-manage-util"/>
   <classpathentry combineaccessrules="false" kind="src" path="/import-api"/>
   <classpathentry kind="src" path="/cm-api"/>
-  <classpathentry combineaccessrules="false" kind="src" path="/cm-impl"/>
-  <classpathentry combineaccessrules="false" kind="src" path="/component-impl"/>
   <classpathentry combineaccessrules="false" kind="src" path="/entity-util"/>
   <classpathentry combineaccessrules="false" kind="src" path="/event-util"/>
   <classpathentry kind="var" path="M2_REPO/velocity-tools/velocity-tools/1.2/velocity-tools-1.2.jar"/>
