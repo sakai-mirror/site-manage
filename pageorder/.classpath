@@ -10,9 +10,9 @@
 	<classpathentry kind="src" path="/authz-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
 	<classpathentry kind="src" path="/util-api"/>
-	<classpathentry kind="var" path="M2_REPO/uk/org/ponder/ponderutilcore/1.2.2M4/ponderutilcore-1.2.2M4.jar"/>
-	<classpathentry kind="var" path="M2_REPO/uk/org/ponder/sakairsf/SakaiRSF/0.7.2M4-sakai_2.2.x/SakaiRSF-0.7.2M4-sakai_2.2.x.jar"/>
-	<classpathentry kind="var" path="M2_REPO/uk/org/ponder/rsfutil/rsfutil/0.7.2M4/rsfutil-0.7.2M4.jar"/>
+    <classpathentry kind="var" path="M2_REPO/uk/org/ponder/ponderutilcore/1.2.2RC1/ponderutilcore-1.2.2RC1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/uk/org/ponder/sakairsf/SakaiRSF/0.7.2RC1-sakai_2.2.x/sakairsf-0.7.2RC1-sakai_2.2.x.jar"/>
+	<classpathentry kind="var" path="M2_REPO/uk/org/ponder/rsfutil/rsfutil/0.7.2RC1/rsfutil-0.7.2RC1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/component-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
