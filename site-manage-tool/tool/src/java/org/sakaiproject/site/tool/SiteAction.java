@@ -68,6 +68,12 @@ import org.sakaiproject.cheftool.menu.MenuImpl;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.cover.ContentHostingService;
+import org.sakaiproject.coursemanagement.api.AcademicSession;
+import org.sakaiproject.coursemanagement.api.CourseOffering;
+import org.sakaiproject.coursemanagement.api.Enrollment;
+import org.sakaiproject.coursemanagement.api.EnrollmentSet;
+import org.sakaiproject.coursemanagement.api.Section;
+import org.sakaiproject.coursemanagement.api.exception.IdNotFoundException;
 import org.sakaiproject.email.cover.EmailService;
 import org.sakaiproject.entity.api.EntityProducer;
 import org.sakaiproject.entity.api.EntityPropertyNotDefinedException;
@@ -119,13 +125,6 @@ import org.sakaiproject.util.Validator;
 import org.sakaiproject.importer.api.ImportService;
 import org.sakaiproject.importer.api.ImportDataSource;
 import org.sakaiproject.importer.api.SakaiArchive;
-
-import org.sakaiproject.coursemanagement.api.AcademicSession;
-import org.sakaiproject.coursemanagement.api.CourseOffering;
-import org.sakaiproject.coursemanagement.api.Section;
-import org.sakaiproject.coursemanagement.api.Enrollment;
-import org.sakaiproject.coursemanagement.api.Membership;
-import org.sakaiproject.coursemanagement.api.exception.IdNotFoundException;
 import org.sakaiproject.authz.api.GroupProvider;
 import org.apache.velocity.tools.generic.SortTool;
 
@@ -7836,32 +7835,43 @@ public class SiteAction extends PagedResourceActionII {
 			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
-				Set enrollmentSet = cms.getEnrollments(providerCourseEid);
-				for (Iterator eIterator = enrollmentSet.iterator();eIterator.hasNext();)
+				Set enrollmentSets = cms.getEnrollmentSets(providerCourseEid);
+				if (enrollmentSets != null)
 				{
-					Enrollment e = (Enrollment) eIterator.next();
-					try 
+					for (Iterator eSetsIterator = enrollmentSets.iterator();eSetsIterator.hasNext();)
 					{
-						User user = UserDirectoryService.getUserByEid(e.getUserId());
-						Member member = realm.getMember(user.getId());
-						if (member != null && member.isProvided())
+						EnrollmentSet enrollmentSet = (EnrollmentSet) eSetsIterator.next();
+						if (enrollmentSet != null)
 						{
-							// add provided participant
-							Participant participant = new Participant();
-							participant.credits = e.getCredits();
-							participant.name = user.getSortName();
-							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-							participant.regId = "";
-							participant.removeable = false;
-							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.section = cms.getSection(providerCourseEid).getTitle();
-							participant.uniqname = user.getId();
-							participants.add(participant);
+							Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
+							for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
+							{
+								Enrollment e = (Enrollment) eIterator.next();
+								try 
+								{
+									User user = UserDirectoryService.getUserByEid(e.getUserId());
+									Member member = realm.getMember(user.getId());
+									if (member != null && member.isProvided())
+									{
+										// add provided participant
+										Participant participant = new Participant();
+										participant.credits = e.getCredits();
+										participant.name = user.getSortName();
+										participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+										participant.regId = "";
+										participant.removeable = false;
+										participant.role = member.getRole()!=null?member.getRole().getId():"";
+										participant.section = cms.getSection(providerCourseEid).getTitle();
+										participant.uniqname = user.getId();
+										participants.add(participant);
+									}
+								} catch (UserNotDefinedException exception) {
+									// deal with missing user quietly without throwing a
+									// warning message
+									M_log.warn(exception.getMessage());
+								}
+							}
 						}
-					} catch (UserNotDefinedException exception) {
-						// deal with missing user quietly without throwing a
-						// warning message
-						M_log.warn(exception.getMessage());
 					}
 				}
 			}
