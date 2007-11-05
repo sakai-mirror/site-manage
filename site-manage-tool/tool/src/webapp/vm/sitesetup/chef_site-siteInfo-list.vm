@@ -59,9 +59,7 @@
 					$tlang.getString("sitegen.siteinfolist.courses")
 				</th>
 				<td>
-					#foreach($id in $!providerCourseList)
-						$id<br />
-					#end
+					$!providedSectionTitle
 					#foreach($id in $!manualCourseList)
 						$id $tlang.getString("man.requested")<br />
 					#end
