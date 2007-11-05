@@ -7831,14 +7831,15 @@ public class SiteAction extends PagedResourceActionII {
 			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
+				Section section = cms.getSection(providerCourseEid);
 				if (cms.isSectionDefined(providerCourseEid))
 				{
 					// in case of Section eid
-					EnrollmentSet enrollmentSet = cms.getSection(providerCourseEid).getEnrollmentSet();
-					addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet);
+					EnrollmentSet enrollmentSet = section.getEnrollmentSet();
+					addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, section.getTitle());
 					// add memberships
 					Set memberships = cms.getSectionMemberships(providerCourseEid);
-					addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships);
+					addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships, section.getTitle());
 				}
 			}
 			
@@ -7886,7 +7887,7 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param providerCourseEid
 	 * @param memberships
 	 */
-	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships) {
+	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships, String sectionTitle) {
 		if (memberships != null)
 		{
 			for (Iterator mIterator = memberships.iterator();mIterator.hasNext();)
@@ -7904,7 +7905,7 @@ public class SiteAction extends PagedResourceActionII {
 						if (participantsMap.containsKey(userId))
 						{
 							participant = (Participant) participantsMap.get(userId);
-							participant.section = participant.section.concat(", <br />" + cms.getSection(providerCourseEid).getTitle());
+							participant.section = participant.section.concat(", <br />" + sectionTitle);
 						}
 						else
 						{
@@ -7915,7 +7916,7 @@ public class SiteAction extends PagedResourceActionII {
 							participant.regId = "";
 							participant.removeable = false;
 							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.section = cms.getSection(providerCourseEid).getTitle();
+							participant.section = sectionTitle;
 							participant.uniqname = userId;
 						}
 						
@@ -7937,7 +7938,7 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param providerCourseEid
 	 * @param enrollmentSet
 	 */
-	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet) {
+	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet, String sectionTitle) {
 		if (enrollmentSet != null)
 		{
 			Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
@@ -7958,7 +7959,7 @@ public class SiteAction extends PagedResourceActionII {
 						if (participantsMap.containsKey(userId))
 						{
 							participant = (Participant) participantsMap.get(userId);
-							participant.section = participant.section.concat(", <br />" + cms.getSection(providerCourseEid).getTitle());
+							participant.section = participant.section.concat(", <br />" + sectionTitle);
 							participant.credits = participant.credits.concat(", <br />" + e.getCredits());
 						}
 						else
@@ -7970,7 +7971,7 @@ public class SiteAction extends PagedResourceActionII {
 							participant.regId = "";
 							participant.removeable = false;
 							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.section = cms.getSection(providerCourseEid).getTitle();
+							participant.section = sectionTitle;
 							participant.uniqname = userId;
 						}
 						participantsMap.put(userId, participant);
