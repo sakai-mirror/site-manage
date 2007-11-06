@@ -60,6 +60,9 @@
 				</th>
 				<td>
 					$!providedSectionTitle
+					#foreach($id in $!cmRequestedCourseList)
+						$id.eid $tlang.getString("man.requested")<br />
+					#end
 					#foreach($id in $!manualCourseList)
 						$id $tlang.getString("man.requested")<br />
 					#end

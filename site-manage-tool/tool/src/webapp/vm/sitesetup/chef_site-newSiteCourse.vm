@@ -161,10 +161,15 @@ function redirectBasedOnSelection(){
 					</label>
 				</li>
 			#end
+			#foreach($id in $!cmRequestedCourseList)
+				<li>
+						$id.eid $tlang.getString("man.requested")<br />
+				</li>
+			#end
 			#foreach($id in $!manualCourseList)
 				<li>
 					<label for = "$id">
-						$id
+						$id $tlang.getString("man.requested")<br />
 					</label>
 				</li>
 			#end
