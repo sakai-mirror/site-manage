@@ -4,7 +4,7 @@
 </style>
 
 <SCRIPT LANGUAGE=JAVASCRIPT>
-<!-- hide from non-JS browsers
+<!-- hide from non-JS browsersf
 function toggle(toggleKey, begin, end) {
     var checkboxes = document.getElementsByName("providerCourseAdd");
     for (i=begin; i<end; i++){
@@ -161,7 +161,7 @@ function redirectBasedOnSelection(){
 					</label>
 				</li>
 			#end
-			#foreach($id in $!requestedCourseList)
+			#foreach($id in $!manualCourseList)
 				<li>
 					<label for = "$id">
 						$id
@@ -170,7 +170,7 @@ function redirectBasedOnSelection(){
 			#end
 		</ul>
 
-		 #if ($site)
+		#if ($site)
 		<p class="shorttext  required">
 			<span class ="reqStar">*</span>
 			<label for="selectTerm">
@@ -188,8 +188,8 @@ function redirectBasedOnSelection(){
 				#end
 			</select> 
 		</p>
-		#else
-		#if ($enableCourseCreationForUser )
+		#end
+	#if ($enableCourseCreationForUser )
 		<table>
 			<tr>
 			<td>
@@ -214,7 +214,6 @@ function redirectBasedOnSelection(){
 			</td>
 			</tr>
 		</table>
-		#end
 		#end
 
 
@@ -309,10 +308,9 @@ function redirectBasedOnSelection(){
 		<input id="index" type="hidden" name="template-index" value="36" />
 		<input type="hidden" name="back" value="1" />
 		<input type="hidden" name="option" id="option" value="x" />
-
+		<input type="hidden" name="eventSubmit_doContinue_new_course" value="x" />
 			#if (!$site)
 				<!-- Add Not Listed Courses -->
-				<input type="hidden" name="eventSubmit_doContinue_new_course" value="x" />
 				<a href="#" onclick="javascript:submitFindCourse();">$tlang.getString('nscourse.add_course_not_listed')</a>
 				<p class="act">
 				<input
@@ -343,9 +341,10 @@ function redirectBasedOnSelection(){
 					/>
 				</p>
 			#else
+				<!-- Add Not Listed Courses -->
+				<a href="#" onclick="javascript:submitFindCourse();">$tlang.getString('nscourse.add_course_not_listed')</a>
 				<p class="act">
 				<input type="hidden" name="option" id="option" value="x" />
-				<input type="hidden" name="eventSubmit_doAdd_class_select" value="x" />
 				<input
 					disabled="true"
 					type="button" 
@@ -361,7 +360,7 @@ function redirectBasedOnSelection(){
 					name="Cancel" 
 					id="Cancel" 
 					value="$tlang.getString('gen.cancel')"
-					onclick="document.getElementById('option').value='cancel'; document.addCourseForm.submit(); return false;"
+					onclick="document.getElementById('option').value='cancel_edit'; document.addCourseForm.submit(); return false;"
 				/>
 				</p>
 			#end
