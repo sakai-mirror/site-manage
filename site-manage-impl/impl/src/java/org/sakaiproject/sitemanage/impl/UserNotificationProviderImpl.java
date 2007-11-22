@@ -33,7 +33,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	
 	/** portlet configuration parameter values* */
 	/** Resource bundle using current language locale */
-	private static ResourceLoader rb = new ResourceLoader("sitesetupgeneric");
+	private static ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
 
 	public void init() {
 		//nothing realy to do
@@ -42,6 +42,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
+		
 		String from = getSetupRequestEmailAddress();
 		if (from != null) {
 			String productionSiteName = serverConfigurationService.getString(
@@ -104,6 +105,8 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 
 	public void notifyNewUserEmail(User user, String newUserPassword,
 			String siteTitle) {
+		
+		
 		String from = getSetupRequestEmailAddress();
 		String productionSiteName = serverConfigurationService.getString(
 				"ui.service", "");

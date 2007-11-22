@@ -10,5 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/user-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/cm-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/email-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/entity-api"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
