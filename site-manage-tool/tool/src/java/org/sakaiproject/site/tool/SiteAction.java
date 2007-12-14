@@ -96,6 +96,7 @@ import org.sakaiproject.util.SubjectAffiliates;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
 import org.sakaiproject.time.cover.TimeService;
+import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
@@ -216,7 +217,14 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51,
 			"", // 52 - no template; used by daisyf. for remove course section
-			"-findCourse" // 53
+			"-findCourse", // 53
+			"",// 54
+			"",// 55
+			"",// 56
+			"",// 57
+			"-siteInfo-importSelection", //54  //58
+			"-siteInfo-importMigrate", //55    //59
+			"-importSitesMigrate" //56  //60
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -1683,10 +1691,18 @@ public class SiteAction extends PagedResourceActionII {
 							// import link should be visible even if only one
 							// site
 							if (updatableSites.size() > 0) {
-								b.add(new MenuEntry(
+								//a configuration param for showing/hiding Import From Site with Clean Up
+								String importFromSite = ServerConfigurationService.getString("clean.import.site",Boolean.TRUE.toString());
+								if (importFromSite.equalsIgnoreCase("true")) {
+									b.add(new MenuEntry(
 										rb.getString("java.import"),
-										"doMenu_siteInfo_import"));
-
+										"doMenu_siteInfo_importSelection"));
+								}
+								else {
+									b.add(new MenuEntry(
+										rb.getString("java.import"),
+										"doMenu_siteInfo_import"));	
+								}
 								// a configuration param for
 								// showing/hiding import
 								// from file choice
@@ -2419,6 +2435,41 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("importSupportedTools", importTools());
 
 			return (String) getContext(data).get("template") + TEMPLATE[27];
+		case 60:
+			/*
+			 * buildContextForTemplate chef_site-importSitesMigrate.vm
+			 * 
+			 */
+			existingSite = site != null ? true : false;
+			site_type = (String) state.getAttribute(STATE_SITE_TYPE);
+			if (existingSite) {
+				// revising a existing site's tool
+				context.put("continue", "12");
+				context.put("back", "28");
+				context.put("totalSteps", "2");
+				context.put("step", "2");
+				context.put("currentSite", site);
+			} else {
+				// new site, go to edit access page
+				context.put("back", "3");
+				if (fromENWModifyView(state)) {
+					context.put("continue", "26");
+				} else {
+					context.put("continue", "18");
+				}
+			}
+			context.put(STATE_TOOL_REGISTRATION_LIST, state
+					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			context.put("selectedTools", orderToolIds(state, site_type,
+					(List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST))); // String toolId's
+			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
+			context.put("importSitesTools", state
+					.getAttribute(STATE_IMPORT_SITE_TOOL));
+			context.put("check_home", state
+					.getAttribute(STATE_TOOL_HOME_SELECTED));
+			context.put("importSupportedTools", importTools());
+
+			return (String) getContext(data).get("template") + TEMPLATE[60];		
 		case 28:
 			/*
 			 * buildContextForTemplate chef_siteinfo-import.vm
@@ -2431,6 +2482,30 @@ public class SiteAction extends PagedResourceActionII {
 					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
 					null, null, null, SortType.TITLE_ASC, null));
 			return (String) getContext(data).get("template") + TEMPLATE[28];
+		case 58:
+			/*
+			 * buildContextForTemplate chef_siteinfo-importSelection.vm
+			 * 
+			 */
+			context.put("currentSite", site);
+			context.put("importSiteList", state
+					.getAttribute(STATE_IMPORT_SITES));
+			context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
+			return (String) getContext(data).get("template") + TEMPLATE[58];
+		case 59:
+			/*
+			 * buildContextForTemplate chef_siteinfo-importMigrate.vm
+			 * 
+			 */
+			context.put("currentSite", site);
+			context.put("importSiteList", state
+					.getAttribute(STATE_IMPORT_SITES));
+			context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
+			return (String) getContext(data).get("template") + TEMPLATE[59];
 		case 29:
 			/*
 			 * buildContextForTemplate chef_siteinfo-duplicate.vm
@@ -5670,7 +5745,7 @@ public class SiteAction extends PagedResourceActionII {
 					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, "18");
 			}
-		} else if (currentIndex.equals("27") || currentIndex.equals("28")) {
+		} else if (currentIndex.equals("27") || currentIndex.equals("28") || currentIndex.equals("59") || currentIndex.equals("60")) {
 			// from import
 			if (((String) state.getAttribute(STATE_SITE_MODE))
 					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
@@ -6034,6 +6109,22 @@ public class SiteAction extends PagedResourceActionII {
 	} // doMenu_siteInfo_cancel_access
 
 	/**
+	 * doMenu_siteInfo_importSelection
+	 */
+	public void doMenu_siteInfo_importSelection(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// get the tools
+		siteToolsIntoState(state);
+
+		if (state.getAttribute(STATE_MESSAGE) == null) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "58");
+		}
+
+	} // doMenu_siteInfo_importSelection
+
+	/**
 	 * doMenu_siteInfo_import
 	 */
 	public void doMenu_siteInfo_import(RunData data) {
@@ -6048,6 +6139,19 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doMenu_siteInfo_import
+	
+	public void doMenu_siteInfo_importMigrate(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// get the tools
+		siteToolsIntoState(state);
+
+		if (state.getAttribute(STATE_MESSAGE) == null) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "59");
+		}
+
+	} // doMenu_siteInfo_importMigrate
 
 	/**
 	 * doMenu_siteInfo_editClass
@@ -7154,7 +7258,80 @@ public class SiteAction extends PagedResourceActionII {
 				updateCurrentStep(state, forward);
 			}
 			break;
+		case 60:
+			/*
+			 * actionForTemplate chef_site-importSitesMigrate.vm
+			 * 
+			 */
+			if (forward) {
+				Site existingSite = getStateSite(state);
+				if (existingSite != null) {
+					// revising a existing site's tool
+					if (select_import_tools(params, state)) {
+						Hashtable importTools = (Hashtable) state
+								.getAttribute(STATE_IMPORT_SITE_TOOL);
+						List selectedTools = (List) state
+								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+						// Remove all old contents before importing contents from new site
+						importToolIntoSiteMigrate(selectedTools, importTools,
+								existingSite);
+
+						existingSite = getStateSite(state); // refresh site for
+						// WC and News
+
+						if (state.getAttribute(STATE_MESSAGE) == null) {
+							commitSite(existingSite);
+							state.removeAttribute(STATE_IMPORT_SITE_TOOL);
+							state.removeAttribute(STATE_IMPORT_SITES);
+						}
+					} else {
+						// show alert and remain in current page
+						addAlert(state, rb.getString("java.toimporttool"));
+					}
+				} else {
+					// new site
+					select_import_tools(params, state);
+				}
+			} else {
+				// read form input about import tools
+				select_import_tools(params, state);
+			}
+			if (state.getAttribute(STATE_MESSAGE) == null) {
+				updateCurrentStep(state, forward);
+			}
+			break;
 		case 28:
+			/*
+			 * actionForTemplate chef_siteinfo-import.vm
+			 * 
+			 */
+			if (forward) {
+				if (params.getStrings("importSites") == null) {
+					addAlert(state, rb.getString("java.toimport") + " ");
+					state.removeAttribute(STATE_IMPORT_SITES);
+				} else {
+					List importSites = new ArrayList(Arrays.asList(params
+							.getStrings("importSites")));
+					Hashtable sites = new Hashtable();
+					for (index = 0; index < importSites.size(); index++) {
+						try {
+							Site s = SiteService.getSite((String) importSites
+									.get(index));
+							sites.put(s, new Vector());
+						} catch (IdUnusedException e) {
+						}
+					}
+					state.setAttribute(STATE_IMPORT_SITES, sites);
+				}
+			}
+			break;
+		case 58:
+			/*
+			 * actionForTemplate chef_siteinfo-importSelection.vm
+			 * 
+			 */
+			break;
+		case 59:
 			/*
 			 * actionForTemplate chef_siteinfo-import.vm
 			 * 
@@ -8907,6 +9084,51 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 	} // importToolIntoSite
+	
+	private void importToolIntoSiteMigrate(List toolIds, Hashtable importTools,
+			Site site) {
+		
+		if (importTools != null) {
+			// import resources first
+			boolean resourcesImported = false;
+			for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
+				String toolId = (String) toolIds.get(i);
+
+				if (toolId.equalsIgnoreCase("sakai.resources")
+						&& importTools.containsKey(toolId)) {
+					List importSiteIds = (List) importTools.get(toolId);
+
+					for (int k = 0; k < importSiteIds.size(); k++) {
+						String fromSiteId = (String) importSiteIds.get(k);
+						String toSiteId = site.getId();
+
+						String fromSiteCollectionId = ContentHostingService
+								.getSiteCollection(fromSiteId);
+						String toSiteCollectionId = ContentHostingService
+								.getSiteCollection(toSiteId);
+						transferCopyEntitiesMigrate(toolId, fromSiteCollectionId,
+								toSiteCollectionId);
+						resourcesImported = true;
+					}
+				}
+			}
+
+			// import other tools then
+			for (int i = 0; i < toolIds.size(); i++) {
+				String toolId = (String) toolIds.get(i);
+				if (!toolId.equalsIgnoreCase("sakai.resources")
+						&& importTools.containsKey(toolId)) {
+					List importSiteIds = (List) importTools.get(toolId);
+					for (int k = 0; k < importSiteIds.size(); k++) {
+						String fromSiteId = (String) importSiteIds.get(k);
+						String toSiteId = site.getId();
+						transferCopyEntitiesMigrate(toolId, fromSiteId, toSiteId);
+					}
+				}
+			}
+		}
+	} // importToolIntoSiteMigrate
+
 
 	public void saveSiteStatus(SessionState state, boolean published) {
 		Site site = getStateSite(state);
@@ -11315,6 +11537,30 @@ public class SiteAction extends PagedResourceActionII {
 					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
 						et.transferCopyEntities(fromContext, toContext,
 								new Vector());
+					}
+				} catch (Throwable t) {
+					M_log.warn(
+							"Error encountered while asking EntityTransfer to transferCopyEntities from: "
+									+ fromContext + " to: " + toContext, t);
+				}
+			}
+		}
+	}
+	
+	protected void transferCopyEntitiesMigrate(String toolId, String fromContext,
+			String toContext) {
+		
+		for (Iterator i = EntityManager.getEntityProducers().iterator(); i
+				.hasNext();) {
+			EntityProducer ep = (EntityProducer) i.next();
+			if (ep instanceof EntityTransferrer) {
+				try {
+					EntityTransferrer et = (EntityTransferrer) ep;
+
+					// if this producer claims this tool id
+					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
+						et.transferCopyEntities(fromContext, toContext,
+								new Vector(), true);
 					}
 				} catch (Throwable t) {
 					M_log.warn(
