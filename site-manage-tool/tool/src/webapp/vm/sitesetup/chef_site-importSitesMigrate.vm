@@ -66,7 +66,7 @@
 				#end
 			#end
 		</table>
-		<input type="hidden" name="back" value="$back" />
+		<input type="hidden" name="back" value="59" />
 		<input type="hidden" name="template-index" value="60" />
 		<input type="hidden" name="continue" value="$continue" />
 		<p class="act">
