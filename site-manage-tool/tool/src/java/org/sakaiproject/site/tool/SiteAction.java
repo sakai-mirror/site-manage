@@ -3232,7 +3232,7 @@ public class SiteAction extends PagedResourceActionII {
 				try
 				{
 					Section s = cms.getSection(sectionId);
-					sectionTitleString = (i>1)?sectionTitleString + "<br />" + s.getTitle():s.getTitle(); 
+					sectionTitleString = (i>0)?sectionTitleString + "<br />" + s.getTitle():s.getTitle(); 
 				}
 				catch (Exception e)
 				{
@@ -8216,49 +8216,52 @@ public class SiteAction extends PagedResourceActionII {
 		if (enrollmentSet != null)
 		{
 			Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
-			for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
+			if (enrollments != null)
 			{
-				Enrollment e = (Enrollment) eIterator.next();
-				try 
+				for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
 				{
-					User user = UserDirectoryService.getUserByEid(e.getUserId());
-					String userId = user.getId();
-					Member member = realm.getMember(userId);
-					if (member != null && member.isProvided())
+					Enrollment e = (Enrollment) eIterator.next();
+					try 
 					{
-						try
+						User user = UserDirectoryService.getUserByEid(e.getUserId());
+						String userId = user.getId();
+						Member member = realm.getMember(userId);
+						if (member != null && member.isProvided())
 						{
-						// get or add provided participant
-						Participant participant;
-						if (participantsMap.containsKey(userId))
-						{
-							participant = (Participant) participantsMap.get(userId);
-							participant.section = participant.section.concat(", <br />" + sectionTitle);
-							participant.credits = participant.credits.concat(", <br />" + e.getCredits());
+							try
+							{
+							// get or add provided participant
+							Participant participant;
+							if (participantsMap.containsKey(userId))
+							{
+								participant = (Participant) participantsMap.get(userId);
+								participant.section = participant.section.concat(", <br />" + sectionTitle);
+								participant.credits = participant.credits.concat(", <br />" + e.getCredits());
+							}
+							else
+							{
+								participant = new Participant();
+								participant.credits = e.getCredits();
+								participant.name = user.getSortName();
+								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+								participant.regId = "";
+								participant.removeable = false;
+								participant.role = member.getRole()!=null?member.getRole().getId():"";
+								participant.section = sectionTitle;
+								participant.uniqname = userId;
+							}
+							participantsMap.put(userId, participant);
+							}
+							catch (Exception ee)
+							{
+								M_log.warn(ee.getMessage());
+							}
 						}
-						else
-						{
-							participant = new Participant();
-							participant.credits = e.getCredits();
-							participant.name = user.getSortName();
-							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-							participant.regId = "";
-							participant.removeable = false;
-							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.section = sectionTitle;
-							participant.uniqname = userId;
-						}
-						participantsMap.put(userId, participant);
-						}
-						catch (Exception ee)
-						{
-							M_log.warn(ee.getMessage());
-						}
+					} catch (UserNotDefinedException exception) {
+						// deal with missing user quietly without throwing a
+						// warning message
+						M_log.warn(exception.getMessage());
 					}
-				} catch (UserNotDefinedException exception) {
-					// deal with missing user quietly without throwing a
-					// warning message
-					M_log.warn(exception.getMessage());
 				}
 			}
 		}
