@@ -45,6 +45,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.alias.api.Alias;
 import org.sakaiproject.alias.cover.AliasService;
+import org.sakaiproject.api.privacy.PrivacyManager;
 import org.sakaiproject.archive.api.ImportMetadata;
 import org.sakaiproject.archive.cover.ArchiveService;
 import org.sakaiproject.authz.api.AuthzGroup;
@@ -53,6 +54,7 @@ import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
 import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.authz.cover.SecurityService;
 import org.sakaiproject.cheftool.Context;
@@ -128,6 +130,8 @@ import org.sakaiproject.coursemanagement.api.Membership;
 import org.sakaiproject.coursemanagement.api.exception.IdNotFoundException;
 import org.sakaiproject.authz.api.GroupProvider;
 import org.apache.velocity.tools.generic.SortTool;
+
+import edu.iu.oncourse.util.OncourseUtil;
 
 /**
  * <p>
@@ -218,13 +222,14 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-groupDeleteConfirm", // 51,
 			"", // 52 - no template; used by daisyf. for remove course section
 			"-findCourse", // 53
-			"",// 54
-			"",// 55
-			"",// 56
-			"",// 57
-			"-siteInfo-importSelection", //54  //58
-			"-siteInfo-importMigrate", //55    //59
-			"-importSitesMigrate" //56  //60
+			// ONCOURSE COMBINE ROSTERS
+			"-oncourse-combine-rosters", //52 -> 54
+			"-oncourse-combine-choose-name", //53 -> 55
+			"-oncourse-combine-confirm", // 54 -> 56
+			"-oncourse-separate-rosters", //55 -> 57
+			"-siteInfo-importSelection",   //58
+			"-siteInfo-importMigrate",     //59
+			"-importSitesMigrate"   //60
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -584,6 +589,15 @@ public class SiteAction extends PagedResourceActionII {
 
 	// the string marks the protocol part in url
 	private static final String PROTOCOL_STRING = "://";
+	
+	
+	//Oncourse Sectioning
+  	private static final String STATE_SITE_COMBINE_SELECTED_LIST = "siteCombineSelectedList"; 
+  	private static final String STATE_SITE_COMBINE_PARENT_NAME = "siteCombineParentName";
+    private static final String STATE_SITE_COMBINE_DESTINATION = "siteCombineDestination";
+    private static final String STATE_SITE_COMBINE_DESTINATION_SITE = "siteCombineDestination";
+  	
+	
 
 	/**
 	 * Populate the state object, if needed.
@@ -760,6 +774,11 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_CM_AUTHORIZER_SECTIONS);
 		state.removeAttribute(FORM_ADDITIONAL); // don't we need to clena this
 		// too? -daisyf
+		
+		
+		//Get rid of Oncourse combine states
+		state.removeAttribute(STATE_SITE_COMBINE_SELECTED_LIST);
+		state.removeAttribute(STATE_SITE_COMBINE_PARENT_NAME);
 
 	} // cleanState
 
@@ -1672,15 +1691,17 @@ public class SiteAction extends PagedResourceActionII {
 						b.add(new MenuEntry(rb.getString("java.addp"),
 								"doMenu_siteInfo_addParticipant"));
 						if (siteType != null && siteType.equals("course")) {
-							b.add(new MenuEntry(rb.getString("java.editc"),
-									"doMenu_siteInfo_editClass"));
+							//Disabled for Oncourse CL - ajpoland@iupui.edu
+							//b.add(new MenuEntry(rb.getString("java.editc"),
+							//		"doMenu_siteInfo_editClass"));
 						}
 						if (siteType == null || siteType != null
 								&& !isGradToolSite) {
 							// hide site duplicate and import
 							// for GRADTOOLS type of sites
-							b.add(new MenuEntry(rb.getString("java.duplicate"),
-									"doMenu_siteInfo_duplicate"));
+							//Disabled for Oncourse CL -- ajpoland@iupui.edu
+							//b.add(new MenuEntry(rb.getString("java.duplicate"),
+							//		"doMenu_siteInfo_duplicate"));
 
 							List updatableSites = SiteService
 									.getSites(
@@ -1701,7 +1722,7 @@ public class SiteAction extends PagedResourceActionII {
 								else {
 									b.add(new MenuEntry(
 										rb.getString("java.import"),
-										"doMenu_siteInfo_import"));	
+										"doMenu_siteInfo_import"));
 								}
 								// a configuration param for
 								// showing/hiding import
@@ -1719,6 +1740,13 @@ public class SiteAction extends PagedResourceActionII {
 											"doAttachmentsMtrlFrmFile"));
 								}
 							}
+						}
+						/* Oncourse CL Combine / Separate Rosters actions */
+						if (isSiteEligibleToCombine(site)) {
+							b.add( new MenuEntry(rb.getString("oncourse.combine.rosters"), "doMenu_combine_rosters"));
+						}
+						if (isSiteEligibleToSeparate(site)) {
+						  b.add( new MenuEntry(rb.getString("oncourse.separate.rosters"), "doMenu_separate_rosters"));
 						}
 					}
 
@@ -2461,7 +2489,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put(STATE_TOOL_REGISTRATION_LIST, state
 					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
 			context.put("selectedTools", orderToolIds(state, site_type,
-					(List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST))); // String toolId's
+					getToolsAvailableForImport(state))); // String toolId's
 			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
 			context.put("importSitesTools", state
 					.getAttribute(STATE_IMPORT_SITE_TOOL));
@@ -2506,6 +2534,7 @@ public class SiteAction extends PagedResourceActionII {
 					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
 					null, null, null, SortType.TITLE_ASC, null));
 			return (String) getContext(data).get("template") + TEMPLATE[59];
+
 		case 29:
 			/*
 			 * buildContextForTemplate chef_siteinfo-duplicate.vm
@@ -2999,8 +3028,80 @@ public class SiteAction extends PagedResourceActionII {
 
 			return (String) getContext(data).get("template") + TEMPLATE[53];
 		}
-
-		}
+		// New templates for Oncourse Sectioning
+	    case 54:
+	    	System.out.println("Setting up for template 54");
+	    	context.put("continueIndex", "55");
+	    	context.put("currentSite", site);
+	    	context.put("eligibleSiteList", getSitesEligibleToCombine(site));
+	    	context.put(STATE_SITE_COMBINE_SELECTED_LIST, state.getAttribute(STATE_SITE_COMBINE_SELECTED_LIST));
+	    	context.put(STATE_SITE_COMBINE_PARENT_NAME, null);
+	    	
+	    	
+	    	List existingCombinedSiteList = getExistingCombinedSiteList(site);
+	    	if(existingCombinedSiteList != null && !existingCombinedSiteList.isEmpty()) {
+	    		context.put("existingCombinedSiteList", existingCombinedSiteList);
+	    		context.put("hasExistingCombinedSites", "true");
+	    	}
+	    	
+	    	List existingChildSiteList = getExistingChildSiteList(site);
+	    	if(existingChildSiteList != null && !existingChildSiteList.isEmpty()) {
+	    		context.put("existingChildSiteList", existingChildSiteList);
+	    	}
+	    	
+	    	
+	    
+	    	
+	    	
+			return (String)getContext(data).get("template") + TEMPLATE[54];
+	    case 55:
+	    	System.out.println("Setting up for template 55");
+	    	context.put("continueIndex", "56");
+	    	context.put("backIndex", "54");
+	    	
+	    	String destinationType = (String) state.getAttribute(STATE_SITE_COMBINE_DESTINATION);
+	    	String destinationSiteName = (String) state.getAttribute(STATE_SITE_COMBINE_PARENT_NAME);
+	    	
+	    	
+	    	
+	    	
+	    	// If we will be creating a new site to combine into, set up to ask the user for a preferred name
+	    
+	    	
+	    	List suggestedNames =  getSuggestedCombinedSiteNames((List)state.getAttribute(STATE_SITE_COMBINE_SELECTED_LIST), state);
+	    	
+	    	context.put(STATE_SITE_COMBINE_SELECTED_LIST, state.getAttribute(STATE_SITE_COMBINE_SELECTED_LIST));
+	    	
+//		    	 if an existing site was chosen, set this as our destination name and skip asking for a preferred name
+	    	if("EXISTING".equals(destinationType) && destinationSiteName != null) {
+	    		M_log.info("using destination site: "+destinationSiteName);
+	    		context.put("backIndex", "54");
+	    		context.put(STATE_SITE_COMBINE_PARENT_NAME, destinationSiteName);
+	    		return (String)getContext(data).get("template") + TEMPLATE[56];
+	    	}
+	    	
+	    	if(suggestedNames != null && suggestedNames.size() == 1) {
+	    		// if there is only one name in the list, skip this selection screen
+	    		M_log.info("Only one name in the list.... skipping to template 56");
+	        	context.put("backIndex", "54");
+	        	String name = (String)suggestedNames.iterator().next();
+	    		context.put(STATE_SITE_COMBINE_PARENT_NAME, name);
+	    		state.setAttribute(STATE_SITE_COMBINE_PARENT_NAME,name);
+	    		return (String)getContext(data).get("template") + TEMPLATE[56]; 
+	    	}
+	    	
+	    	context.put("suggestedNameList", suggestedNames);
+	    	context.put(STATE_SITE_COMBINE_PARENT_NAME, state.getAttribute(STATE_SITE_COMBINE_PARENT_NAME));
+	    
+	    	return (String)getContext(data).get("template") + TEMPLATE[55]; 
+	    case 56:
+	    	context.put("backIndex", "55");
+	    	context.put(STATE_SITE_COMBINE_SELECTED_LIST, state.getAttribute(STATE_SITE_COMBINE_SELECTED_LIST));
+	    	context.put(STATE_SITE_COMBINE_PARENT_NAME, state.getAttribute(STATE_SITE_COMBINE_PARENT_NAME));
+	    	return (String)getContext(data).get("template") + TEMPLATE[56]; 
+	    case 57:
+	    	return (String)getContext(data).get("template") + TEMPLATE[57];
+	    }
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
@@ -4236,7 +4337,7 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_GROUP_MEMBERS, gMemberSet);
 		} else if (option.equals("cancel")) {
 			// cancel from the update the group member process
-			doCancel_create(data);
+			doCancel(data);
 			cleanEditGroupParams(state);
 
 		} else if (option.equals("save")) {
@@ -6123,7 +6224,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doMenu_siteInfo_importSelection
-
+	
 	/**
 	 * doMenu_siteInfo_import
 	 */
@@ -6627,6 +6728,8 @@ public class SiteAction extends PagedResourceActionII {
 							}
 							realmEdit.addMember(id, roleId, activeGrant,
 									fromProvider);
+							// Oncourse hook for adding users to Classic
+							OncourseUtil.addToOncourseRoster(state,id,roleId);
 						}
 					}
 				}
@@ -6644,6 +6747,8 @@ public class SiteAction extends PagedResourceActionII {
 							selected.name = user.getDisplayName();
 							selected.uniqname = user.getId();
 							realmEdit.removeMember(user.getId());
+							OncourseUtil.deleteFromOncourseRoster(state, user.getId());
+							//OncourseUtil.deleteFromParentGroupIfNeeded();
 						} catch (UserNotDefinedException e) {
 							M_log.warn(this + " IdUnusedException " + rId
 									+ ". ");
@@ -6661,6 +6766,9 @@ public class SiteAction extends PagedResourceActionII {
 							+ maintainRoleString + ".");
 				} else {
 					AuthzGroupService.save(realmEdit);
+					
+					// then update all related group realms for the role
+					doUpdate_related_group_participants(s, realmId);
 				}
 			} catch (GroupNotDefinedException e) {
 				addAlert(state, rb.getString("java.problem2"));
@@ -6674,6 +6782,58 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doUpdate_participant
+	
+	
+	/**
+	 * update realted group realm setting according to parent site realm changes
+	 * @param s
+	 * @param realmId
+	 */
+	private void doUpdate_related_group_participants(Site s, String realmId) {
+		Collection groups = s.getGroups();
+		if (groups != null)
+		{
+			for (Iterator iGroups = groups.iterator(); iGroups.hasNext();)
+			{
+				Group g = (Group) iGroups.next();
+				try
+				{
+					Set gMembers = g.getMembers();
+					for (Iterator iGMembers = gMembers.iterator(); iGMembers.hasNext();)
+					{
+						Member gMember = (Member) iGMembers.next();
+						String gMemberId = gMember.getUserId();
+						Member siteMember = s.getMember(gMemberId);
+						if ( siteMember  == null)
+						{
+							// user has been removed from the site
+							g.removeMember(gMemberId);
+						}
+						else
+						{
+							// if there is a difference between the role setting, remove the entry from group and add it back with correct role, all are marked "not provided"
+							if (!g.getUserRole(gMemberId).equals(siteMember.getRole()))
+							{
+								g.removeMember(gMemberId);
+								g.addMember(gMemberId, siteMember.getRole().getId(), siteMember.isActive(), false);
+							}
+						}
+					}
+					// commit
+					// post event about the participant update
+					//**ONCOURSE** Commenting out this event posting, these events are not supported in Sakai 2.4.x
+					//EventTrackingService.post(EventTrackingService.newEvent(SiteService.SECURE_UPDATE_GROUP_MEMBERSHIP, g.getId(),false));
+					SiteService.save(s);
+				}
+				catch (Exception ee)
+				{
+					M_log.warn(this + ee.getMessage() + g.getId());
+				}
+				
+			}
+		}
+	}
+	
 
 	/**
 	 * doUpdate_site_access
@@ -7652,6 +7812,52 @@ public class SiteAction extends PagedResourceActionII {
 				state.removeAttribute(SORTED_ASC);
 			}
 			break;
+			// Oncourse sectioning actions
+		case 54:
+			// if adding to an existing combined site, one check box is ok, otherwise we need to have 2
+			if(!"EXISTING".equals(params.get("destination"))) {
+				if (params.getStrings("selectedSites") == null || params.getStrings("selectedSites").length < 2) {
+					addAlert(state, "Please select at least two sites before proceeding");
+				} 
+			} 
+			if (params.getStrings("selectedSites") != null) {
+			  
+			  List selectedSitesList = new ArrayList();
+				
+			  String[] selectedSites = params.getStrings("selectedSites");
+			  for(int i=0; i < selectedSites.length; i++) {
+				
+				try {  
+				  
+				  selectedSitesList.add(SiteService.getSite(selectedSites[i]));
+				  
+				} catch (Exception e) {
+					M_log.warn("Exception: "+e);
+				}
+			  } 
+				
+			  state.setAttribute(STATE_SITE_COMBINE_SELECTED_LIST, selectedSitesList);
+			  
+			  if("EXISTING".equals(params.get("destination"))) {
+				  state.setAttribute(STATE_SITE_COMBINE_DESTINATION, "EXISTING");
+				  state.setAttribute(STATE_SITE_COMBINE_PARENT_NAME, params.get("siteCombinedDestinationSite").replace("-"," "));
+			  } else {
+				  state.setAttribute(STATE_SITE_COMBINE_DESTINATION, "NEW");
+			  }
+			
+		    	
+			  
+			}
+		    break;
+		case 55:
+			if(forward) {
+				if (params.getString("parentName") == null) {
+					addAlert(state, "Please select a name before proceeding");
+				}
+				state.setAttribute(STATE_SITE_COMBINE_PARENT_NAME, params.getString("parentName"));
+			}
+			
+			break;
 		}
 
 	}// actionFor Template
@@ -8186,6 +8392,7 @@ public class SiteAction extends PagedResourceActionII {
 		boolean hasDiscussion = false;
 		boolean hasEmail = false;
 		boolean hasNewSiteInfo = false;
+		boolean hasMessageCenter = false;
 
 		// Special case - Worksite Setup Home comes from a hardcoded checkbox on
 		// the vm template rather than toolRegistrationList
@@ -8243,6 +8450,8 @@ public class SiteAction extends PagedResourceActionII {
 				hasChat = true;
 			} else if (choice.equals("sakai.discussion")) {
 				hasDiscussion = true;
+			}  else if (choice.equals("sakai.messages") || choice.equals("sakai.forums") || choice.equals("sakai.messagecenter")) {
+				hasMessageCenter = true;
 			}
 		}
 
@@ -8259,7 +8468,8 @@ public class SiteAction extends PagedResourceActionII {
 			SitePage page = null;
 			// Were the synoptic views of Announcement, Discussioin, Chat
 			// existing before the editing
-			boolean hadAnnouncement = false, hadDiscussion = false, hadChat = false, hadSchedule = false;
+			boolean hadAnnouncement = false, hadDiscussion = false, hadChat = false, hadSchedule = false, hadMessageCenter = false;
+
 
 			if (homeInWSetupPageList) {
 				if (!SiteService.isUserSite(site.getId())) {
@@ -8325,6 +8535,17 @@ public class SiteAction extends PagedResourceActionII {
 								// synoptic Chat
 							}
 						}
+						if (tool.getTool().getId()
+								.equals("sakai.synoptic.messagecenter")) {
+							hadMessageCenter = true;
+							if (!hasMessageCenter) {
+								removeToolList.add(tool);// if Messages and/or Forums tools
+								// isn't selected,
+								// remove the
+								// synoptic Message Center tool
+							}
+						}
+						
 					}
 					// remove those synoptic tools
 					for (ListIterator rToolList = removeToolList.listIterator(); rToolList
@@ -8370,13 +8591,22 @@ public class SiteAction extends PagedResourceActionII {
 						addSynopticTool(page, "sakai.synoptic.chat", rb
 								.getString("java.recent"), "2,1");
 					}
+					/* Oncourse - do not add synoptic schedule tool
 					if (hasSchedule && !hadSchedule) {
 						// Add synoptic schedule tool
 						addSynopticTool(page, "sakai.summary.calendar", rb
 								.getString("java.reccal"), "3,1");
 					}
-					if (hasAnnouncement || hasDiscussion || hasChat
-							|| hasSchedule) {
+						
+					*/
+				
+					if (hasMessageCenter && !hadMessageCenter) {
+						// Add synoptic Message Center
+						addSynopticTool(page, "sakai.synoptic.messagecenter", rb
+								.getString("java.recmsg"), "4,1");
+					}
+					if (hasAnnouncement || hasDiscussion || hasChat || hasMessageCenter) {
+						// Oncourse	|| hasSchedule) 
 						page.setLayout(SitePage.LAYOUT_DOUBLE_COL);
 					} else {
 						page.setLayout(SitePage.LAYOUT_SINGLE_COL);
@@ -8809,6 +9039,7 @@ public class SiteAction extends PagedResourceActionII {
 		boolean hasChat = false;
 		boolean hasDiscussion = false;
 		boolean hasSiteInfo = false;
+		boolean hasMessageCenter = false;
 
 		List chosenList = (List) state
 				.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
@@ -8921,6 +9152,8 @@ public class SiteAction extends PagedResourceActionII {
 					hasDiscussion = true;
 				} else if (toolId.equals("sakai.siteinfo")) {
 					hasSiteInfo = true;
+				} else if (toolId.equals("sakai.messages") || toolId.equals("sakai.forums") || toolId.equals("sakai.messagecenter")) {
+					hasMessageCenter = true;
 				}
 
 			} // for
@@ -8974,7 +9207,7 @@ public class SiteAction extends PagedResourceActionII {
 						tool.setTitle("Recent Chat Messages");
 						tool.setLayoutHints("2,1");
 					}
-
+					/* Oncourse - do not add synoptic schedule tool
 					if (hasSchedule) {
 						// Add synoptic schedule tool
 						tool = page.addTool();
@@ -8982,6 +9215,17 @@ public class SiteAction extends PagedResourceActionII {
 								.getTool("sakai.summary.calendar"));
 						tool.setTitle(rb.getString("java.reccal"));
 						tool.setLayoutHints("3,1");
+					}
+					*/
+					
+
+					if (hasMessageCenter) {
+						// Add synoptic Message Center tool
+						tool = page.addTool();
+						tool.setTool("sakai.synoptic.messagecenter", ToolManager
+								.getTool("sakai.synoptic.messagecenter"));
+						tool.setTitle(rb.getString("java.recmsg"));
+						tool.setLayoutHints("4,1");
 					}
 
 				} catch (Exception e) {
@@ -9084,6 +9328,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 	} // importToolIntoSite
+
 	
 	private void importToolIntoSiteMigrate(List toolIds, Hashtable importTools,
 			Site site) {
@@ -9727,6 +9972,8 @@ public class SiteAction extends PagedResourceActionII {
 													.getId())) {
 								realmEdit.addMember(user.getId(), role, true,
 										false);
+								OncourseUtil.addToOncourseRoster(state,user.getId(),role);
+								//OncourseUtil.addToParentGroup(state,user.getId().role);
 								addedUserEIds.add(eId);
 
 								// send notification
@@ -11546,7 +11793,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 	}
-	
+
 	protected void transferCopyEntitiesMigrate(String toolId, String fromContext,
 			String toContext) {
 		
@@ -12495,5 +12742,1123 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		return list;
 	}
+	
+	
+//	 Oncourse Sectioning functions
+	public void doCancel_combine ( RunData data )
+	{
+		// Don't put current form data in state, just return to the previous template
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		removeAddClassContext(state);
+		state.setAttribute(STATE_TEMPLATE_INDEX, "12");
+		
+	} // doCancel_combine
+	
+	/**
+	* doCancel called when "eventSubmit_doCancel_separate" is in the request parameters to c
+	*/
+	public void doCancel_separate ( RunData data )
+	{
+		// Don't put current form data in state, just return to the previous template
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		removeAddClassContext(state);
+		state.setAttribute(STATE_TEMPLATE_INDEX, "12");
+		
+	} // doCancel_separate
+	
+	//Oncourse sectioning functions
+	/**
+	 * doMenu_combine_rosters
+	 */
+	public void doMenu_combine_rosters (RunData data) 
+	{
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		
+		//Site site = getStateSite(state);
+		//state.setAttribute(STATE_TERM_SELECTED, CourseManagementService.getTerm(site.getProperties().getProperty(PROP_SITE_TERM)));
+		
+		state.setAttribute (STATE_TEMPLATE_INDEX, "54");
+			
+	}	// doMenu_combine_rosters
+	
+	/**
+	 * doMenu_separate_rosters
+	 */
+	public void doMenu_separate_rosters (RunData data) 
+	{
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		
+		//Site site = getStateSite(state);
+		//state.setAttribute(STATE_TERM_SELECTED, cms.getTerm(site.getProperties().getProperty(PROP_SITE_TERM)));
+		
+		state.setAttribute (STATE_TEMPLATE_INDEX, "57");
+			
+	}	// doMenu_separate_rosters
+	
+	 //Oncourse sectioning functions
+	public void doSeparateCombinedCourse(RunData data) {
+		
+		M_log.info("doSeparateCombinedCourse()");
+		
 
+		SecurityService.pushAdvisor(new SecurityAdvisor()
+		{
+			public SecurityAdvice isAllowed(String userId, String function, String reference)
+			{
+				return SecurityAdvice.ALLOWED;
+			}
+		});
+		
+		
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		ParameterParser params = data.getParameters ();
+		
+		//		Go back to site info list when finished
+		state.setAttribute (STATE_TEMPLATE_INDEX, "12");
+	  try {
+		  
+		Site site = getStateSite(state);
+		
+		
+		ResourceProperties siteProperties = site.getProperties();
+		
+		
+		String parentSiteId = siteProperties.getProperty("site-oncourse-combined-my-parent");
+		String parentGroupId = siteProperties.getProperty("site-oncourse-combined-my-parent-group");
+		
+		// Remove the group in the parent site
+		Site parentSite = SiteService.getSite(parentSiteId);
+		Group parentGroup = parentSite.getGroup(parentGroupId);
+		parentSite.removeGroup(parentGroup);
+		SiteService.save(parentSite);
+	
+		
+		 // Remove property to link from child to parent
+        siteProperties.removeProperty("site-oncourse-combined-my-parent");
+        siteProperties.removeProperty("site-oncourse-combined-my-parent-group");
+
+		
+		// Put the original Home page back
+		Iterator pages = site.getPages().iterator();
+		
+		System.out.println("Site: "+site.getTitle());
+		
+		SitePage pageToRemove = null;
+		
+		while(pages.hasNext()) {
+			SitePage page = (SitePage)pages.next();
+			System.out.println("Page Title: "+page.getTitle());
+			if("Home".equals(page.getTitle())) {
+				pageToRemove = page;
+			}
+		}
+	
+		if(pageToRemove != null) {
+		
+			System.out.println("Found a HOME tool");
+			site.removePage(pageToRemove);
+		}
+		
+		//Add the original pages back
+		
+		SitePage page = site.addPage();
+	
+		page.setTitle("Home");
+		page.setLayout(SitePage.LAYOUT_DOUBLE_COL);
+		
+		ToolConfiguration tool = page.addTool();
+		tool.setTool("sakai.privacy", ToolManager.getTool("sakai.privacy"));
+		tool.setTitle("Privacy Status");
+		tool.setLayoutHints("0,0");
+		
+		tool = page.addTool();
+		tool.setTool("sakai.iframe", ToolManager.getTool("sakai.iframe"));
+		tool.setTitle("Worksite Information");
+		tool.setLayoutHints("1,0");
+		tool.getPlacementConfig().setProperty("special", "worksite");
+
+		site.setInfoUrl("");
+		
+		tool = page.addTool();
+		tool.setTool("sakai.synoptic.announcement", ToolManager.getTool("sakai.synoptic.announcement"));
+		tool.setTitle("Recent Announcements");
+		tool.setLayoutHints("0,1");
+	
+		tool = page.addTool();
+		tool.setTool("sakai.synoptic.chat", ToolManager.getTool("sakai.synoptic.chat"));
+		tool.setTitle("Recent Chat Messages");
+		tool.setLayoutHints("1,1");
+		
+		
+		
+		tool = page.addTool();
+		tool.setTool("sakai.synoptic.messagecenter", ToolManager.getTool("sakai.synoptic.messagecenter"));
+		tool.setTitle("Messages and Forums Notifications");
+		tool.setLayoutHints("3,1");
+		
+								
+
+		// Syllabus
+		page = site.addPage();
+		page.setTitle("Syllabus");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.syllabus", ToolManager.getTool("sakai.syllabus"));
+		tool.setTitle("Syllabus");
+		tool.setLayoutHints("0,0");									
+	
+		// Calendar
+		page = site.addPage();
+		page.setTitle("Calendar");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.schedule", ToolManager.getTool("sakai.schedule"));
+		tool.setTitle("Calendar");
+		tool.setLayoutHints("0,0");	
+		
+		// Announcements
+		page = site.addPage();
+		page.setTitle("Announcements");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.announcements", ToolManager.getTool("sakai.announcements"));
+		tool.setTitle("Announcements");
+		tool.setLayoutHints("0,0");	
+		
+		// Resources
+		page = site.addPage();
+		page.setTitle("Resources");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.resources", ToolManager.getTool("sakai.resources"));
+		tool.setTitle("Resources");
+		tool.setLayoutHints("0,0");
+		
+//		 Messages
+		page = site.addPage();
+		page.setTitle("Messages");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+
+		tool = page.addTool();
+		tool.setTool("sakai.messages", ToolManager.getTool("sakai.messages"));
+		tool.setTitle("Messages");
+		tool.setLayoutHints("0,0");
+		
+//		 Forums
+		page = site.addPage();
+		page.setTitle("Forums");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+
+		tool = page.addTool();
+		tool.setTool("sakai.forums", ToolManager.getTool("sakai.forums"));
+		tool.setTitle("Forums");
+		tool.setLayoutHints("0,0");
+		
+		// Assignments
+		page = site.addPage();
+		page.setTitle("Assignments");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.assignment.grades", ToolManager.getTool("sakai.assignment.grades"));
+		tool.setTitle("Assignments");
+		tool.setLayoutHints("0,0");
+		
+		// Tests & Surveys
+//			page = siteEdit.addPage();
+//			page.setTitle("Tests & Surveys");
+//			page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+//			tool = page.addTool();
+//			tool.setTool("sakai.samigo", ToolManager.getTool("sakai.samigo"));
+//			tool.setTitle("Tests & Surveys");
+//			tool.setLayoutHints("0,0");
+		
+		// Gradebook
+		page = site.addPage();
+		page.setTitle("Gradebook");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.gradebook.tool", ToolManager.getTool("sakai.gradebook.tool"));
+		tool.setTitle("Gradebook");
+		tool.setLayoutHints("0,0");
+		
+		// Drop Box
+//			page = siteEdit.addPage();
+//			page.setTitle("Drop Box");
+//			page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+//		
+//			tool = page.addTool();
+//			tool.setTool("sakai.dropbox", ToolManager.getTool("sakai.dropbox"));
+//			tool.setTitle("Drop Box");
+//			tool.setLayoutHints("0,0");	
+
+		// Chat Room
+		page = site.addPage();
+		page.setTitle("Chat Room");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.chat", ToolManager.getTool("sakai.chat"));
+		tool.setTitle("Chat Room");
+		tool.setLayoutHints("0,0");	
+		
+		//	Roster
+		page = site.addPage();
+		page.setTitle("Roster");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.site.roster", ToolManager.getTool("sakai.site.roster"));
+		tool.setTitle("Roster");
+		tool.setLayoutHints("0,0");
+		
+		
+		// Email Archive
+		page = site.addPage();
+		page.setTitle("Email Archive");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.mailbox", ToolManager.getTool("sakai.mailbox"));
+		tool.setTitle("Email Archive");
+		tool.setLayoutHints("0,0");	
+		
+		
+		// IU News
+		page = site.addPage();
+		page.setTitle("IU News");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.news", ToolManager.getTool("sakai.news"));
+		tool.setTitle("IU News");
+		tool.setLayoutHints("0,0");
+		tool.getPlacementConfig().setProperty("channel-url", ServerConfigurationService.getString("news.feedURL"));
+		
+		// Web Content
+		page = site.addPage();
+		page.setTitle("Web Content");
+		page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+	
+		tool = page.addTool();
+		tool.setTool("sakai.iframe", ToolManager.getTool("sakai.iframe"));
+		tool.setTitle("Web Content");
+		tool.setLayoutHints("0,0");
+		
+		
+		
+			
+//		TODO: Resync all child->parent sites to remove members in parent site after separation
+			
+		SiteService.save(site);
+		
+		OncourseUtil.syncCombinedRosters(parentSiteId);
+	  
+	  } catch (Exception e) {
+			
+			M_log.error("Exception: "+e);
+			addAlert(state, e.getMessage());
+	  }
+	  
+	  
+	 
+   	
+		
+
+	  scheduleTopRefresh();
+	  
+	}
+	
+	
+	public void doCreateCombinedCourse(RunData data) {
+		
+		
+		
+		M_log.info("doCreateCombinedCourse()");
+
+		
+		
+		// Create a course based on selected name in CL and classic
+		//siteId =createCourse(courseId, title);
+		SessionState state = ((JetspeedRunData)data).getPortletSessionState (((JetspeedRunData)data).getJs_peid ());
+		ParameterParser params = data.getParameters ();
+		
+		String currentTerm = getStateSite(state).getProperties().getProperty("term");
+		String oncourseCLPrefix = getOncourseCLPrefixForTerm(currentTerm);
+		String oncourseClassicPrefix = getOncourseClassicPrefixForTerm(currentTerm);
+		
+		//		Go back to site info list when finished
+		state.setAttribute (STATE_TEMPLATE_INDEX, "12");
+		
+		String destination = (String) state.getAttribute(STATE_SITE_COMBINE_DESTINATION);
+		
+		String parentSiteName = (String) state.getAttribute(STATE_SITE_COMBINE_PARENT_NAME);
+		List selectedSites = (List) state.getAttribute(STATE_SITE_COMBINE_SELECTED_LIST);
+		
+		String parentSiteId = parentSiteName.replace(" ", "-");
+		
+		String classicSiteId = parentSiteId.replace(oncourseCLPrefix+"-", oncourseClassicPrefix+"-");
+		
+		
+		
+		try {
+			
+	      
+			
+			SecurityService.pushAdvisor(new SecurityAdvisor()
+			{
+				public SecurityAdvice isAllowed(String userId, String function, String reference)
+				{
+					return SecurityAdvice.ALLOWED;
+				}
+			});
+			
+			
+			if("NEW".equals(destination)) {
+				//If combinedCourse does not already exist, create it
+				createCombinedOncourseCourse(parentSiteName, parentSiteId, classicSiteId, currentTerm);// , siteId, classicSiteId);
+			}
+			
+			Site parentSite = SiteService.getSite(parentSiteId);
+			
+			if("NEW".equals(destination)) {
+				createCombinedClassicCourse(parentSite, classicSiteId);
+			}
+			
+			AuthzGroup parentSiteAuthzGroup = AuthzGroupService.getAuthzGroup("/site/"+parentSiteId);
+			
+			Iterator sitesIterator = selectedSites.iterator();
+			
+			while(sitesIterator.hasNext()) {
+			
+				
+				Site site = (Site) sitesIterator.next();
+				ResourceProperties siteProperties = site.getProperties();
+			    AuthzGroup childSiteAuthzGroup = AuthzGroupService.getAuthzGroup("/site/"+site.getId());
+				
+			    // Add property to link child to parent
+				siteProperties.addProperty("site-oncourse-combined-my-parent", parentSiteId);
+				
+				// Create a group in parent site
+				
+				
+				
+				
+				M_log.info("Creating new group for childSite: "+site.getId()+" parentSite: "+parentSite.getId());
+				Group childSiteGroup = parentSite.addGroup();
+				childSiteGroup.setTitle(site.getId());
+				SiteService.save(parentSite);
+				
+
+				//Add a property to point at parent group so we can find this group by id again
+				siteProperties.addProperty("site-oncourse-combined-my-parent-group", childSiteGroup.getId());
+				
+			
+					
+				
+				
+				// Add a redirect to parent site
+				Iterator pages = site.getPages().iterator();
+				
+				System.out.println("Site: "+site.getTitle());
+				
+				List pagesToRemove = new ArrayList();
+				
+				// Remove all pages
+				while(pages.hasNext()) {
+					SitePage page = (SitePage)pages.next();
+					System.out.println("Page Title: "+page.getTitle());
+					if(!page.getTitle().equals("Site Setup")) {
+						pagesToRemove.add(page);
+					}
+				}
+				
+				for (Iterator i = pagesToRemove.iterator(); i.hasNext();) {
+					SitePage page = (SitePage) i.next();
+					System.out.println("REMOVE: "+page.getTitle());
+					site.removePage(page);
+				}
+				
+				
+				
+				SitePage page = site.addPage();
+				
+				page.setTitle("Home");
+				page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				ToolConfiguration tool = page.addTool();
+				tool.setTool("sakai.iframe.site", ToolManager.getTool("sakai.iframe.site"));
+				tool.setTitle("Home");
+				tool.setLayoutHints("0,0");
+				tool.getPlacementConfig().setProperty("source", "/sakai-site-manage-tool/combinedRedirect.jsp?s="+parentSite.getId());
+				
+				site.setInfoUrl("/sakai-site-manage-tool/combinedRedirect.jsp?s="+parentSite.getId());
+				
+		
+					
+			     
+					
+				SiteService.save(site);
+				
+				
+				//Add users to parent site, and to group:
+				Iterator childMembersIterator = childSiteAuthzGroup.getMembers().iterator();
+				
+				childSiteGroup.removeMembers();
+				
+				//retrieve privacy map
+				  String childSitecontext = "/site/"+site.getId();
+				  String parentSitecontext = "/site/"+parentSiteId;
+				  Map privacyStatusMap = getPrivacyManager().getViewableState(childSitecontext, getPrivacyManager().SYSTEM_RECORD_TYPE);
+				  
+				//this map keeps a cache of the users who have already been hidden during the next loop
+				//if one child site has them hidden and another has them visible, we try to favor hidden
+				  Map privacyStatusCache = new HashMap();
+				
+				
+				while(childMembersIterator.hasNext()) {
+					
+				  Member member = (Member) childMembersIterator.next();	
+					
+				  
+				  parentSiteAuthzGroup.addMember(member.getUserId(), member.getRole().getId(), member.isActive(), member.isProvided());
+				  OncourseUtil.addToOncourseRoster(classicSiteId, member.getUserId(), member.getRole().getId(),false,false);
+				  childSiteGroup.addMember(member.getUserId(), member.getRole().getId(), true, false); 
+				  	
+				  
+				  // add a privacy record to combined course based on user's privacy status from the child site
+				  
+				  Boolean privacyStatus = (Boolean) privacyStatusMap.get(member.getUserId());
+				  
+				  M_log.info("Set privacy record: "+parentSitecontext+" "+member.getUserId()+": "+privacyStatus);
+				  
+				  if(privacyStatus != null) {
+					
+					    Boolean cachedStatus = (Boolean) privacyStatusCache.get(member.getUserId());
+					  
+					    //if this users' status has not been set, or another site has set it to true, it is ok to set it again
+					    //otherwise, it has been set to false and we should not change it
+						if(cachedStatus == null || cachedStatus.equals(new Boolean(true))) {
+					  
+							privacyStatusCache.put(member.getUserId(), privacyStatus);
+						    getPrivacyManager().setViewableState(parentSitecontext, member.getUserId(), privacyStatus, getPrivacyManager().SYSTEM_RECORD_TYPE);
+							
+						} else {
+							M_log.info("skipping... privacy record already set to false for "+member.getUserId());
+						}
+				   }
+				}
+			
+				SiteService.saveGroupMembership(childSiteGroup.getContainingSite());
+				
+			}
+		
+			
+			AuthzGroupService.save(parentSiteAuthzGroup);
+			
+			
+			
+		
+		
+		
+		} catch (Exception e) {
+			
+			M_log.error("Exception: "+e);
+			addAlert(state, e.getMessage());
+		}
+		
+
+		scheduleTopRefresh();
+		
+	}
+	
+	 
+		public static PrivacyManager getPrivacyManager()
+		{
+			return  (PrivacyManager) ComponentManager
+				.get(PrivacyManager.class.getName());
+			
+		}
+
+	
+	
+    boolean isSiteEligibleToSeparate(Site site) {
+		
+		if("course".equals(site.getType())) {
+			
+			ResourceProperties siteProperties = site.getProperties();
+			
+			String courseId = siteProperties.getProperty("site-oncourse-course-id");
+			String isAlreadyChild = siteProperties.getProperty("site-oncourse-combined-my-parent");
+			String isAlreadyParent = siteProperties.getProperty("site-oncourse-combined-is-parent");
+			String term = siteProperties.getProperty(PROP_SITE_TERM);
+			
+			if(isACombinedSiteTerm(term) && courseId != null && isAlreadyChild != null && isAlreadyParent == null) {
+			
+			  return true;
+			
+			}
+			
+		}
+		
+		return false;
+	}
+	
+	boolean isSiteEligibleToCombine(Site site) {
+		
+		if("course".equals(site.getType())) {
+			
+			ResourceProperties siteProperties = site.getProperties();
+			
+			String courseId = siteProperties.getProperty("site-oncourse-course-id");
+			String isAlreadyChild = siteProperties.getProperty("site-oncourse-combined-my-parent");
+			String isAlreadyParent = siteProperties.getProperty("site-oncourse-combined-is-parent");
+			String term = siteProperties.getProperty(PROP_SITE_TERM);
+			
+			if(isACombinedSiteTerm(term) && courseId != null && isAlreadyChild == null && isAlreadyParent == null) {
+			
+			  return true;
+			
+			}
+			
+		}
+		
+		return false;
+	}
+	
+	List getSitesEligibleToCombine(Site currentSite) {
+		
+		List sites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.UPDATE, null, null, null, SortType.TITLE_ASC, null);
+		List eligibleSites = new ArrayList();
+		
+		String currentSiteTerm = currentSite.getProperties().getProperty("term");
+		
+		Iterator sitesIterator = sites.iterator();
+		
+		while(sitesIterator.hasNext()) {
+			
+			Site site = (Site) sitesIterator.next();
+			if(isSiteEligibleToCombine(site)) {
+				
+				
+				String term = site.getProperties().getProperty("term");
+				
+				System.out.println("currentSite: "+currentSite.getId()+"  currentSiteTerm: "+currentSiteTerm+"   site: "+site.getId()+"  term: "+term);
+				
+				  if(!site.getId().equals(currentSite.getId())) {
+					 
+					 // should only return sites that are within the same term
+					 if(currentSiteTerm != null && currentSiteTerm.equals(term)) {
+						 
+						 eligibleSites.add(site);
+						 
+					 }
+					 
+				    
+				  }
+				
+			}
+			
+		}
+		
+		return eligibleSites;
+		
+	}
+	
+	private List getExistingCombinedSiteList(Site currentSite) {
+
+		List sites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.UPDATE, 
+				null, null, null, SortType.TITLE_ASC, null);
+		List combinedSites = new ArrayList();
+		
+		String currentSiteTerm = currentSite.getProperties().getProperty("term");
+		
+		Iterator sitesIterator = sites.iterator();
+		
+		while(sitesIterator.hasNext()) {
+		
+			Site site = (Site) sitesIterator.next();
+
+			String term = site.getProperties().getProperty("term");
+			
+			String isAlreadyParent = site.getProperties().getProperty("site-oncourse-combined-is-parent");
+			
+			if(isAlreadyParent != null) {
+				
+//				 should only return sites that are within the same term
+				 if(currentSiteTerm != null && currentSiteTerm.equals(term)) {
+					 
+					 combinedSites.add(site);
+					 
+				 }
+				
+				
+				
+			}
+			
+		}
+		
+		return combinedSites;
+	}
+	
+	private List getExistingChildSiteList(Site currentSite) {
+
+		List sites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.UPDATE, 
+				null, null, null, SortType.TITLE_ASC, null);
+		List childSites = new ArrayList();
+		
+		String currentSiteTerm = currentSite.getProperties().getProperty("term");
+		
+		Iterator sitesIterator = sites.iterator();
+		
+		while(sitesIterator.hasNext()) {
+		
+			Site site = (Site) sitesIterator.next();
+			
+			String term = site.getProperties().getProperty("term");
+			
+			String isAlreadyChild = site.getProperties().getProperty("site-oncourse-combined-my-parent");
+			
+			if(isAlreadyChild != null) {
+				//	 should only return sites that are within the same term
+				 if(currentSiteTerm != null && currentSiteTerm.equals(term)) {
+							
+					 childSites.add(site);
+				 }
+			}
+			
+		}
+		
+		return childSites;
+		
+	}
+	
+	boolean isACombinedSiteTerm(String term) {
+		
+		//** oncourse.combined.site.terms.1=TERM NAME,SUGGESTED TITLE PREFIX,CLASSIC PREFIX
+		//oncourse.combined.site.terms.1=SUMMER 2007,SP07,2007-2
+		//oncourse.combined.site.terms.2=SPRING 2007,SU07,2007-5
+		String[] terms = ServerConfigurationService.getStrings("oncourse.combined.site.terms");
+		
+		for(int i = 0; i < terms.length; i++) {
+			
+			String[] parts = terms[i].split(",");
+			if(parts[0].equals(term)) return true;
+			
+		}
+		
+		return false;
+		
+	}
+	
+	String getOncourseCLPrefixForTerm(String term) {
+		
+		String[] terms = ServerConfigurationService.getStrings("oncourse.combined.site.terms");
+		
+		for(int i = 0; i < terms.length; i++) {
+			
+			String[] parts = terms[i].split(",");
+			if(parts[0].equals(term)) return parts[1];
+			
+		}
+		
+		return null;
+		
+		
+	}
+	
+	String getOncourseClassicPrefixForTerm(String term) {
+		
+		String[] terms = ServerConfigurationService.getStrings("oncourse.combined.site.terms");
+		
+		for(int i = 0; i < terms.length; i++) {
+			
+			String[] parts = terms[i].split(",");
+			if(parts[0].equals(term)) return parts[2];
+			
+		}
+		
+		return null;
+		
+		
+	}
+	
+	List getSuggestedCombinedSiteNames(List sites, SessionState state) {
+		
+		List names = new ArrayList();
+		Iterator sitesIterator = sites.iterator();
+		
+		String term = getStateSite(state).getProperties().getProperty("term");
+		
+		String oncourseCLPrefix = getOncourseCLPrefixForTerm(term);
+		String seq_num = OncourseUtil.getSuggestedCombinedSeqNumber();
+		
+		while(sitesIterator.hasNext()) {
+			Site site = (Site) sitesIterator.next();
+			ResourceProperties siteProperties = site.getProperties();
+			
+			String courseId = siteProperties.getProperty("site-oncourse-course-id");
+			
+			if(courseId != null) {
+				String[] parts = courseId.split("-");
+				if(parts != null & parts.length == 6) {
+					
+					String suggestion = oncourseCLPrefix+" "+parts[2]+" "+parts[3]+" "+parts[4]+" C"+seq_num;
+					if(!names.contains(suggestion)) {
+						System.out.println("Suggestion: "+suggestion);
+						names.add(suggestion);
+					}
+
+				}
+				
+				
+			}
+		
+		}
+		
+		
+		
+		return names;
+	}
+	
+	
+	
+	void createCombinedOncourseCourse(String title, String newSiteId, String classicSiteId, String term) {
+		
+		M_log.info("createCombinedOncourseCourse("+title+")");
+		String PROP_SITE_ONCOURSE_COURSE_ID = "site-oncourse-course-id";
+		
+		User user = UserDirectoryService.getCurrentUser();
+		String instructor = user.getDisplayName();
+    	String instructorId = user.getEid();
+    	String description = "Combined Course";
+    	
+    	String campus = "";
+    	
+    	//example 2008-2-BL-AAAD-A100-12166
+    	String[] parts = classicSiteId.split("-");
+    	if(parts != null && parts.length > 2) {
+    		campus = parts[2];
+    	}
+  
+		
+        		try {
+        			
+        		      
+					Site siteEdit = SiteService.addSite(newSiteId, "course");
+				
+					siteEdit.setJoinable(false);
+					siteEdit.setPublished(true);
+					siteEdit.setPubView(false);
+					siteEdit.setShortDescription(description);
+					siteEdit.setDescription(description);
+					siteEdit.setTitle(title);
+					siteEdit.setType("course");
+			
+					SitePage page = null;
+					ToolConfiguration tool = null;
+					
+					
+					// Home
+					page = siteEdit.addPage();
+					page.setTitle("Home");
+					page.setLayout(SitePage.LAYOUT_DOUBLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.privacy", ToolManager.getTool("sakai.privacy"));
+					tool.setTitle("Privacy Status");
+					tool.setLayoutHints("0,0");
+
+					
+					tool = page.addTool();
+					tool.setTool("sakai.iframe", ToolManager.getTool("sakai.iframe"));
+					tool.setTitle("Worksite Information");
+					tool.setLayoutHints("1,0");
+					tool.getPlacementConfig().setProperty("special", "worksite");
+					
+					tool = page.addTool();
+					tool.setTool("sakai.synoptic.announcement", ToolManager.getTool("sakai.synoptic.announcement"));
+					tool.setTitle("Recent Announcements");
+					tool.setLayoutHints("0,1");
+					
+				//	tool = page.addTool();
+				//	tool.setTool(ToolManager.getTool("sakai.synoptic.discussion"));
+				//	tool.setTitle("Recent Discussion Items");
+				//	tool.setLayoutHints("1,1");
+					
+					tool = page.addTool();
+					tool.setTool("sakai.synoptic.chat", ToolManager.getTool("sakai.synoptic.chat"));
+					tool.setTitle("Recent Chat Messages");
+					tool.setLayoutHints("1,1");
+					
+					
+					tool = page.addTool();
+					tool.setTool("sakai.synoptic.messagecenter", ToolManager.getTool("sakai.synoptic.messagecenter"));
+					tool.setTitle("Message Center Notifications");
+					tool.setLayoutHints("3,1");
+					
+					
+											
+
+					// Syllabus
+					page = siteEdit.addPage();
+					page.setTitle("Syllabus");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.syllabus", ToolManager.getTool("sakai.syllabus"));
+					tool.setTitle("Syllabus");
+					tool.setLayoutHints("0,0");									
+				
+					// Calendar
+					page = siteEdit.addPage();
+					page.setTitle("Calendar");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.schedule", ToolManager.getTool("sakai.schedule"));
+					tool.setTitle("Calendar");
+					tool.setLayoutHints("0,0");	
+					
+					// Announcements
+					page = siteEdit.addPage();
+					page.setTitle("Announcements");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.announcements", ToolManager.getTool("sakai.announcements"));
+					tool.setTitle("Announcements");
+					tool.setLayoutHints("0,0");	
+					
+					// Resources
+					page = siteEdit.addPage();
+					page.setTitle("Resources");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.resources", ToolManager.getTool("sakai.resources"));
+					tool.setTitle("Resources");
+					tool.setLayoutHints("0,0");
+
+//					 Messages
+					page = siteEdit.addPage();
+					page.setTitle("Messages");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+
+					tool = page.addTool();
+					tool.setTool("sakai.messages", ToolManager.getTool("sakai.messages"));
+					tool.setTitle("Messages");
+					tool.setLayoutHints("0,0");
+					
+//					 Forums
+					page = siteEdit.addPage();
+					page.setTitle("Forums");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+
+					tool = page.addTool();
+					tool.setTool("sakai.forums", ToolManager.getTool("sakai.forums"));
+					tool.setTitle("Forums");
+					tool.setLayoutHints("0,0");
+					
+					// Assignments
+					page = siteEdit.addPage();
+					page.setTitle("Assignments");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.assignment.grades", ToolManager.getTool("sakai.assignment.grades"));
+					tool.setTitle("Assignments");
+					tool.setLayoutHints("0,0");
+					
+					// Tests & Surveys
+//					page = siteEdit.addPage();
+//					page.setTitle("Tests & Surveys");
+//					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+//					tool = page.addTool();
+//					tool.setTool("sakai.samigo", ToolManager.getTool("sakai.samigo"));
+//					tool.setTitle("Tests & Surveys");
+//					tool.setLayoutHints("0,0");
+					
+					// Gradebook
+					page = siteEdit.addPage();
+					page.setTitle("Gradebook");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.gradebook.tool", ToolManager.getTool("sakai.gradebook.tool"));
+					tool.setTitle("Gradebook");
+					tool.setLayoutHints("0,0");
+					
+					// Drop Box
+//					page = siteEdit.addPage();
+//					page.setTitle("Drop Box");
+//					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+//				
+//					tool = page.addTool();
+//					tool.setTool("sakai.dropbox", ToolManager.getTool("sakai.dropbox"));
+//					tool.setTitle("Drop Box");
+//					tool.setLayoutHints("0,0");	
+
+					// Chat Room
+					page = siteEdit.addPage();
+					page.setTitle("Chat Room");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.chat", ToolManager.getTool("sakai.chat"));
+					tool.setTitle("Chat Room");
+					tool.setLayoutHints("0,0");	
+					
+					//	Roster
+					page = siteEdit.addPage();
+					page.setTitle("Roster");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.site.roster", ToolManager.getTool("sakai.site.roster"));
+					tool.setTitle("Roster");
+					tool.setLayoutHints("0,0");
+					
+					
+					// Email Archive
+					page = siteEdit.addPage();
+					page.setTitle("Email Archive");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.mailbox", ToolManager.getTool("sakai.mailbox"));
+					tool.setTitle("Email Archive");
+					tool.setLayoutHints("0,0");	
+					String channelReference = mailArchiveChannelReference(newSiteId); 
+					try
+					{
+						AliasService.setAlias(classicSiteId, channelReference);
+					}
+					catch (IdUsedException ee) 
+					{
+						M_log.warn(this+ ": "+classicSiteId+": Email alias already exists: "+ee);
+					}
+					catch (IdInvalidException ee) 
+					{
+						M_log.warn(this+ ": "+classicSiteId+": Email alias is invalid: "+ee);
+					}
+					catch (PermissionException ee) 
+					{
+						M_log.warn(this+ ": "+classicSiteId+": Permission exception: "+ee);
+					}
+					
+					if("BL".equals(campus)) {
+					// IU News
+					page = siteEdit.addPage();
+					page.setTitle("IU News");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.news", ToolManager.getTool("sakai.news"));
+					tool.setTitle("IU News");
+					tool.setLayoutHints("0,0");
+					tool.getPlacementConfig().setProperty("channel-url", ServerConfigurationService.getString("news.feedURL"));
+					}
+					
+					// Web Content
+					page = siteEdit.addPage();
+					page.setTitle("Web Content");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.iframe", ToolManager.getTool("sakai.iframe"));
+					tool.setTitle("Web Content");
+					tool.setLayoutHints("0,0");
+					/*
+					
+//					 Section Info
+					page = siteEdit.addPage();
+					page.setTitle("Section Info");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.sections", ToolManager.getTool("sakai.sections"));
+					tool.setTitle("Section Info");
+					tool.setLayoutHints("0,0");
+					
+					*/
+
+				
+					// Site Setup
+					page = siteEdit.addPage();
+					page.setTitle("Site Setup");
+					page.setLayout(SitePage.LAYOUT_SINGLE_COL);
+				
+					tool = page.addTool();
+					tool.setTool("sakai.siteinfo", ToolManager.getTool("sakai.siteinfo"));
+					tool.setTitle("Site Setup");
+					tool.setLayoutHints("0,0");
+					
+					
+
+					
+					
+					
+					ResourcePropertiesEdit sitePropertiesEdit = siteEdit.getPropertiesEdit();
+					
+					sitePropertiesEdit.addProperty(PROP_SITE_ONCOURSE_COURSE_ID, classicSiteId);
+					sitePropertiesEdit.addProperty("contact-email", instructorId);
+					sitePropertiesEdit.addProperty("contact-name", instructor);
+					sitePropertiesEdit.addProperty("term", term);
+					
+					//MARK THIS AS A PARENT SITE
+					sitePropertiesEdit.addProperty("site-oncourse-combined-is-parent", "true");
+					//
+					
+					M_log.info(this+": SiteService.commitEdit()");
+					SiteService.save(siteEdit);
+					
+					
+				
+					
+					
+					
+				} catch (IdInvalidException e) {
+					M_log.warn(e);
+				} catch (IdUsedException e) {
+					M_log.warn(e);
+				} catch (PermissionException e) {
+					M_log.warn(e);
+				} catch (IdUnusedException e) {
+					M_log.warn(e);	
+				//} catch (GroupNotDefinedException e) {
+				//	M_log.warn(e);	
+				//} catch (AuthzPermissionException e) {
+				//	M_log.warn(e);	
+				}
+        		
+		
+	}
+	
+	private void createCombinedClassicCourse(Site parentSite, String classicSiteId) {
+		
+		M_log.info("createCombinedClassicCourse()");
+		/*
+		public static String createClassicCourse(String year, String semester, String campus, String department, 
+				String course, String section, 
+				String title, User instructor, String sakaiSiteId) 
+		*/
+		
+		String[] parts = classicSiteId.split("-");
+		User instructor = UserDirectoryService.getCurrentUser();
+
+		String description = parts[2]+" "+parts[3]+" "+parts[4]+" "+parts[5]+" COMBINED COURSE";
+		
+		OncourseUtil.createClassicCourse(parts[0],parts[1],parts[2],parts[3],parts[4],parts[5],description,instructor,parentSite.getId());
+		
+	}
+	
+	
+	
 }
