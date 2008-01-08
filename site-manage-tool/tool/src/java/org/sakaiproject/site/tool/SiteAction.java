@@ -3230,6 +3230,22 @@ public class SiteAction extends PagedResourceActionII {
 				.trimToNull(getExternalRealmId(state)));
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
+			
+			String sectionTitleString = "";
+			for(int i = 0; i < providerCourseList.size(); i++)
+			{
+				String sectionId = (String) providerCourseList.get(i);
+				try
+				{
+					Section s = cms.getSection(sectionId);
+					sectionTitleString = (i>1)?sectionTitleString + "<br />" + s.getTitle():s.getTitle(); 
+				}
+				catch (Exception e)
+				{
+					M_log.warn("coursesIntoContext " + e.getMessage() + " sectionId=" + sectionId);
+				}
+			}
+			context.put("providedSectionTitle", sectionTitleString);
 			context.put("providerCourseList", providerCourseList);
 		}
 
@@ -7848,14 +7864,22 @@ public class SiteAction extends PagedResourceActionII {
 			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
-				if (cms.isSectionDefined(providerCourseEid))
+				try
 				{
-					// in case of Section eid
-					EnrollmentSet enrollmentSet = cms.getSection(providerCourseEid).getEnrollmentSet();
-					addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet);
-					// add memberships
-					Set memberships = cms.getSectionMemberships(providerCourseEid);
-					addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships);
+					Section section = cms.getSection(providerCourseEid);
+					if (section != null)
+					{
+						// in case of Section eid
+						EnrollmentSet enrollmentSet = section.getEnrollmentSet();
+						addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, section.getTitle());
+						// add memberships
+						Set memberships = cms.getSectionMemberships(providerCourseEid);
+						addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships, section.getTitle());
+					}
+				}
+				catch (IdNotFoundException e)
+				{
+					M_log.warn("SiteAction prepareParticipants " + e.getMessage() + " sectionId=" + providerCourseEid);
 				}
 			}
 			
@@ -7903,10 +7927,9 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param providerCourseEid
 	 * @param memberships
 	 */
-	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships) {
+	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships, String sectionTitle) {
 		if (memberships != null)
 		{
-			String sectionTitle = cms.getSection(providerCourseEid).getTitle();
 			for (Iterator mIterator = memberships.iterator();mIterator.hasNext();)
 			{
 				Membership m = (Membership) mIterator.next();
@@ -7955,10 +7978,9 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param providerCourseEid
 	 * @param enrollmentSet
 	 */
-	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet) {
+	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet, String sectionTitle) {
 		if (enrollmentSet != null)
 		{
-			String sectionTitle = cms.getSection(providerCourseEid).getTitle();
 			Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
 			for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
 			{
@@ -9650,6 +9672,8 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				} catch (GroupNotDefinedException eee) {
 					message.append(rb.getString("java.realm") + realmId);
+				} catch (Exception eee) {
+					M_log.warn("SiteActionaddUsersRealm " + eee.getMessage() + " realmId=" + realmId);
 				}
 			}
 		}
