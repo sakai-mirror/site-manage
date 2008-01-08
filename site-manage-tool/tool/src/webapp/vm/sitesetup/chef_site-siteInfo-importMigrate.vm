@@ -15,7 +15,7 @@
 				$tlang.getString("sitinfimp.reuse")
 			</p>
 			<p class="instruction">
-				$tlang.getString("sitinfimp.youcan")
+				$tlang.getString("sitinfimp.replace")
 			</p>
 			#set ($siteIDCounter =0)
 			#foreach($site in $sites)
