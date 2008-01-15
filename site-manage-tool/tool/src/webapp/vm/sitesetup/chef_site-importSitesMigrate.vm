@@ -11,7 +11,7 @@
 		<div class="clear"></div>
 	#end
 	<p class="instruction">
-	$tlang.getString("import.choose")
+	$tlang.getString("sitinfimp.choose")
 	</p>
 	<form name="importSitesForm" action="#toolForm("$action")" method="post">
 		<table class ="listHier lines nolines" cellspacing="0" summary="$tlang.getString("import.choose.list.summary")" border="0">
@@ -57,6 +57,7 @@
 								#if ($toolFound)
 									<input type="checkbox" id="toolSite$toolCount$siteCount" name="$toolId" value="$site.Id" #if($!selectedSites.contains($site.Id))checked="checked"#end />
 									<label  class="skip" for="toolSite$toolCount$siteCount">$tlang.getString('import.choose.label1')  $toolTitle $tlang.getString('import.choose.label2') $validator.escapeHtml($site.getTitle())</label>
+									#if ($toolId.indexOf("sakai.rwiki") != -1) $tlang.getString("sitinfimp.wikinote") #end
 								#else
 									<input type="checkbox" id="toolSite$toolCount$siteCount"  name="$toolId" value="$site.Id" disabled="disabled" />
 								#end
