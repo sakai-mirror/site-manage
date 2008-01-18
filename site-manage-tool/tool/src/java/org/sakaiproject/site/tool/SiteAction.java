@@ -515,6 +515,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	public static final String SITE_CREATE_CURRENT_STEP = "site_create_current_step";
 
+	// types of site whose title can be editable
+	public static final String TITLE_EDITABLE_SITE_TYPE = "title_editable_site_type";
+
 	// types of site where site view roster permission is editable
 	public static final String EDIT_VIEW_ROSTER_SITE_TYPE = "edit_view_roster_site_type";
 
@@ -684,6 +687,14 @@ public class SiteAction extends PagedResourceActionII {
 								.getStrings("gradToolsSiteType")));
 			}
 			state.setAttribute(GRADTOOLS_SITE_TYPES, gradToolsSiteTypes);
+		}
+		
+		if (ServerConfigurationService.getStrings("titleEditableSiteType") != null) {
+			state.setAttribute(TITLE_EDITABLE_SITE_TYPE, new ArrayList(Arrays
+					.asList(ServerConfigurationService
+							.getStrings("titleEditableSiteType"))));
+		} else {
+			state.setAttribute(TITLE_EDITABLE_SITE_TYPE, new Vector());
 		}
 
 		if (state.getAttribute(EDIT_VIEW_ROSTER_SITE_TYPE) == null) {
@@ -1105,7 +1116,6 @@ public class SiteAction extends PagedResourceActionII {
 			 */
 			context.put("siteTypes", state.getAttribute(STATE_SITE_TYPES));
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-
 			context.put("type", siteType);
 
 			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -1862,7 +1872,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteProperties = site.getProperties();
 
 			context.put("title", state.getAttribute(FORM_SITEINFO_TITLE));
-
+			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, site.getType())));
 			context.put("type", site.getType());
 
 			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
@@ -6170,7 +6180,8 @@ public class SiteAction extends PagedResourceActionII {
 		ResourcePropertiesEdit siteProperties = Site.getPropertiesEdit();
 		String site_type = (String) state.getAttribute(STATE_SITE_TYPE);
 
-		if (site_type != null && !site_type.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+		if (siteTitleEditable(state, site_type)) 
+		{
 			Site.setTitle((String) state.getAttribute(FORM_SITEINFO_TITLE));
 		}
 
@@ -6232,6 +6243,20 @@ public class SiteAction extends PagedResourceActionII {
 
 		}
 	} // doSave_siteInfo
+
+
+	/**
+	 * Check to see whether the site's title is editable or not
+	 * @param state
+	 * @param site_type
+	 * @return
+	 */
+	private boolean siteTitleEditable(SessionState state, String site_type) {
+		return site_type != null 
+				&& (!site_type.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))
+					||	(state.getAttribute(TITLE_EDITABLE_SITE_TYPE) != null 
+							&& ((List) state.getAttribute(TITLE_EDITABLE_SITE_TYPE)).contains(site_type)));
+	}
 
 	/**
 	 * init
@@ -6824,8 +6849,8 @@ public class SiteAction extends PagedResourceActionII {
 			 */
 			if (forward) {
 				Site Site = getStateSite(state);
-
-				if (Site.getType() != null && !Site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+				if (siteTitleEditable(state, Site.getType())) 
+				{
 					// site titel is editable and could not be null
 					String title = StringUtil.trimToNull(params
 							.getString("title"));
