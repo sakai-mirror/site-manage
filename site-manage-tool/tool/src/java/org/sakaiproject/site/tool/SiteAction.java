@@ -885,6 +885,8 @@ public class SiteAction extends PagedResourceActionII {
 
 		String hasGradSites = ServerConfigurationService.getString(
 				"withDissertation", Boolean.FALSE.toString());
+		
+		context.put("cms", cms);
 
 		Site site = getStateSite(state);
 
@@ -2418,8 +2420,7 @@ public class SiteAction extends PagedResourceActionII {
 		case 36:
 			/*
 			 * buildContextForTemplate chef_site-newSiteCourse.vm
-			 */
-						
+			 */		
 			// SAK-9824
 			Boolean enableCourseCreationForUser = ServerConfigurationService.getBoolean("site.enableCreateAnyUser", Boolean.FALSE);
 			context.put("enableCourseCreationForUser", enableCourseCreationForUser);
