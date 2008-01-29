@@ -7445,8 +7445,33 @@ public class SiteAction extends PagedResourceActionII {
 											PROP_SITE_TERM, termId);
 								}
 							}
-							try {
+							try 
+							{
 								SiteService.save(site);
+								
+								if (site.getType().equals("course")) {
+									// also remove the provider id attribute if any
+									String realm = SiteService.siteReference(site.getId());
+									try 
+									{
+										AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
+										realmEdit.setProviderGroupId(null);
+										AuthzGroupService.save(realmEdit);
+									} catch (GroupNotDefinedException e) {
+										M_log.warn(this + " IdUnusedException, not found, or not an AuthzGroup object");
+										addAlert(state, rb.getString("java.realm"));
+									}
+									// catch (AuthzPermissionException e)
+									// {
+									// M_log.warn(this + " PermissionException, user does not
+									// have permission to edit AuthzGroup object.");
+									// addAlert(state, rb.getString("java.notaccess"));
+									// return;
+									// }
+									catch (Exception e) {
+										addAlert(state, this + rb.getString("java.problem"));
+									}
+								}
 							} catch (IdUnusedException e) {
 								// TODO:
 							} catch (PermissionException e) {
