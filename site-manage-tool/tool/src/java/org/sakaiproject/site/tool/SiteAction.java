@@ -4625,16 +4625,8 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (emptyInputNum == requiredFields.size()) {
 				// ignore if all inputs are empty
 			} else {
-				if (state.getAttribute(STATE_FUTURE_TERM_SELECTED) != null
-						&& ((Boolean) state
-								.getAttribute(STATE_FUTURE_TERM_SELECTED))
-								.booleanValue()) {
-					// if future term selected, then not all fields are required
-					// %%%
-					validInputSites++;
-				} else {
-					validInput = false;
-				}
+				// input invalid
+				validInput = false;
 			}
 		}
 
