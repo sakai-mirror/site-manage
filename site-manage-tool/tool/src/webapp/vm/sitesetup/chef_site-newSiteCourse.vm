@@ -232,26 +232,26 @@ function redirectBasedOnSelection(){
 				#set($crosslisted=0)	
 				#set($courseNumber=0)	
 				#foreach($courseObject in $termCourseList)
-					<table>
-					<th align="left">
-					$courseObject.title 
-					#if ($!courseObject.courseOfferingObjects.size() > 1)
-						(cross-listed)
-						#set($crosslisted=1)	
-					#end
+					<table border="0" cellpadding="0" cellspacing="0" class="listHier lines nolines highlightPanel" style="width:50%;margin:0;border:2px solid #ddd;margin-left:1em">
+					<th>
+						$courseObject.title 
+						#if ($!courseObject.courseOfferingObjects.size() > 1)
+							<strong class="highlight">(cross-listed)</strong>
+							#set($crosslisted=1)	
+						#end
 					</th>
 					#foreach($courseOfferingObject in $courseObject.courseOfferingObjects)
-						<tr><td>
 						#set($endKey = $courseNumber + $!courseOfferingObject.sections.size())
 						#if ($!courseOfferingObject.sections.size() > 1)
-							<div id="selectAll$courseNumber">							
-								<a href="#" onclick="javascript:selectAll($courseNumber, $endKey)" >$tlang.getString("nscourse.select_group_sections")</a>
-							</div>
-							<div id="unselectAll$courseNumber" class="displayNone">
-								<a href="#" onclick="javascript:unselectAll($courseNumber, $endKey)" >$tlang.getString("nscourse.unselect_group_sections")</a>
-							</div>
+							<tr><td>
+								<div id="selectAll$courseNumber">							
+									<a href="#" onclick="javascript:selectAll($courseNumber, $endKey)" >$tlang.getString("nscourse.select_group_sections")</a>
+								</div>
+								<div id="unselectAll$courseNumber" class="displayNone">
+									<a href="#" onclick="javascript:unselectAll($courseNumber, $endKey)" >$tlang.getString("nscourse.unselect_group_sections")</a>
+								</div>
+							</td></tr>
 						#end
-						</td></tr>
 						#foreach($sectionObject in $courseOfferingObject.sections)
 							#if (!$!providerCourseList.contains("$sectionObject.eid")) 
 								<tr><td class="checkbox">
