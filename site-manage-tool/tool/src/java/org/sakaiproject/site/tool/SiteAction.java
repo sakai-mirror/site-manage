@@ -113,6 +113,9 @@ import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
+import org.sakaiproject.site.util.SiteSetupQuestionMap;
+import org.sakaiproject.site.util.SiteSetupQuestion;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
@@ -6020,71 +6023,12 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		
 		/*<p>
-		 * This is a change related to SAK-12912, check if there is any file in Admin resources area which configures the survey questions for WSetup
-		 * The url to the parent folder is named SiteSetupQuestions, with url of
-		 * <ul>
-		 * <li>http://<your server dns and port>/access/content/private/siteSetupQuestions/</li>
-		 * </ul>
-		 * <p>
-		 * For one institution, they can offer survey questions to various site type, then the file should be listed under site type subfolder, /SiteSetupQestions/course/questions.xml for example
+		 * This is a change related to SAK-12912
 		 */
-		
-		// get the setting - but use a security advisor to avoid needing end-user permission to the resource
-		SecurityService.pushAdvisor(new SecurityAdvisor()
+		if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
 		{
-			public SecurityAdvice isAllowed(String userId, String function, String reference)
-			{
-				return SecurityAdvice.ALLOWED;
-			}
-		});
-		try
-		{
-			contentHostingService.checkCollection("/private/siteSetupQuestions/");
-			List questionFolders = contentHostingService.getCollection("/private/siteSetupQuestions/").getMembers();
-			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
-			// check to see any site type has defined question set
-			for(Iterator iFolders = questionFolders.iterator(); iFolders.hasNext();)
-			{
-				ContentEntity entity = (ContentEntity) iFolders.next();
-				// only expecting collections
-				if (entity.isCollection())
-				{
-					// match the collection title with site types
-					String title = entity.getProperties().getProperty(ResourceProperties.PROP_DISPLAY_NAME);
-					if (siteTypes.contains(title))
-					{
-						// get the questions.xml content within the collection
-						ContentEntity questionFile = ((ContentCollection) entity).getMember("/private/siteSetupQuestions/" + title + "/" + "questions.xml");
-						if (questionFile != null && questionFile.isResource())
-						{
-							try
-							{
-								byte[] fileContent = ((ContentResource) questionFile).getContent();
-							}
-							catch (ServerOverloadException ee)
-							{
-								
-							}
-						}
-					}
-				}
-			}
+			SiteSetupQuestionMap m = SiteSetupQuestionFileParser.updateConfig();
 		}
-		catch(PermissionException e)
-		{
-			addAlert(state, " " + rb.getString("notpermis3") + " " );
-		}
-		catch (IdUnusedException e)
-		{
-			addAlert(state, " " + rb.getString("notexist2") + " ");
-		}
-		catch (TypeException e)
-		{
-			addAlert(state," " + rb.getString("notexist2") + " ");
-		}
-		// clear the security advisors
-		SecurityService.clearAdvisors();
-		
 	} // init
 
 	public void doNavigate_to_site(RunData data) {

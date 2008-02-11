@@ -37,7 +37,7 @@ import org.sakaiproject.site.util.SiteSetupQuestion;
  */
 public class SiteSetupQuestionMap
 {
-	private Map<String, List<SiteSetupQuestion>> questionsMap;  
+	private Map<String, List<SiteSetupQuestion>> questionsMap = new HashMap<String, List<SiteSetupQuestion>>();  
 	
 	/**
 	 * get the set of site types which has questions defined 
@@ -48,6 +48,11 @@ public class SiteSetupQuestionMap
 		return questionsMap.keySet();
 	}
 	
+	/**
+	 * get the question list for specified site type
+	 * @param siteType
+	 * @return
+	 */
 	public List<SiteSetupQuestion> getQuestionListBySiteType(String siteType)
 	{
 		List<SiteSetupQuestion> rv = new Vector<SiteSetupQuestion>();
@@ -58,6 +63,19 @@ public class SiteSetupQuestionMap
 		else
 		{
 			return rv;
+		}	
+	}
+	
+	/**
+	 * Set the question list for specified site type
+	 * @param siteType
+	 * @param l
+	 */
+	public void setQuestionListBySiteType(String siteType, List<SiteSetupQuestion> l)
+	{
+		if (questionsMap.containsKey(siteType))
+		{
+			questionsMap.put(siteType, l);
 		}	
 	}
 
@@ -77,4 +95,23 @@ public class SiteSetupQuestionMap
 		this.questionsMap = questionsMap;
 	}
 	
+	/**
+	 * Add a new site type
+	 * @param siteType
+	 */
+	public void addSiteType(String siteType)
+	{
+		this.questionsMap.put(siteType, new Vector<SiteSetupQuestion>());
+	}
+	
+	/**
+	 * Add one SiteSetupQuestion to question list under specified site type
+	 * @param siteType
+	 */
+	public void addQuestionToSiteType(String siteType, SiteSetupQuestion q)
+	{
+		List<SiteSetupQuestion> l =  getQuestionListBySiteType(siteType);
+		l.add(q);
+		setQuestionListBySiteType(siteType, l);
+	}
 }
