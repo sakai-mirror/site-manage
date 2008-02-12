@@ -113,9 +113,10 @@ import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.site.util.SiteSetupQuestion;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
 import org.sakaiproject.site.util.SiteSetupQuestionMap;
-import org.sakaiproject.site.util.SiteSetupQuestion;
+import org.sakaiproject.site.util.SiteSetupQuestionTypeSet;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
@@ -235,7 +236,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-groupedit", // 50
 			"-siteInfo-groupDeleteConfirm", // 51,
 			"",
-			"-findCourse" // 53
+			"-findCourse", // 53
+			"-questions" // 54
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -247,7 +249,7 @@ public class SiteAction extends PagedResourceActionII {
 	/** Name of state attribute for CHEF site type */
 	private static final String STATE_SITE_TYPE = "site-type";
 
-	/** Name of state attribute for poissible site types */
+	/** Name of state attribute for possible site types */
 	private static final String STATE_SITE_TYPES = "site_types";
 
 	private static final String STATE_DEFAULT_SITE_TYPE = "default_site_type";
@@ -597,6 +599,12 @@ public class SiteAction extends PagedResourceActionII {
 	
 	// the string for course site type
 	private static final String STATE_COURSE_SITE_TYPE = "state_course_site_type";
+	
+	// the string for site setup questions
+	private static final String STATE_SITE_SETUP_QUESTION_MAP = "state_site_setup_question_map";
+	
+	// the template index after exist the question mode
+	private static final String STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE = "state_site_setup_question_next_template";
 	
 	/**
 	 * Populate the state object, if needed.
@@ -2746,6 +2754,11 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("authzGroupService", AuthzGroupService.getInstance());
 			return (String) getContext(data).get("template") + TEMPLATE[53];
 		}
+		case 54:
+			/*
+			 * build context for chef_site-questions.vm
+			 */
+			return (String) getContext(data).get("template") + TEMPLATE[54];
 
 		}
 		// should never be reached
@@ -3896,8 +3909,33 @@ public class SiteAction extends PagedResourceActionII {
 		if (state.getAttribute(SITE_CREATE_CURRENT_STEP) == null) {
 			state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(1));
 		}
+		
+		redirectToQuestionVM(state, type);
 
 	} // doSite_type
+
+	/**
+	 * Depend on the setup question setting, redirect the site setup flow
+	 * @param state
+	 * @param type
+	 */
+	private void redirectToQuestionVM(SessionState state, String type) {
+		// SAK-12912: check whether there is any setup question defined 
+		if (state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP) != null)
+		{
+			SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
+			SiteSetupQuestionTypeSet tSet = m.getQuestionSetBySiteType(type);
+			if (tSet != null && tSet.getQuestions() != null && tSet.getQuestions().size() > 0)
+			{
+				// there is at least one question defined for this type
+				if (state.getAttribute(STATE_MESSAGE) == null)
+				{
+					state.setAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE, state.getAttribute(STATE_TEMPLATE_INDEX));
+					state.setAttribute(STATE_TEMPLATE_INDEX, "54");
+				}
+			}
+		}
+	}
 
 	/**
 	 * Determine whether the selected term is considered of "future term"
@@ -6025,9 +6063,13 @@ public class SiteAction extends PagedResourceActionII {
 		/*<p>
 		 * This is a change related to SAK-12912
 		 */
-		if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
+		if (state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP) == null)
 		{
-			SiteSetupQuestionMap m = SiteSetupQuestionFileParser.updateConfig();
+			if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
+			{
+				SiteSetupQuestionMap m = SiteSetupQuestionFileParser.updateConfig();
+				state.setAttribute(STATE_SITE_SETUP_QUESTION_MAP, m);
+			}
 		}
 	} // init
 
@@ -7022,6 +7064,15 @@ public class SiteAction extends PagedResourceActionII {
 			if (!forward) {
 				state.removeAttribute(SORTED_BY);
 				state.removeAttribute(SORTED_ASC);
+			}
+			break;
+		case 54:
+			if (forward) {
+				
+				// actions?
+				
+				state.setAttribute(STATE_TEMPLATE_INDEX, state.getAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE));
+				state.removeAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE);
 			}
 			break;
 		}

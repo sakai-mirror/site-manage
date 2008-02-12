@@ -21,6 +21,7 @@
 package org.sakaiproject.site.util;
 
 import java.util.List;
+import java.util.Vector;
 
 /**
  * The SiteSetupQuestion object is to store user-defined question.
@@ -32,6 +33,13 @@ public class SiteSetupQuestion
 {
 	/* the question prompt */
 	private String question;
+	
+	/* whether the question is required */
+	private boolean required;
+	
+	/* whether the question has multiple answers*/
+	private boolean isMultipleAnswsers;
+	
 	
 	/* the answer list */
 	private List<String> answers;
@@ -45,7 +53,7 @@ public class SiteSetupQuestion
 	}
 
 	/**
-	 * set the qustion prompt
+	 * set the question prompt
 	 * @param question
 	 */
 	public void setQuestion(String question) {
@@ -66,6 +74,36 @@ public class SiteSetupQuestion
 	 */
 	public void setAnswers(List<String> answers) {
 		this.answers = answers;
+	}
+	
+	/**
+	 * add into the list of answers
+	 * @param answers
+	 */
+	public void addAnswers(String answer) {
+		List<String> currentAnswers = getAnswers();
+		if (currentAnswers == null)
+		{
+			currentAnswers = new Vector<String>();
+		}
+		currentAnswers.add(answer);
+		setAnswers(currentAnswers);
+	}
+
+	public boolean isRequired() {
+		return required;
+	}
+
+	public void setRequired(boolean required) {
+		this.required = required;
+	}
+
+	public boolean isMultipleAnswsers() {
+		return isMultipleAnswsers;
+	}
+
+	public void setMultipleAnswsers(boolean isMultipleAnswsers) {
+		this.isMultipleAnswsers = isMultipleAnswsers;
 	}
 	
 }

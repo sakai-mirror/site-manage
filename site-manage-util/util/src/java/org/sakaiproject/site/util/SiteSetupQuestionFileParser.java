@@ -300,34 +300,73 @@ public class SiteSetupQuestionFileParser
 							{
 								// add the site type into the question list
 								m.addSiteType(siteType);
-								NodeList qList = currentNode.getChildNodes();
-								for (int i2 = 0; i2 < qList.getLength(); i2++)
+								NodeList qSetList = currentNode.getChildNodes();
+								for (int i2 = 0; i2 < qSetList.getLength(); i2++)
 								{
-									Node qNode = qList.item(i2);
+									Node qNode = qSetList.item(i2);
 									switch (qNode.getNodeType())
 									{
 										case Node.TEXT_NODE:
 											break;
 										case Node.ELEMENT_NODE:
+											SiteSetupQuestionTypeSet s = new SiteSetupQuestionTypeSet();
 											if (qNode.getNodeName().equals("header"))
 											{
-												String header = qNode.getNodeValue();
+												s.setHeader(qNode.getNodeValue());
 											}
 											else if (qNode.getNodeName().equals("url"))
 											{
-												String url = qNode.getNodeValue();
+												s.setUrl(qNode.getNodeValue());
 											}
 											else if (qNode.getNodeName().equals("question"))
 											{
+												SiteSetupQuestion q = new SiteSetupQuestion();
+												if (qNode.hasAttributes())
+												{
+													// attributes
+													NamedNodeMap qMap = qNode.getAttributes();
+													if (qMap.getNamedItem("required") != null)
+													{
+														q.setRequired(Boolean.valueOf(qMap.getNamedItem("required").getNodeValue()));
+													}
+													if (qMap.getNamedItem("multiple_answers") != null)
+													{
+														q.setMultipleAnswsers(Boolean.valueOf(qMap.getNamedItem("multiple_answers").getNodeValue()));
+													}
+													
+													NodeList qList = qNode.getChildNodes();
+													for (int i3 = 0; i3 < qList.getLength(); i3++)
+													{
+														Node qDetailNode = qList.item(i3);
+														switch (qDetailNode.getNodeType())
+														{
+															case Node.TEXT_NODE:
+																break;
+															case Node.ELEMENT_NODE:
+																if (qDetailNode.getNodeName().equals("q"))
+																{
+																	q.setQuestion(qDetailNode.getNodeValue());
+																}
+																else if (qDetailNode.getNodeName().equals("answer"))
+																{
+																	q.addAnswers(qDetailNode.getNodeValue());
+																}
+																break;
+														}
+													}
+												}
 												
+												// add question
+												s.addQuestion(q);
 											}
+											m.setQuestionListBySiteType(siteType, s);
 											break;
 									}
-								}
-								
 							}
+								
 						}
-						break;
+					}
+					break;
 				}
 			}
 		}

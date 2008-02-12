@@ -1,0 +1,34 @@
+<script type="text/javascript">
+<!-- hide from non-JS browsers
+
+// -->
+</script>
+
+<div class="portletBody">
+	<h3>here</h3>
+	
+	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
+				<form name = "removeSectionForm" method="post" action="#toolForm($action)">
+					<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+					<input type="hidden" name="eventSubmit_doFind_course" value="x" />
+					<input type="hidden" name="option" value="remove" />
+					
+		<input id="index" type="hidden" name="template-index" value="54" />
+		<input type="hidden" name="back" value="$backIndex" />
+		<input type="hidden" name="eventSubmit_doFind_course" value="x" />
+		<input type="hidden" name="option" value="find"/>
+		<p class="act">
+			<input id="continueButton" 
+				#if (!$selectedCourse || ($!authGroupSet && !$!authGroupSet.isEmpty()))
+  			disabled="true"
+				#end
+			 type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" 
+				value="$tlang.getString('gen.continue')" onclick="resetOption('continue');" />
+			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" 
+				onclick="resetOption('back');" />
+			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')"
+				onclick="resetOption('cancel');" />
+		</p>
+
+	</form>
+</div>
