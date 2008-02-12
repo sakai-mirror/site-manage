@@ -104,6 +104,7 @@ public class SiteSetupQuestionFileParser
 	
 	protected static String m_adminSiteName = "setupQuestionsAdmin";
 	protected static String m_configFolder = "config";
+	protected static String m_answerFolder = "answer";
 	protected static String m_configXml = "questions.xml";
 	
 	protected static SiteSetupQuestionMap m_siteSetupQuestionMap;
@@ -116,6 +117,10 @@ public class SiteSetupQuestionFileParser
 		m_adminSiteName = siteName;
 	}
 	    
+	/**
+	 * the reference to config folder
+	 * @return
+	 */
 	public static String getConfigFolderReference()
 	{
 		String configFolderRef = null;
@@ -124,6 +129,20 @@ public class SiteSetupQuestionFileParser
 			configFolderRef = "/content/group/" + m_adminSiteName + "/" + m_configFolder + "/";
 		}
 		return configFolderRef;
+	}
+	
+	/**
+	 * the reference to answer folder
+	 * @return
+	 */
+	public static String getAnswerFolderReference()
+	{
+		String answerFolderRef = null;
+		if(StringUtil.trimToNull(m_adminSiteName) != null && StringUtil.trimToNull(m_answerFolder) != null)
+		{
+			answerFolderRef = "/content/group/" + m_adminSiteName + "/" + m_answerFolder + "/";
+		}
+		return answerFolderRef;
 	}
 	
 	/**
@@ -300,6 +319,7 @@ public class SiteSetupQuestionFileParser
 							{
 								// add the site type into the question list
 								m.addSiteType(siteType);
+								SiteSetupQuestionTypeSet s = new SiteSetupQuestionTypeSet();
 								NodeList qSetList = currentNode.getChildNodes();
 								for (int i2 = 0; i2 < qSetList.getLength(); i2++)
 								{
@@ -309,14 +329,13 @@ public class SiteSetupQuestionFileParser
 										case Node.TEXT_NODE:
 											break;
 										case Node.ELEMENT_NODE:
-											SiteSetupQuestionTypeSet s = new SiteSetupQuestionTypeSet();
 											if (qNode.getNodeName().equals("header"))
 											{
-												s.setHeader(qNode.getNodeValue());
+												s.setHeader(qNode.getTextContent());
 											}
 											else if (qNode.getNodeName().equals("url"))
 											{
-												s.setUrl(qNode.getNodeValue());
+												s.setUrl(qNode.getTextContent());
 											}
 											else if (qNode.getNodeName().equals("question"))
 											{
@@ -345,11 +364,22 @@ public class SiteSetupQuestionFileParser
 															case Node.ELEMENT_NODE:
 																if (qDetailNode.getNodeName().equals("q"))
 																{
-																	q.setQuestion(qDetailNode.getNodeValue());
+																	q.setQuestion(qDetailNode.getTextContent());
 																}
 																else if (qDetailNode.getNodeName().equals("answer"))
 																{
-																	q.addAnswers(qDetailNode.getNodeValue());
+																	SiteSetupQuestionAnswer answer = new SiteSetupQuestionAnswer();
+																	if (qDetailNode.hasAttributes())
+																	{
+																		// attributes
+																		NamedNodeMap qDetailMap = qDetailNode.getAttributes();
+																		if (qDetailMap.getNamedItem("fillin_blank") != null)
+																		{
+																			answer.setFillInBlank(Boolean.valueOf(qDetailMap.getNamedItem("fillin_blank").getNodeValue()));
+																		}
+																	}
+																	answer.setAnswer(qDetailNode.getTextContent());
+																	q.addAnswers(answer);
 																}
 																break;
 														}
@@ -359,10 +389,12 @@ public class SiteSetupQuestionFileParser
 												// add question
 												s.addQuestion(q);
 											}
-											m.setQuestionListBySiteType(siteType, s);
+											
 											break;
 									}
 							}
+							// set SiteSetupQuestionTypeSet
+							m.setQuestionListBySiteType(siteType, s);
 								
 						}
 					}
@@ -374,7 +406,7 @@ public class SiteSetupQuestionFileParser
 	    // what to do?
 	    
 	    
-	    return null;
+	    return m;
 	  }
 
 	  /**

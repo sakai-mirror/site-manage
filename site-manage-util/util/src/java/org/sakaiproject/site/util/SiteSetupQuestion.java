@@ -32,17 +32,16 @@ import java.util.Vector;
 public class SiteSetupQuestion
 {
 	/* the question prompt */
-	private String question;
+	private String question = "";
 	
 	/* whether the question is required */
-	private boolean required;
+	private boolean required = false;
 	
 	/* whether the question has multiple answers*/
-	private boolean isMultipleAnswsers;
-	
+	private boolean isMultipleAnswsers = false;
 	
 	/* the answer list */
-	private List<String> answers;
+	private List<SiteSetupQuestionAnswer> answers = new Vector<SiteSetupQuestionAnswer>();
 
 	/**
 	 * get the question prompt
@@ -64,7 +63,7 @@ public class SiteSetupQuestion
 	 * get the list of answers
 	 * @return
 	 */
-	public List<String> getAnswers() {
+	public List<SiteSetupQuestionAnswer> getAnswers() {
 		return answers;
 	}
 
@@ -72,7 +71,7 @@ public class SiteSetupQuestion
 	 * set the list of answers
 	 * @param answers
 	 */
-	public void setAnswers(List<String> answers) {
+	public void setAnswers(List<SiteSetupQuestionAnswer> answers) {
 		this.answers = answers;
 	}
 	
@@ -80,11 +79,11 @@ public class SiteSetupQuestion
 	 * add into the list of answers
 	 * @param answers
 	 */
-	public void addAnswers(String answer) {
-		List<String> currentAnswers = getAnswers();
+	public void addAnswers(SiteSetupQuestionAnswer answer) {
+		List<SiteSetupQuestionAnswer> currentAnswers = getAnswers();
 		if (currentAnswers == null)
 		{
-			currentAnswers = new Vector<String>();
+			currentAnswers = new Vector<SiteSetupQuestionAnswer>();
 		}
 		currentAnswers.add(answer);
 		setAnswers(currentAnswers);

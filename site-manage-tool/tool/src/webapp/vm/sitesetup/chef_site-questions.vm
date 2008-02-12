@@ -5,29 +5,37 @@
 </script>
 
 <div class="portletBody">
-	<h3>here</h3>
-	
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
-				<form name = "removeSectionForm" method="post" action="#toolForm($action)">
-					<input type="hidden" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
-					<input type="hidden" name="eventSubmit_doFind_course" value="x" />
-					<input type="hidden" name="option" value="remove" />
-					
-		<input id="index" type="hidden" name="template-index" value="54" />
-		<input type="hidden" name="back" value="$backIndex" />
-		<input type="hidden" name="eventSubmit_doFind_course" value="x" />
-		<input type="hidden" name="option" value="find"/>
-		<p class="act">
-			<input id="continueButton" 
-				#if (!$selectedCourse || ($!authGroupSet && !$!authGroupSet.isEmpty()))
-  			disabled="true"
+	<h4>$questionSet.getHeader()</h4>
+	<form name = "removeSectionForm" method="post" action="#toolForm($action)">
+		#foreach ($question in $questionSet.getQuestions())
+			<h5>
+				#if ($question.required)
+					<span class ="reqStarInline">*</span>
 				#end
-			 type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" 
-				value="$tlang.getString('gen.continue')" onclick="resetOption('continue');" />
-			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')" 
-				onclick="resetOption('back');" />
-			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')"
-				onclick="resetOption('cancel');" />
+				$question.getQuestion()
+			</h5>
+			#foreach($answer in $question.getAnswers())
+				#if ($question.isMultipleAnswsers())
+					<input type="checkbox" name="$question.getQuestion()" value="#if($answer.isFillInBlank())'fillInBlank'#else$answer.getAnswer()#end" id="$question.getQuestion()" />
+				#else
+					<input type="radio" name="$question.getQuestion()" value="#if($answer.isFillInBlank())'fillInBlank'#else$answer.getAnswer()#end" id="$question.getQuestion()" />
+				#end
+				$answer.getAnswer()
+				#if ($answer.isFillInBlank())
+					<input type="text" name="fillInBlank_$question.getQuestion()" value="" id="fillInBlank_$question.getQuestion()" />
+				#end
+				<br />
+			#end
+		#end
+		<input type="hidden" name="back" value="1" />
+		<input type="hidden" name="template-index" value="54" />
+		<input type="hidden" name="continue" value="$continueIndex" />
+					
+		<p class="act">
+			<input type="submit" class="active" accesskey="s" name="eventSubmit_doContinue" value="$tlang.getString('gen.continue')" />
+			<input type="submit" accesskey="b" name="eventSubmit_doBack" value="$tlang.getString('gen.back')"  />
+			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString('gen.cancel')" />
 		</p>
 
 	</form>

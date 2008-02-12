@@ -606,6 +606,9 @@ public class SiteAction extends PagedResourceActionII {
 	// the template index after exist the question mode
 	private static final String STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE = "state_site_setup_question_next_template";
 	
+	// the answers to site setup questions
+	private static final String STATE_SITE_SETUP_QUESTION_ANSWER = "state_site_setup_question_answer";
+	
 	/**
 	 * Populate the state object, if needed.
 	 */
@@ -2758,6 +2761,9 @@ public class SiteAction extends PagedResourceActionII {
 			/*
 			 * build context for chef_site-questions.vm
 			 */
+			SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
+			context.put("questionSet", m.getQuestionSetBySiteType((String) state.getAttribute(STATE_SITE_TYPE)));
+			context.put("continueIndex", state.getAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE));
 			return (String) getContext(data).get("template") + TEMPLATE[54];
 
 		}
@@ -7069,15 +7075,69 @@ public class SiteAction extends PagedResourceActionII {
 		case 54:
 			if (forward) {
 				
-				// actions?
-				
-				state.setAttribute(STATE_TEMPLATE_INDEX, state.getAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE));
-				state.removeAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE);
+				// store answers to site setup questions
+				if (getAnswersToSetupQuestions(params, state))
+				{
+					state.setAttribute(STATE_TEMPLATE_INDEX, state.getAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE));
+					state.removeAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE);
+				}
 			}
 			break;
 		}
 
 	}// actionFor Template
+	
+	/**
+	 * get user answers to setup questions
+	 * @param params
+	 * @param state
+	 * @return
+	 */
+	protected boolean getAnswersToSetupQuestions(ParameterParser params, SessionState state)
+	{
+		boolean rv = true;
+		
+		String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
+		SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
+		SiteSetupQuestionTypeSet s = m.getQuestionSetBySiteType(siteType);
+		List<SiteSetupQuestion> questionList = s.getQuestions();
+		Hashtable<String, String> h = new Hashtable<String, String>();
+		for (Iterator i = questionList.iterator(); i.hasNext();)
+		{
+			SiteSetupQuestion question = (SiteSetupQuestion) i.next();
+			String answer = params.get(question.getQuestion());
+			if (question.isRequired() && answer == null)
+			{
+				rv = false;
+			}
+			if (answer.equals("fillInBlank"))
+			{
+				// need to read the text input instead
+				answer = params.get("fillInBlank_" + question.getQuestion());
+			}
+			h.put(question.getQuestion(), answer);
+		}
+		state.setAttribute(STATE_SITE_SETUP_QUESTION_ANSWER, h);	
+		return true;
+	}
+	
+	/**
+	 * get user answers to setup questions
+	 * @param params
+	 * @return
+	 */
+	protected void saveAnswersToSetupQuestions(SessionState state)
+	{
+		String answerFolderReference = SiteSetupQuestionFileParser.getAnswerFolderReference();
+		try
+		{
+			contentHostingService.addResource(answerFolderReference + "");
+		}
+		catch (Exception e)
+		{
+			M_log.warn(this + e.getMessage());
+		}
+	}
 
 	/**
 	 * update current step index within the site creation wizard
