@@ -49,7 +49,7 @@
 										#foreach ($page in $allPages)
 											#set($pageTools = $page.getTools())
 											#foreach ($pageTool in $pageTools)
-												#if ($pageTool.getTool().getId() == $toolId)
+												#if ($pageTool.getTool().getId() == $toolId ||($toolId.indexOf("sakai.assignment2") != -1 && $pageTool.getTool().getId().indexOf("sakai.assignment.grades") != -1))
 													#set($toolFound = true)
 												#end
 											#end

@@ -2178,10 +2178,13 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("continue", "18");
 				}
 			}
-			context.put(STATE_TOOL_REGISTRATION_LIST, state
-					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
-			context.put("selectedTools", orderToolIds(state, site_type,
-					(List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST))); // String toolId's
+			
+			// we want the stealthed assignment2 tool to show up in the list
+			// in some circumstances, so pass all registered tools for the
+			// import - these are used to retrieve the title
+			context.put(STATE_TOOL_REGISTRATION_LIST, ToolManager.findTools(null, null));
+			context.put("selectedTools", orderToolIdsForImport(state, site_type,
+					getToolsAvailableForImport(state, site))); // String toolId's
 			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
 			context.put("importSitesTools", state
 					.getAttribute(STATE_IMPORT_SITE_TOOL));
@@ -9533,6 +9536,17 @@ public class SiteAction extends PagedResourceActionII {
 		return rv;
 
 	} // orderToolIds
+	
+	private List orderToolIdsForImport(SessionState state, String type, List toolIdList) {
+		List orderedToolList = orderToolIds(state, type, toolIdList);
+		
+		// determine if assignment2 needs to be added
+		if (toolIdList != null && toolIdList.contains("sakai.assignment2") &&
+				(orderedToolList != null && !orderedToolList.contains("sakai.assignment2"))) {
+			orderedToolList.add("sakai.assignment2");
+		}
+		return orderedToolList;
+	}
 
 	private void setupFormNamesAndConstants(SessionState state) {
 		TimeBreakdown timeBreakdown = (TimeService.newTime()).breakdownLocal();
@@ -10719,35 +10733,62 @@ public class SiteAction extends PagedResourceActionII {
 
 	/**
 	 * @param state
+	 * @param the existing site. if this is not null, some
+	 * tools may be returned that you don't have in your site (ie the News and Web Content
+	 * tools if they exist in the site you are importing from). similarly, if not null,
+	 * will look for the assignment2 tool in your site and add it as an import option if
+	 * you have it in your site and either the old or new tool in one of your importable sites
 	 * @return Get a list of all tools that should be included as options for
 	 *         import
 	 */
-	protected List getToolsAvailableForImport(SessionState state) {
-		// The Web Content and News tools do not follow the standard rules for
-		// import
-		// Even if the current site does not contain the tool, News and WC will
-		// be
-		// an option if the imported site contains it
-		boolean displayWebContent = false;
-		boolean displayNews = false;
+	protected List getToolsAvailableForImport(SessionState state, Site existingSite) {
+		
+		List toolsOnImportList = (List) state
+		.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+		
+		if (existingSite != null) {
+			// The Web Content and News tools do not follow the standard rules for
+			// import. Even if the current site does not contain the tool, News and WC will
+			// be an option if the imported site contains it
+			boolean displayWebContent = false;
+			boolean displayNews = false;
+			boolean hasAssignment1 = false;
+			boolean hasAssignment2 = false;
+			
+			Set importSites = ((Hashtable) state.getAttribute(STATE_IMPORT_SITES))
+			.keySet();
 
-		Set importSites = ((Hashtable) state.getAttribute(STATE_IMPORT_SITES))
-				.keySet();
-		Iterator sitesIter = importSites.iterator();
-		while (sitesIter.hasNext()) {
-			Site site = (Site) sitesIter.next();
-			if (site.getToolForCommonId("sakai.iframe") != null)
-				displayWebContent = true;
-			if (site.getToolForCommonId("sakai.news") != null)
-				displayNews = true;
+			Iterator sitesIter = importSites.iterator();
+			while (sitesIter.hasNext()) {
+				Site site = (Site) sitesIter.next();
+				if (site.getToolForCommonId("sakai.iframe") != null)
+					displayWebContent = true;
+				if (site.getToolForCommonId("sakai.news") != null)
+					displayNews = true;
+				if (site.getToolForCommonId("sakai.assignment.grades") != null) {
+					hasAssignment1 = true;
+				}
+				if (site.getToolForCommonId("sakai.assignment2") != null) {
+					hasAssignment2 = true;
+				}
+			}
+
+			if (displayWebContent && !toolsOnImportList.contains("sakai.iframe"))
+				toolsOnImportList.add("sakai.iframe");
+			if (displayNews && !toolsOnImportList.contains("sakai.news"))
+				toolsOnImportList.add("sakai.news");
+			
+			// if the current site has the new assignment2 tool and the site you
+			// are importing from has either the old or new assign tool, add
+			// the assignment2 tool as an importable option
+			if (existingSite.getToolForCommonId("sakai.assignment2") != null) {
+				if ((hasAssignment1 || hasAssignment2) && !toolsOnImportList.contains("sakai.assignment2")) {
+					toolsOnImportList.add("sakai.assignment2");
+				}
+			}
+			
 		}
 
-		List toolsOnImportList = (List) state
-				.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-		if (displayWebContent && !toolsOnImportList.contains("sakai.iframe"))
-			toolsOnImportList.add("sakai.iframe");
-		if (displayNews && !toolsOnImportList.contains("sakai.news"))
-			toolsOnImportList.add("sakai.news");
 
 		return toolsOnImportList;
 	} // getToolsAvailableForImport
