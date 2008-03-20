@@ -40,6 +40,11 @@ import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.util.ResourceLoader;
 
+//ONC-356
+import edu.iu.oncourse.util.OncourseUtil;
+import org.sakaiproject.tool.cover.SessionManager;
+import org.sakaiproject.site.api.Site;
+
 /**
  * <p>
  * MembershipAction is a tool which displays Sites and lets the user join and un-join joinable Sites.
@@ -320,6 +325,20 @@ public class MembershipAction extends PagedResourceActionII
 				SiteService.join(id);
 				String msg = rb.getString("mb.youhave2") + " " + SiteService.getSite(id).getTitle();
 				addAlert(state, msg);
+				
+				//ONC-356
+				//	add user to original oncourse site
+				try 
+				{
+				Site site = SiteService.getSite(id);
+				String userId = SessionManager.getCurrentSessionUserId();
+				String role = "student";
+				OncourseUtil.addToOncourseRosterForJoin(site,userId,role);
+				}
+				catch (Exception e)
+				{
+					Log.warn("chef", "Add user to Original Oncourse failed ****" + e);
+				}
 			}
 			catch (IdUnusedException e)
 			{
