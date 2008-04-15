@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+      "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+          "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+          
+<hibernate-mapping package="org.sakaiproject.sitemanage.impl">
+	<class name="SiteSetupQuestionAnswerImpl"
+		table="SSQ_ANSWER">
+		
+		<id name="id" type="long" column="ID">
+	    	<generator class="native">
+                <param name="sequence">SSQ_ANSWER_ID_SEQ</param>
+	    	</generator>
+		</id>
+		
+		<property name="answer" type="string" not-null="true">
+            <column name="ANSWER"/>
+        </property>
+        
+        <property name="answerString" type="string" not-null="false">
+            <column name="ANSWER_STRING"/>
+        </property>
+        
+        <property name="isFillInBlank" type="boolean" not-null="true">
+            <column name="FILL_IN_BLANK"/>
+        </property>
+        
+        <many-to-one name="questionId" column="QUESTION_ID"
+			class="SiteSetupQuestionImpl" index="SSQ_ANSWER_QUESTION_I" lazy="false" />
+    </class>
+</hibernate-mapping>
