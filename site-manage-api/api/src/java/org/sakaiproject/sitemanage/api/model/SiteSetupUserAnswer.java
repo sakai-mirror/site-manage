@@ -1,0 +1,86 @@
+/**********************************************************************************
+ * $URL:  $
+ * $Id:  $
+ ***********************************************************************************
+ *
+ * Copyright (c) 2003, 2004, 2005, 2006 The Sakai Foundation.
+ * 
+ * Licensed under the Educational Community License, Version 1.0 (the "License"); 
+ * you may not use this file except in compliance with the License. 
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.opensource.org/licenses/ecl1.php
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the License is distributed on an "AS IS" BASIS, 
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
+ *
+ **********************************************************************************/
+
+package org.sakaiproject.sitemanage.api.model;
+
+public interface SiteSetupUserAnswer {
+	
+	/**
+	 * get the user id
+	 * @return
+	 */
+	public String getUserId();
+	
+	/**
+	 * set the user id
+	 * @param userId
+	 */
+	public void setUserId(String userId);
+	
+	/**
+	 * get site id
+	 * @return
+	 */
+	public String getSiteId();
+	
+	/**
+	 * 
+	 * @param siteId
+	 */
+	public void setSiteId(String siteId);
+	
+	/**
+	 * get question id
+	 * @return
+	 */
+	public Long getQuestionId();
+	
+	/**
+	 * set question id
+	 * @param questionId
+	 * @return
+	 */
+	public void setQuestionId(Long questionId);
+	
+	/**
+	 * get the SiteSetupQuestion id
+	 * @return
+	 */
+	public Long getAnswerId();
+
+	/**
+	 * set the SiteSetupQuestion id
+	 * @param answerId
+	 */
+	public void setAnswerId(Long answerId);
+	
+	/**
+	 * get the answer string if the answer type is fill in blank one
+	 * @return
+	 */
+	public String getAnswerString();
+	
+	/**
+	 * set the answer string if the answer type is fill in blank one
+	 * @param answerString
+	 */
+	public void setAnswerString(String answerString);
+}
