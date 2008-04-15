@@ -113,7 +113,7 @@ import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
-import org.sakaiproject.site.util.SiteSetupQuestion;
+import org.sakaiproject.sitemanage.api.model.*;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
 import org.sakaiproject.site.util.SiteSetupQuestionMap;
 import org.sakaiproject.site.util.SiteSetupQuestionTypeSet;
