@@ -127,7 +127,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 		this.isMultipleAnswers = isMultipleAnswers;
 	}
 	
-	Long siteTypeId;
+	private Long siteTypeId;
 	/**
 	 * {@inheritDoc}
 	 */
@@ -139,7 +139,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setSiteType(Long siteTypeId)
+	public void setSiteTypeId(Long siteTypeId)
 	{
 		this.siteTypeId = siteTypeId;
 	}
