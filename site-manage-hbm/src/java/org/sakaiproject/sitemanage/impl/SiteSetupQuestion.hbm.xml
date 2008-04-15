@@ -7,10 +7,10 @@
 	<class name="SiteSetupQuestionImpl"
 		table="SSQ_QUESTION">
 		
-		<id name="id" type="long" column="ID">
-	    	<generator class="native">
-                <param name="sequence">SSQ_QUESTION_ID_SEQ</param>
-	    	</generator>
+		<comment>This table stores site setup questions</comment>
+		
+		<id name="id" length="99" column="ID">
+			<generator class="org.sakaiproject.id.hbm.IdGenerator"/>
 		</id>
 		
 		<property name="question" type="string" not-null="false">

@@ -27,15 +27,28 @@ import java.util.List;
 import org.sakaiproject.sitemanage.api.model.*;
 
 public class SiteSetupQuestionImpl implements SiteSetupQuestion {
-		
+	
+	public SiteSetupQuestionImpl()
+	{
+	}
+	
+	public SiteSetupQuestionImpl(List<SiteSetupQuestionAnswer> answers, boolean isMultipleAnswers, String question, boolean required, String siteTypeId)
+	{
+		this.answers = answers;
+		this.isMultipleAnswers = isMultipleAnswers;
+		this.question = question;
+		this.required = required;
+		this.siteTypeId = siteTypeId;
+	}
+	
 	private static final long serialVersionUID = 1L;
 	
-	private Long id;
+	private String id;
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getId()
+	public String getId()
 	{
 		return id;
 	}
@@ -43,7 +56,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setId(Long id)
+	public void setId(String id)
 	{
 		this.id = id;
 	}
@@ -86,7 +99,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void addAnswers(SiteSetupQuestionAnswer answer)
+	public void addAnswer(SiteSetupQuestionAnswer answer)
 	{
 		this.answers.add(answer);
 	}
@@ -127,11 +140,11 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 		this.isMultipleAnswers = isMultipleAnswers;
 	}
 	
-	private Long siteTypeId;
+	private String siteTypeId;
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getSiteTypeId()
+	public String getSiteTypeId()
 	{
 		return siteTypeId;
 	}
@@ -139,7 +152,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setSiteTypeId(Long siteTypeId)
+	public void setSiteTypeId(String siteTypeId)
 	{
 		this.siteTypeId = siteTypeId;
 	}

@@ -31,13 +31,13 @@ public interface SiteSetupQuestionAnswer extends java.io.Serializable {
 	 * get the associated question id
 	 * @return
 	 */
-	public Long getId();
+	public String getId();
 	
 	/**
 	 * set the associated question id
 	 * @param id
 	 */
-	public void setId(Long id);
+	public void setId(String id);
 	
 	/**
 	 * whether the answer is fill-in-blank
@@ -74,5 +74,18 @@ public interface SiteSetupQuestionAnswer extends java.io.Serializable {
 	 * @param fillInBlankString
 	 */
 	public void setAnswerString(String AnswerString);
+	
+	/**
+	 * get the associated question id
+	 * @return
+	 */
+	public String getQuestionId();
+	
+	/**
+	 * set the question id
+	 * @return
+	 */
+	public void setQuestionId(String questionId);
+	
 	
 }

@@ -18,7 +18,7 @@
 
 package org.sakaiproject.sitemanage.api.model;
 
-import java.util.Collection;
+import java.util.List ;
 
 /**
  * This is the interface for the Service of SiteSetupQuestion. It contains the backend logic for the tool
@@ -32,30 +32,93 @@ public interface SiteSetupQuestionService {
 	 * @param siteType
 	 * @return
 	 */
-	public Collection<SiteSetupQuestion> getAllTasks(String siteType);
+	public List<SiteSetupQuestion> getQuestions(String siteType);
 
+	/*********** SiteSetupQuestion **************/
 	/**
-	 * Add question
+	 * new question
 	 * @param q
-	 */
-	public void addSiteSetupQuestion(SiteSetupQuestion q);
-	
-	/**
-	 * create a new instance of SiteSetupQuestion
 	 * @return
 	 */
 	public SiteSetupQuestion newSiteSetupQuestion();
 	
 	/**
-	 * get a new instance of SiteSetupQuestionAnswer
+	 * Save question
+	 * @param q
+	 * @return
+	 */
+	public boolean saveSiteSetupQuestion(SiteSetupQuestion q);
+	
+	/**
+	 * remove SiteSetupQuestion
+	 * @return
+	 */
+	public boolean removeSiteSetupQuestion(SiteSetupQuestion question);
+	
+	/********* SiteSetupQuestionAnswer ***************/
+	
+	/**
+	 * new answer
+	 * @param q
 	 * @return
 	 */
 	public SiteSetupQuestionAnswer newSiteSetupQuestionAnswer();
-
+	
 	/**
-	 * Remove question
-	 * @param q
+	 * save the SiteSetupQuestionAnswer object
+	 * @param answer
+	 * @return
 	 */
-	public void removeTask(SiteSetupQuestion q);
+	public boolean saveSiteSetupQuestionAnswer(SiteSetupQuestionAnswer answer);
+	
+	/**
+	 * remove the SiteSetupQuestionAnswer object
+	 * @param answer
+	 * @return
+	 */
+	public boolean removeSiteSetupQuestionAnswer(SiteSetupQuestionAnswer answer);
 
+	/************ SiteTypeQuestions *******************/
+	
+	/**
+	 * new SiteTypeQuestions
+	 */
+	public SiteTypeQuestions newSiteTypeQuestions();
+	
+	/**
+	 * save the SiteTypeQuestion object
+	 * @param siteTypeQuestions
+	 * @return
+	 */
+	public boolean saveSiteTypeQuestions(SiteTypeQuestions siteTypeQuestions);
+	
+	/**
+	 * remove the SiteTypeQuestion object
+	 * @param siteTypeQuestions
+	 * @return
+	 */
+	public boolean removeSiteTypeQuestions(SiteTypeQuestions siteTypeQuestions);
+	
+	/************ SiteSetupUserAnswer *******************/
+	/**
+	 * new SiteSetupUserAnswer
+	 * @param uAnswer
+	 * @return
+	 */
+	public SiteSetupUserAnswer newSiteSetupUserAnswer();
+	
+	/**
+	 * Save the SiteTypeQuestion object
+	 * @param SiteSetupUserAnswer
+	 * @return
+	 */
+	public boolean saveSiteSetupUserAnswer(SiteSetupUserAnswer siteSetupUserAnswer);
+	
+	/**
+	 * remove the SiteTypeQuestion object
+	 * @param siteSetupUserAnswer
+	 * @return
+	 */
+	public boolean removeSiteSetupUserAnswer(SiteSetupUserAnswer siteSetupUserAnswer);
+	
 }

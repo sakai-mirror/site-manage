@@ -51,26 +51,26 @@ public interface SiteSetupUserAnswer {
 	 * get question id
 	 * @return
 	 */
-	public Long getQuestionId();
+	public String getQuestionId();
 	
 	/**
 	 * set question id
 	 * @param questionId
 	 * @return
 	 */
-	public void setQuestionId(Long questionId);
+	public void setQuestionId(String questionId);
 	
 	/**
 	 * get the SiteSetupQuestion id
 	 * @return
 	 */
-	public Long getAnswerId();
+	public String getAnswerId();
 
 	/**
 	 * set the SiteSetupQuestion id
 	 * @param answerId
 	 */
-	public void setAnswerId(Long answerId);
+	public void setAnswerId(String answerId);
 	
 	/**
 	 * get the answer string if the answer type is fill in blank one

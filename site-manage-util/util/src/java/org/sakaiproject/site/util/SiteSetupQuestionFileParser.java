@@ -385,7 +385,8 @@ public class SiteSetupQuestionFileParser
 																		}
 																	}
 																	answer.setAnswer(qDetailNode.getTextContent());
-																	q.addAnswers(answer);
+																	questionService.saveSiteSetupQuestionAnswer(answer);
+																	q.addAnswer(answer);
 																}
 																break;
 														}
@@ -393,6 +394,7 @@ public class SiteSetupQuestionFileParser
 												}
 												
 												// add question
+												questionService.saveSiteSetupQuestion(q);
 												s.addQuestion(q);
 											}
 											

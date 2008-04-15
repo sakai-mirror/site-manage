@@ -31,12 +31,25 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 	
 	private static final long serialVersionUID = 1L;
 	
-	private Long siteTypeId;
+	public SiteTypeQuestionsImpl()
+	{
+		
+	}
+	
+	public SiteTypeQuestionsImpl(String instruction, List<SiteSetupQuestion> questions, String siteType, String siteTypeId)
+	{
+		this.instruction = instruction;
+		this.questions = questions;
+		this.siteType = siteType;
+		this.siteTypeId = siteTypeId;
+	}
+	
+	private String siteTypeId;
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getSiteTypeId()
+	public String getSiteTypeId()
 	{
 		return siteTypeId;
 	}
@@ -44,7 +57,7 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setSiteTypeId(Long siteTypeId)
+	public void setSiteTypeId(String siteTypeId)
 	{
 		this.siteTypeId = siteTypeId;
 	}

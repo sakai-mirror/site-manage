@@ -28,6 +28,20 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 	
 	private static final long serialVersionUID = 1L;
 	
+	public SiteSetupUserAnswerImpl()
+	{
+		
+	}
+	
+	public SiteSetupUserAnswerImpl(String answerId, String answerString, String questionId, String siteId, String userId)
+	{
+		this.answerId = answerId;
+		this.answerString = answerString;
+		this.questionId = questionId;
+		this.siteId = siteId;
+		this.userId = userId;
+	}
+	
 	private String userId;
 	
 	/**
@@ -64,11 +78,11 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 		this.siteId = siteId;
 	}
 	
-	private Long questionId;
+	private String questionId;
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getQuestionId()
+	public String getQuestionId()
 	{
 		return questionId;
 	}
@@ -76,17 +90,17 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setQuestionId(Long questionId)
+	public void setQuestionId(String questionId)
 	{
 		this.questionId = questionId;
 	}
 	
-	private Long answerId;
+	private String answerId;
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getAnswerId()
+	public String getAnswerId()
 	{
 		return answerId;
 	}
@@ -94,7 +108,7 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setAnswerId(Long answerId)
+	public void setAnswerId(String answerId)
 	{
 		this.answerId = answerId;
 	}
@@ -116,4 +130,5 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 	{
 		this.answerString = answerString;
 	}
+	
 }

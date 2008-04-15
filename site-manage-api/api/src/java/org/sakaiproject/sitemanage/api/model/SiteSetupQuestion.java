@@ -34,13 +34,13 @@ public interface SiteSetupQuestion extends java.io.Serializable {
 	 * get id of question
 	 * @return
 	 */
-	public Long getId();
+	public String getId();
 	
 	/**
 	 * set the id of question
 	 * @param id
 	 */
-	public void setId(Long id);
+	public void setId(String id);
 	
 	/**
 	 * get the question prompt
@@ -70,7 +70,7 @@ public interface SiteSetupQuestion extends java.io.Serializable {
 	 * add into the list of answers
 	 * @param answers
 	 */
-	public void addAnswers(SiteSetupQuestionAnswer answer);
+	public void addAnswer(SiteSetupQuestionAnswer answer);
 	
 	/**
 	 * is question required or not
@@ -100,11 +100,11 @@ public interface SiteSetupQuestion extends java.io.Serializable {
 	 * get the site type id
 	 * @return
 	 */
-	public Long getSiteTypeId();
+	public String getSiteTypeId();
 	
 	/**
 	 * set the site type id
 	 * @param siteTypeId
 	 */
-	public void setSiteTypeId(Long siteTypeId);
+	public void setSiteTypeId(String siteTypeId);
 }

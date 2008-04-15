@@ -7,10 +7,8 @@
 	<class name="SiteSetupUserAnswerImpl"
 		table="SSQ_USER_ANSWER">
 		
-		<id name="id" type="long" column="ID">
-	    	<generator class="native">
-                <param name="sequence">SSQ_USER_ANSWER_ID_SEQ</param>
-	    	</generator>
+		<id name="id" length="99" column="ID">
+			<generator class="org.sakaiproject.id.hbm.IdGenerator"/>
 		</id>
 		
 		<property name="siteId" type="string" not-null="true">

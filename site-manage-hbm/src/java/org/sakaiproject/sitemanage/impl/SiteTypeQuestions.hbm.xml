@@ -7,10 +7,8 @@
 	<class name="SiteTypeQuestionsImpl"
 		table="SSQ_SITETYPE_QUESTIONS">
 		
-		<id name="siteTypeId" type="long" column="SITETYPE_ID">
-	    	<generator class="native">
-                <param name="sequence">SSQ_SITETYPE_QUESTIONS_ID_SEQ</param>
-	    	</generator>
+		<id name="id" length="99" column="ID">
+			<generator class="org.sakaiproject.id.hbm.IdGenerator"/>
 		</id>
 		
 		<property name="siteType" type="string" not-null="true">
@@ -27,4 +25,11 @@
 			<one-to-many class="SiteSetupQuestionImpl" />
 		</list>
     </class>
+    
+	<query name = "findQuestionIdsForSiteType">
+			<![CDATA[
+			from SiteTypeQuestionsImpl as questions
+			where questions.siteType = :siteType
+		]]>
+	</query>
 </hibernate-mapping>

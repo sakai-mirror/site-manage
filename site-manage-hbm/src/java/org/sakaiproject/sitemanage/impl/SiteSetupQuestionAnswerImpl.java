@@ -28,11 +28,23 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 	
 	private static final long serialVersionUID = 1L;
 	
-	private Long id;
+	public SiteSetupQuestionAnswerImpl()
+	{
+		
+	}
+	
+	public SiteSetupQuestionAnswerImpl(String answer, String answerString, boolean isFillInBlank)
+	{
+		this.answer = answer;
+		this.answerString = answerString;
+		this.isFillInBlank = isFillInBlank;
+	}
+	
+	private String id;
 	/**
 	 * {@inheritDoc}
 	 */
-	public Long getId()
+	public String getId()
 	{
 		return id;
 	}
@@ -40,12 +52,12 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setId(Long id)
+	public void setId(String id)
 	{
 		this.id = id;
 	}
 	
-	boolean isFillInBlank;
+	private boolean isFillInBlank;
 	
 	/**
 	 * {@inheritDoc}
@@ -63,7 +75,7 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 		this.isFillInBlank = isFillInBlank;
 	}
 	
-	String answer;
+	private String answer;
 
 	/**
 	 * {@inheritDoc}
@@ -81,7 +93,7 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 		this.answer = answer;
 	}
 
-	String answerString;
+	private String answerString;
 	
 	/**
 	 * {@inheritDoc}
@@ -99,4 +111,21 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 		this.answerString = answerString;
 	}
 
+	private String questionId;
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getQuestionId()
+	{
+		return questionId;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void setQuestionId(String questionId)
+	{
+		this.questionId = questionId;
+	}
 }

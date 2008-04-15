@@ -33,13 +33,13 @@ public interface SiteTypeQuestions {
 	 * get the site type id
 	 * @return
 	 */
-	public Long getSiteTypeId();
+	public String getSiteTypeId();
 	
 	/**
 	 * set the site type id
 	 * @param siteTypeId
 	 */
-	public void setSiteTypeId(Long siteTypeId);
+	public void setSiteTypeId(String siteTypeId);
 	
 	/**
 	 * get the site type 
