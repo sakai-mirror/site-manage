@@ -23,6 +23,8 @@ package org.sakaiproject.site.util;
 import java.util.List;
 import java.util.Vector;
 
+import org.sakaiproject.sitemanage.api.model.*;
+
 /**
  * The SiteSetupQuestionTypeSet object is to store user-defined questions for a particular site type 
  * It could have a header as description for all following questions, a url for further information, and a list of SiteSetupQuestion objects

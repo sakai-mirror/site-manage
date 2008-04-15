@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Vector;
 
-import org.sakaiproject.site.util.SiteSetupQuestion;
+import org.sakaiproject.sitemanage.api.model.*;
 
 /**
  * The SiteSetupQuestionMap object is to store user-defined questions based on site types. 

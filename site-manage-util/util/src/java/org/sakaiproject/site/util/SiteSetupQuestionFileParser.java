@@ -59,6 +59,8 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 
+import org.sakaiproject.sitemanage.api.model.*;
+
 /**
  * This parser is mainly to parse the questions.xml file:
  * @author zqian
@@ -67,6 +69,10 @@ import javax.xml.parsers.SAXParser;
 public class SiteSetupQuestionFileParser
 {
 	private static Log m_log = LogFactory.getLog(SiteSetupQuestionFileParser.class);
+	
+	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
+	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
+	
 	/* Here is a template of the question.xml file:
 	   <?xml version="1.0" encoding="UTF-8" ?> 
 	 	<SiteSetupQuestions>
@@ -339,7 +345,7 @@ public class SiteSetupQuestionFileParser
 											}
 											else if (qNode.getNodeName().equals("question"))
 											{
-												SiteSetupQuestion q = new SiteSetupQuestion();
+												SiteSetupQuestion q = questionService.newSiteSetupQuestion();
 												if (qNode.hasAttributes())
 												{
 													// attributes
@@ -368,7 +374,7 @@ public class SiteSetupQuestionFileParser
 																}
 																else if (qDetailNode.getNodeName().equals("answer"))
 																{
-																	SiteSetupQuestionAnswer answer = new SiteSetupQuestionAnswer();
+																	SiteSetupQuestionAnswer answer = questionService.newSiteSetupQuestionAnswer();
 																	if (qDetailNode.hasAttributes())
 																	{
 																		// attributes
