@@ -42,6 +42,24 @@ public class SiteSetupUserAnswerImpl implements SiteSetupUserAnswer {
 		this.userId = userId;
 	}
 	
+	private String id;
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getId()
+	{
+		return id;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void setId(String id)
+	{
+		this.id = id;
+	}
+	
 	private String userId;
 	
 	/**

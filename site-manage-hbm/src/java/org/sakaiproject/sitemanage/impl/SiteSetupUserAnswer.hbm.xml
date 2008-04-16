@@ -19,23 +19,14 @@
             <column name="USER_ID"/>
         </property>
         
-		<property name="questionId" type="long" not-null="true">
-            <column name="QUESTION_ID"/>
-        </property>
-        
-		<property name="answerId" type="long" not-null="true">
-            <column name="ANSWER_ID"/>
-        </property>
-        
         <property name="answerString" type="string" not-null="false">
             <column name="ANSWER_STRING"/>
         </property>
         
-        <property name="isFillInBlank" type="boolean" not-null="true">
-            <column name="FILL_IN_BLANK"/>
-        </property>
-        
         <many-to-one name="questionId" column="QUESTION_ID"
-			class="SiteSetupQuestionImpl" index="SSQ_ANSWER_QUESTION_I" lazy="false" />
+			class="SiteSetupQuestionImpl" index="SSQ_USER_ANSWER_QUESTION_I" lazy="false" />
+			
+		<many-to-one name="answerId" column="ANSWER_ID"
+			class="SiteSetupQuestionImpl" index="SSQ_USER_ANSWER_ANSWER_I" lazy="false" />
     </class>
 </hibernate-mapping>

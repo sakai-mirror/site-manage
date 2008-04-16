@@ -24,6 +24,18 @@ package org.sakaiproject.sitemanage.api.model;
 public interface SiteSetupUserAnswer {
 	
 	/**
+	 * get the id
+	 * @return
+	 */
+	public String getId();
+	
+	/**
+	 * set the id
+	 * @param id
+	 */
+	public void setId(String id);
+	
+	/**
 	 * get the user id
 	 * @return
 	 */

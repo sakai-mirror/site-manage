@@ -46,6 +46,22 @@ public class SiteSetupQuestionServiceImpl extends HibernateDaoSupport implements
 	private final static Log Log = LogFactory.getLog(SiteSetupQuestionServiceImpl.class);
 	
 	/**
+	 * Init
+	 */
+   public void init()
+   {
+      Log.info("init()");
+   }
+   
+   /**
+    * Destroy
+    */
+   public void destroy()
+   {
+      Log.info("destroy()");
+   }
+	
+	/**
 	 * {@inheritDoc}
 	 */
 	public List<SiteSetupQuestion> getQuestions(String siteType)

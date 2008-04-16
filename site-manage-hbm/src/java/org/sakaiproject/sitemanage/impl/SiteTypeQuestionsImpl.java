@@ -22,7 +22,8 @@
 
 package org.sakaiproject.sitemanage.impl;
 
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.sakaiproject.sitemanage.api.model.*;
 
@@ -36,12 +37,30 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 		
 	}
 	
-	public SiteTypeQuestionsImpl(String instruction, List<SiteSetupQuestion> questions, String siteType, String siteTypeId)
+	public SiteTypeQuestionsImpl(String instruction, Set<SiteSetupQuestion> questions, String siteType, String siteTypeId)
 	{
 		this.instruction = instruction;
 		this.questions = questions;
 		this.siteType = siteType;
 		this.siteTypeId = siteTypeId;
+	}
+	
+	private String id;
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getId()
+	{
+		return id;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void setId(String id)
+	{
+		this.id = id;
 	}
 	
 	private String siteTypeId;
@@ -80,11 +99,11 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 		this.siteType = siteType;
 	}
 
-	private List<SiteSetupQuestion> questions;
+	private Set<SiteSetupQuestion> questions = new HashSet<SiteSetupQuestion>();
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<SiteSetupQuestion> getQuestions()
+	public Set<SiteSetupQuestion> getQuestions()
 	{
 		return questions;
 	}
@@ -92,9 +111,18 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setQuestions(List<SiteSetupQuestion> questions)
+	public void setQuestions(Set<SiteSetupQuestion> questions)
 	{
 		this.questions = questions;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void addQuestion(SiteSetupQuestion question)
+	{
+		question.setSiteTypeQuestions(this);
+		this.questions.add(question);
 	}
 	
 	private String instruction;
@@ -113,5 +141,22 @@ public class SiteTypeQuestionsImpl implements SiteTypeQuestions
 	public void setInstruction(String instruction)
 	{
 		this.instruction = instruction;
+	}
+	
+	private String url;
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getUrl()
+	{
+		return url;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public void setUrl(String url)
+	{
+		this.url = url;
 	}
 }

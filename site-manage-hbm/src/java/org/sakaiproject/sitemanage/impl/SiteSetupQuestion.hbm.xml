@@ -17,25 +17,21 @@
             <column name="QUESTION"/>
         </property>
         
-        <property name="siteTypeId" type="long" not-null="false">
-            <column name="SITETYPE_ID"/>
-        </property>
-        
         <property name="required" type="boolean" not-null="true">
             <column name="REQUIRED"/>
         </property>
         
-        <property name="isMultiAnswers" type="boolean" not-null="true">
-            <column name="MULTI_ANSWERS"/>
+        <property name="isMultipleAnswers" type="boolean" not-null="true">
+            <column name="MULTIPLE_ANSWERS"/>
         </property>
         
-        <list name="answers" cascade="all-delete-orphan" inverse="false"
+        <set name="answers" cascade="all-delete-orphan" inverse="false"
 			lazy="true">
-			<key column="id" />
+			<key column="QUESTION_ID" />
 			<one-to-many class="SiteSetupQuestionAnswerImpl" />
-		</list>
+		</set>
 		
-		<many-to-one name="siteTypeId" column="SITETYPE_ID"
+		<many-to-one name="siteTypeQuestions" column="SITETYPE_ID"
 			class="SiteTypeQuestionsImpl" index="SSQ_QUESTION_SITETYPE_I" lazy="false" />
     </class>
 </hibernate-mapping>

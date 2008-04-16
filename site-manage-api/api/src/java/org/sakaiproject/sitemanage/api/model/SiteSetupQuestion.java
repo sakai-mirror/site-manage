@@ -20,7 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.sitemanage.api.model;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * The SiteSetupQuestion object is to store user-defined question.
@@ -55,16 +55,16 @@ public interface SiteSetupQuestion extends java.io.Serializable {
 	public void setQuestion(String question);
 
 	/**
-	 * get the list of answers
+	 * get the set of answers
 	 * @return
 	 */
-	public List<SiteSetupQuestionAnswer> getAnswers();
+	public Set<SiteSetupQuestionAnswer> getAnswers();
 
 	/**
-	 * set the list of answers
+	 * set the set of answers
 	 * @param answers
 	 */
-	public void setAnswers(List<SiteSetupQuestionAnswer> answers);
+	public void setAnswers(Set<SiteSetupQuestionAnswer> answers);
 	
 	/**
 	 * add into the list of answers
@@ -88,23 +88,23 @@ public interface SiteSetupQuestion extends java.io.Serializable {
 	 * does question have multiple answers
 	 * @return
 	 */
-	public boolean isMultipleAnswsers();
+	public boolean getIsMultipleAnswers();
 
 	/**
 	 * set flag for multiple answers
 	 * @param isMultipleAnswsers
 	 */
-	public void setMultipleAnswsers(boolean isMultipleAnswers);
+	public void setIsMultipleAnswers(boolean isMultipleAnswers);
 	
 	/**
-	 * get the site type id
+	 * get the SiteTypeQuestions objct
 	 * @return
 	 */
-	public String getSiteTypeId();
+	public SiteTypeQuestions getSiteTypeQuestions();
 	
 	/**
-	 * set the site type id
-	 * @param siteTypeId
+	 * set the SiteTypeQuestions
+	 * @param siteTypeQuestions
 	 */
-	public void setSiteTypeId(String siteTypeId);
+	public void setSiteTypeQuestions(SiteTypeQuestions siteTypeQuestions);
 }

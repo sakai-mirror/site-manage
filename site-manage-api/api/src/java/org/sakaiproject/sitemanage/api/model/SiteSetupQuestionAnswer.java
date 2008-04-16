@@ -43,13 +43,13 @@ public interface SiteSetupQuestionAnswer extends java.io.Serializable {
 	 * whether the answer is fill-in-blank
 	 * @return
 	 */
-	public boolean isFillInBlank();
+	public boolean getIsFillInBlank();
 
 	/**
 	 * set the fill-in-blank type
 	 * @param isFillInBlank
 	 */
-	public void setFillInBlank(boolean isFillInBlank);
+	public void setIsFillInBlank(boolean isFillInBlank);
 
 	/**
 	 * get the answer content
@@ -76,16 +76,16 @@ public interface SiteSetupQuestionAnswer extends java.io.Serializable {
 	public void setAnswerString(String AnswerString);
 	
 	/**
-	 * get the associated question id
+	 * get the associated question
 	 * @return
 	 */
-	public String getQuestionId();
+	public SiteSetupQuestion getQuestion();
 	
 	/**
-	 * set the question id
+	 * set the question 
 	 * @return
 	 */
-	public void setQuestionId(String questionId);
+	public void setQuestion(SiteSetupQuestion question);
 	
 	
 }

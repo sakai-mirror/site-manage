@@ -23,7 +23,7 @@
             <column name="FILL_IN_BLANK"/>
         </property>
         
-        <many-to-one name="questionId" column="QUESTION_ID"
+        <many-to-one name="question" column="QUESTION_ID"
 			class="SiteSetupQuestionImpl" index="SSQ_ANSWER_QUESTION_I" lazy="false" />
     </class>
 </hibernate-mapping>

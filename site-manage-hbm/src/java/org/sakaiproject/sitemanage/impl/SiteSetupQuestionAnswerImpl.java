@@ -62,7 +62,7 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean isFillInBlank()
+	public boolean getIsFillInBlank()
 	{
 		return isFillInBlank;
 	}
@@ -70,7 +70,7 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setFillInBlank(boolean isFillInBlank)
+	public void setIsFillInBlank(boolean isFillInBlank)
 	{
 		this.isFillInBlank = isFillInBlank;
 	}
@@ -111,21 +111,21 @@ public class SiteSetupQuestionAnswerImpl implements SiteSetupQuestionAnswer{
 		this.answerString = answerString;
 	}
 
-	private String questionId;
+	private SiteSetupQuestion question;
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public String getQuestionId()
+	public SiteSetupQuestion getQuestion()
 	{
-		return questionId;
+		return question;
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setQuestionId(String questionId)
+	public void setQuestion(SiteSetupQuestion question)
 	{
-		this.questionId = questionId;
+		this.question = question;
 	}
 }

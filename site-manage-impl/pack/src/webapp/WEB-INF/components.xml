@@ -46,7 +46,7 @@
             <ref bean="org.sakaiproject.springframework.orm.hibernate.GlobalTransactionManager" />
         </property>
         <property name="target">
-            <ref bean="org.sakaiproject.sitesetup.impl.SiteSetupQuestionServiceImpl" />
+            <ref bean="org.sakaiproject.sitemanage.impl.SiteSetupQuestionServiceImpl" />
         </property>
         <property name="transactionAttributes">
             <props>
@@ -61,12 +61,6 @@
     	<property name="sessionFactory">
     		<ref
     			bean="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory" />
-    	</property>
-    	<property name="toolManager">
-    		<ref bean="org.sakaiproject.tool.api.ActiveToolManager" />
-    	</property>
-    	<property name="entityManager">
-    		<ref bean="org.sakaiproject.entity.api.EntityManager" />
     	</property>
     </bean>
 

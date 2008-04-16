@@ -22,7 +22,8 @@
 
 package org.sakaiproject.sitemanage.impl;
 
-import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.sakaiproject.sitemanage.api.model.*;
 
@@ -32,13 +33,13 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	{
 	}
 	
-	public SiteSetupQuestionImpl(List<SiteSetupQuestionAnswer> answers, boolean isMultipleAnswers, String question, boolean required, String siteTypeId)
+	public SiteSetupQuestionImpl(Set<SiteSetupQuestionAnswer> answers, boolean isMultipleAnswers, String question, boolean required, SiteTypeQuestions siteTypeQuestions)
 	{
 		this.answers = answers;
 		this.isMultipleAnswers = isMultipleAnswers;
 		this.question = question;
 		this.required = required;
-		this.siteTypeId = siteTypeId;
+		this.siteTypeQuestions = siteTypeQuestions;
 	}
 	
 	private static final long serialVersionUID = 1L;
@@ -79,11 +80,11 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 		this.question = question;
 	}
 
-	List<SiteSetupQuestionAnswer> answers;
+	private Set<SiteSetupQuestionAnswer> answers = new HashSet<SiteSetupQuestionAnswer>();
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<SiteSetupQuestionAnswer> getAnswers()
+	public Set<SiteSetupQuestionAnswer> getAnswers()
 	{
 		return answers;
 	}
@@ -91,7 +92,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setAnswers(List<SiteSetupQuestionAnswer> answers)
+	public void setAnswers(Set<SiteSetupQuestionAnswer> answers)
 	{
 		this.answers = answers;
 	}
@@ -101,6 +102,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	 */
 	public void addAnswer(SiteSetupQuestionAnswer answer)
 	{
+		answer.setQuestion(this);
 		this.answers.add(answer);
 	}
 	
@@ -127,7 +129,7 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public boolean isMultipleAnswsers()
+	public boolean getIsMultipleAnswers()
 	{
 		return isMultipleAnswers;
 	}
@@ -135,25 +137,26 @@ public class SiteSetupQuestionImpl implements SiteSetupQuestion {
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setMultipleAnswsers(boolean isMultipleAnswers)
+	public void setIsMultipleAnswers(boolean isMultipleAnswers)
 	{
 		this.isMultipleAnswers = isMultipleAnswers;
 	}
 	
-	private String siteTypeId;
+	private SiteTypeQuestions siteTypeQuestions;
+	
 	/**
 	 * {@inheritDoc}
 	 */
-	public String getSiteTypeId()
+	public SiteTypeQuestions getSiteTypeQuestions()
 	{
-		return siteTypeId;
+		return siteTypeQuestions;
 	}
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public void setSiteTypeId(String siteTypeId)
+	public void setSiteTypeQuestions(SiteTypeQuestions siteTypeQuestions)
 	{
-		this.siteTypeId = siteTypeId;
+		this.siteTypeQuestions = siteTypeQuestions;
 	}
 }

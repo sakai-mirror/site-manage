@@ -324,8 +324,9 @@ public class SiteSetupQuestionFileParser
 							if (siteType != null)
 							{
 								// add the site type into the question list
-								m.addSiteType(siteType);
-								SiteSetupQuestionTypeSet s = new SiteSetupQuestionTypeSet();
+								SiteTypeQuestions siteTypeQuestions = questionService.newSiteTypeQuestions();
+								siteTypeQuestions.setSiteType(siteType);
+								
 								NodeList qSetList = currentNode.getChildNodes();
 								for (int i2 = 0; i2 < qSetList.getLength(); i2++)
 								{
@@ -337,11 +338,11 @@ public class SiteSetupQuestionFileParser
 										case Node.ELEMENT_NODE:
 											if (qNode.getNodeName().equals("header"))
 											{
-												s.setHeader(qNode.getTextContent());
+												siteTypeQuestions.setInstruction(qNode.getTextContent());
 											}
 											else if (qNode.getNodeName().equals("url"))
 											{
-												s.setUrl(qNode.getTextContent());
+												siteTypeQuestions.setUrl(qNode.getTextContent());
 											}
 											else if (qNode.getNodeName().equals("question"))
 											{
@@ -354,9 +355,17 @@ public class SiteSetupQuestionFileParser
 													{
 														q.setRequired(Boolean.valueOf(qMap.getNamedItem("required").getNodeValue()));
 													}
+													else
+													{
+														q.setRequired(false);
+													}
 													if (qMap.getNamedItem("multiple_answers") != null)
 													{
-														q.setMultipleAnswsers(Boolean.valueOf(qMap.getNamedItem("multiple_answers").getNodeValue()));
+														q.setIsMultipleAnswers(Boolean.valueOf(qMap.getNamedItem("multiple_answers").getNodeValue()));
+													}
+													else
+													{
+														q.setIsMultipleAnswers(false);
 													}
 													
 													NodeList qList = qNode.getChildNodes();
@@ -381,10 +390,15 @@ public class SiteSetupQuestionFileParser
 																		NamedNodeMap qDetailMap = qDetailNode.getAttributes();
 																		if (qDetailMap.getNamedItem("fillin_blank") != null)
 																		{
-																			answer.setFillInBlank(Boolean.valueOf(qDetailMap.getNamedItem("fillin_blank").getNodeValue()));
+																			answer.setIsFillInBlank(Boolean.valueOf(qDetailMap.getNamedItem("fillin_blank").getNodeValue()));
+																		}
+																		else
+																		{
+																			answer.setIsFillInBlank(false);
 																		}
 																	}
 																	answer.setAnswer(qDetailNode.getTextContent());
+																	// save answer
 																	questionService.saveSiteSetupQuestionAnswer(answer);
 																	q.addAnswer(answer);
 																}
@@ -393,16 +407,16 @@ public class SiteSetupQuestionFileParser
 													}
 												}
 												
-												// add question
+												// save question
 												questionService.saveSiteSetupQuestion(q);
-												s.addQuestion(q);
+												siteTypeQuestions.addQuestion(q);
 											}
 											
 											break;
 									}
 							}
-							// set SiteSetupQuestionTypeSet
-							m.setQuestionListBySiteType(siteType, s);
+							// save siteTypeQuestions
+							questionService.saveSiteTypeQuestions(siteTypeQuestions);
 								
 						}
 					}

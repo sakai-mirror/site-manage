@@ -19,11 +19,15 @@
             <column name="INSTRUCTION"/>
         </property>
         
-        <list name="questions" cascade="all-delete-orphan" inverse="false"
+        <property name="url" type="string" not-null="false">
+            <column name="URL"/>
+        </property>
+        
+        <set name="questions" cascade="all-delete-orphan" inverse="false"
 			lazy="true">
-			<key column="id" />
+			<key column="SITETYPE_ID" />
 			<one-to-many class="SiteSetupQuestionImpl" />
-		</list>
+		</set>
     </class>
     
 	<query name = "findQuestionIdsForSiteType">
