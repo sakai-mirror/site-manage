@@ -3,7 +3,7 @@
       "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
           "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
           
-<hibernate-mapping package="org.sakaiproject.sitemanage.impl">
+<hibernate-mapping package="org.sakaiproject.sitemanage.impl" default-lazy="false">
 	<class name="SiteSetupQuestionAnswerImpl"
 		table="SSQ_ANSWER">
 		
@@ -24,6 +24,12 @@
         </property>
         
         <many-to-one name="question" column="QUESTION_ID"
-			class="SiteSetupQuestionImpl" index="SSQ_ANSWER_QUESTION_I" lazy="false" />
+			class="SiteSetupQuestionImpl" index="SSQ_ANSWER_QUESTION_I" />
     </class>
+    <query name = "findAnswerById">
+			<![CDATA[
+			from SiteSetupQuestionAnswerImpl answer
+			where answer.id = :id
+		]]>
+	</query>
 </hibernate-mapping>

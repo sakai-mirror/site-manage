@@ -24,6 +24,8 @@ package org.sakaiproject.sitemanage.impl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,7 +43,11 @@ import org.sakaiproject.sitemanage.api.model.*;
 
 public class SiteSetupQuestionServiceImpl extends HibernateDaoSupport implements SiteSetupQuestionService {
 	
-	private static final String QUERY_SITETYPE_QUESTIONS = "findQuestionIdsForSiteType";
+	private static final String QUERY_ANY_SITETYPE_QUESTIONS = "findAnySiteTypeQuestions";
+	
+	private static final String QUERY_QUESTIONS_BY_SITETYPE = "findQuestionsBySiteType";
+	
+	private static final String QUERY_ANSWER_BY_ID = "findAnswerById";
 	
 	private final static Log Log = LogFactory.getLog(SiteSetupQuestionServiceImpl.class);
 	
@@ -60,13 +66,41 @@ public class SiteSetupQuestionServiceImpl extends HibernateDaoSupport implements
    {
       Log.info("destroy()");
    }
+   
+   /**
+	 * {@inheritDoc}
+	 */
+   public boolean hasAnySiteTypeQuestions()
+   {
+	   List rvList = getHibernateTemplate().findByNamedQuery(QUERY_ANY_SITETYPE_QUESTIONS);
+	   if (rvList != null && rvList.size() > 0)
+	   {
+		   return true;
+	   }
+	   return false;
+   }
 	
 	/**
 	 * {@inheritDoc}
 	 */
-	public List<SiteSetupQuestion> getQuestions(String siteType)
+	public SiteTypeQuestions getSiteTypeQuestions(String siteType)
 	{
-		return getHibernateTemplate().findByNamedQueryAndNamedParam(QUERY_SITETYPE_QUESTIONS, "siteType", siteType);
+		List<SiteTypeQuestions> rvList = getHibernateTemplate().findByNamedQueryAndNamedParam(QUERY_QUESTIONS_BY_SITETYPE, "siteType", siteType);
+		if (rvList != null && rvList.size() == 1)
+		{
+			return rvList.get(0);
+		}
+		return null;
+	}
+	
+	public SiteSetupQuestionAnswer getSiteSetupQuestionAnswer(String answerId)
+	{
+		List<SiteSetupQuestionAnswer> rvList = (getHibernateTemplate().findByNamedQueryAndNamedParam(QUERY_ANSWER_BY_ID, "id", answerId));
+		if (rvList != null && rvList.size() == 1)
+		{
+			return rvList.get(0);
+		}
+		return null;
 	}
 
 	/*********** SiteSetupQuestion **************/

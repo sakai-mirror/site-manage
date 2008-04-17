@@ -115,8 +115,6 @@ import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.sitemanage.api.model.*;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
-import org.sakaiproject.site.util.SiteSetupQuestionMap;
-import org.sakaiproject.site.util.SiteSetupQuestionTypeSet;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
@@ -174,6 +172,9 @@ public class SiteAction extends PagedResourceActionII {
 	.get(org.sakaiproject.sitemanage.api.UserNotificationProvider.class);
 	
 	private ContentHostingService contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
+	
+	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
+	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
 	
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
@@ -600,9 +601,6 @@ public class SiteAction extends PagedResourceActionII {
 	// the string for course site type
 	private static final String STATE_COURSE_SITE_TYPE = "state_course_site_type";
 	
-	// the string for site setup questions
-	private static final String STATE_SITE_SETUP_QUESTION_MAP = "state_site_setup_question_map";
-	
 	// the template index after exist the question mode
 	private static final String STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE = "state_site_setup_question_next_template";
 	
@@ -782,8 +780,9 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_CM_CURRENT_USERID);
 		state.removeAttribute(STATE_CM_AUTHORIZER_LIST);
 		state.removeAttribute(STATE_CM_AUTHORIZER_SECTIONS);
-		state.removeAttribute(FORM_ADDITIONAL); // don't we need to clena this
+		state.removeAttribute(FORM_ADDITIONAL); // don't we need to clean this
 		// too? -daisyf
+		state.removeAttribute(STATE_SITE_SETUP_QUESTION_ANSWER);
 
 	} // cleanState
 
@@ -2761,8 +2760,11 @@ public class SiteAction extends PagedResourceActionII {
 			/*
 			 * build context for chef_site-questions.vm
 			 */
-			SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
-			context.put("questionSet", m.getQuestionSetBySiteType((String) state.getAttribute(STATE_SITE_TYPE)));
+			SiteTypeQuestions siteTypeQuestions = questionService.getSiteTypeQuestions((String) state.getAttribute(STATE_SITE_TYPE));
+			if (siteTypeQuestions != null)
+			{
+				context.put("questionSet", siteTypeQuestions);
+			}
 			context.put("continueIndex", state.getAttribute(STATE_SITE_SETUP_QUESTION_NEXT_TEMPLATE));
 			return (String) getContext(data).get("template") + TEMPLATE[54];
 
@@ -3926,12 +3928,12 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param type
 	 */
 	private void redirectToQuestionVM(SessionState state, String type) {
-		// SAK-12912: check whether there is any setup question defined 
-		if (state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP) != null)
+		// SAK-12912: check whether there is any setup question defined
+		SiteTypeQuestions siteTypeQuestions = questionService.getSiteTypeQuestions(type);
+		if (siteTypeQuestions != null)
 		{
-			SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
-			SiteSetupQuestionTypeSet tSet = m.getQuestionSetBySiteType(type);
-			if (tSet != null && tSet.getQuestions() != null && tSet.getQuestions().size() > 0)
+			Set questionSet = siteTypeQuestions.getQuestions();
+			if (questionSet != null && questionSet.size() > 0)
 			{
 				// there is at least one question defined for this type
 				if (state.getAttribute(STATE_MESSAGE) == null)
@@ -4835,6 +4837,10 @@ public class SiteAction extends PagedResourceActionII {
 					addAlert(state, rb.getString("java.addalias") + " ");
 				}
 			}
+			
+			// save user answers
+			saveSiteSetupQuestionUserAnswers(state, siteId);
+			
 			// TODO: hard coding this frame id is fragile, portal dependent, and
 			// needs to be fixed -ggolden
 			// schedulePeerFrameRefresh("sitenav");
@@ -4850,6 +4856,28 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	}// doFinish
+
+
+	/**
+	 * save user answers
+	 * @param state
+	 * @param siteId
+	 */
+	private void saveSiteSetupQuestionUserAnswers(SessionState state,
+			String siteId) {
+		// update the database with user answers to SiteSetup questions
+		if (state.getAttribute(STATE_SITE_SETUP_QUESTION_ANSWER) != null)
+		{
+			Set<SiteSetupUserAnswer> userAnswers = (Set<SiteSetupUserAnswer>) state.getAttribute(STATE_SITE_SETUP_QUESTION_ANSWER);
+			for(Iterator<SiteSetupUserAnswer> aIterator = userAnswers.iterator(); aIterator.hasNext();)
+			{
+				SiteSetupUserAnswer userAnswer = aIterator.next();
+				userAnswer.setSiteId(siteId);
+				// save to db
+				questionService.saveSiteSetupUserAnswer(userAnswer);
+			}
+		}
+	}
 
 	/**
 	 * Update course site and related realm based on the roster chosen or requested
@@ -6068,13 +6096,13 @@ public class SiteAction extends PagedResourceActionII {
 		
 		/*<p>
 		 * This is a change related to SAK-12912
+		 * initialize the question list
 		 */
-		if (state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP) == null)
+		if (!questionService.hasAnySiteTypeQuestions())
 		{
 			if (SiteSetupQuestionFileParser.isConfigurationXmlAvailable())
 			{
-				SiteSetupQuestionMap m = SiteSetupQuestionFileParser.updateConfig();
-				state.setAttribute(STATE_SITE_SETUP_QUESTION_MAP, m);
+				SiteSetupQuestionFileParser.updateConfig();
 			}
 		}
 	} // init
@@ -7096,29 +7124,47 @@ public class SiteAction extends PagedResourceActionII {
 	protected boolean getAnswersToSetupQuestions(ParameterParser params, SessionState state)
 	{
 		boolean rv = true;
+		String answerString = null;
+		String answerId = null;
+		Set userAnswers = new HashSet();
 		
-		String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-		SiteSetupQuestionMap m = (SiteSetupQuestionMap) state.getAttribute(STATE_SITE_SETUP_QUESTION_MAP);
-		SiteSetupQuestionTypeSet s = m.getQuestionSetBySiteType(siteType);
-		List<SiteSetupQuestion> questionList = s.getQuestions();
-		Hashtable<String, String> h = new Hashtable<String, String>();
-		for (Iterator i = questionList.iterator(); i.hasNext();)
+		SiteTypeQuestions siteTypeQuestions = questionService.getSiteTypeQuestions((String) state.getAttribute(STATE_SITE_TYPE));
+		if (siteTypeQuestions != null)
 		{
-			SiteSetupQuestion question = (SiteSetupQuestion) i.next();
-			String answer = params.get(question.getQuestion());
-			if (question.isRequired() && answer == null)
+			Set<SiteSetupQuestion> questions = siteTypeQuestions.getQuestions();
+			for (Iterator i = questions.iterator(); i.hasNext();)
 			{
-				rv = false;
+				SiteSetupQuestion question = (SiteSetupQuestion) i.next();
+				// get the selected answerId
+				answerId = params.get(question.getId());
+				if (question.isRequired() && answerId == null)
+				{
+					rv = false;
+					addAlert(state, rb.getString("sitesetupquestion.alert"));
+				}
+				else if (answerId != null)
+				{
+					SiteSetupQuestionAnswer answer = questionService.getSiteSetupQuestionAnswer(answerId);
+					if (answer != null)
+					{
+						if (answer.getIsFillInBlank())
+						{
+							// need to read the text input instead
+							answerString = params.get("fillInBlank_" + answerId);
+						}
+						
+						SiteSetupUserAnswer uAnswer = questionService.newSiteSetupUserAnswer();
+						uAnswer.setAnswerId(answerId);
+						uAnswer.setQuestionId(question.getId());
+						uAnswer.setUserId(SessionManager.getCurrentSessionUserId());
+						//update the state variable
+						userAnswers.add(uAnswer);
+					}
+				}
 			}
-			if (answer.equals("fillInBlank"))
-			{
-				// need to read the text input instead
-				answer = params.get("fillInBlank_" + question.getQuestion());
-			}
-			h.put(question.getQuestion(), answer);
+			state.setAttribute(STATE_SITE_SETUP_QUESTION_ANSWER, userAnswers);	
 		}
-		state.setAttribute(STATE_SITE_SETUP_QUESTION_ANSWER, h);	
-		return true;
+		return rv;
 	}
 	
 	/**

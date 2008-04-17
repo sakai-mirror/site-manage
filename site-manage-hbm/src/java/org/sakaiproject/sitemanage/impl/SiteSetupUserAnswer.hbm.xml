@@ -3,7 +3,7 @@
       "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
           "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
           
-<hibernate-mapping package="org.sakaiproject.sitemanage.impl">
+<hibernate-mapping package="org.sakaiproject.sitemanage.impl" default-lazy="false">
 	<class name="SiteSetupUserAnswerImpl"
 		table="SSQ_USER_ANSWER">
 		
@@ -23,10 +23,13 @@
             <column name="ANSWER_STRING"/>
         </property>
         
-        <many-to-one name="questionId" column="QUESTION_ID"
-			class="SiteSetupQuestionImpl" index="SSQ_USER_ANSWER_QUESTION_I" lazy="false" />
+        <property name="answerId" type="string" not-null="false">
+            <column name="ANSWER_ID"/>
+        </property>
 			
-		<many-to-one name="answerId" column="ANSWER_ID"
-			class="SiteSetupQuestionImpl" index="SSQ_USER_ANSWER_ANSWER_I" lazy="false" />
+		<property name="questionId" type="string" not-null="false">
+            <column name="QUESTION_ID"/>
+        </property>
+        
     </class>
 </hibernate-mapping>

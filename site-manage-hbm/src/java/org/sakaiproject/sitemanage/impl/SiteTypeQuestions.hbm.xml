@@ -3,7 +3,7 @@
       "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
           "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
           
-<hibernate-mapping package="org.sakaiproject.sitemanage.impl">
+<hibernate-mapping package="org.sakaiproject.sitemanage.impl" default-lazy="false">
 	<class name="SiteTypeQuestionsImpl"
 		table="SSQ_SITETYPE_QUESTIONS">
 		
@@ -23,17 +23,22 @@
             <column name="URL"/>
         </property>
         
-        <set name="questions" cascade="all-delete-orphan" inverse="false"
-			lazy="true">
+        <set name="questions" cascade="all-delete-orphan" inverse="false">
 			<key column="SITETYPE_ID" />
 			<one-to-many class="SiteSetupQuestionImpl" />
 		</set>
     </class>
     
-	<query name = "findQuestionIdsForSiteType">
+	<query name = "findQuestionsBySiteType">
 			<![CDATA[
-			from SiteTypeQuestionsImpl as questions
+			from SiteTypeQuestionsImpl questions
 			where questions.siteType = :siteType
+		]]>
+	</query>
+	
+	<query name = "findAnySiteTypeQuestions">
+			<![CDATA[
+			from SiteTypeQuestionsImpl questions
 		]]>
 	</query>
 </hibernate-mapping>

@@ -18,7 +18,7 @@
 
 package org.sakaiproject.sitemanage.api.model;
 
-import java.util.List ;
+import java.util.Set ;
 
 /**
  * This is the interface for the Service of SiteSetupQuestion. It contains the backend logic for the tool
@@ -28,11 +28,24 @@ import java.util.List ;
 public interface SiteSetupQuestionService {
 	
 	/**
-	 * Get the list of SiteSetupQuestion objects for the site type
+	 * Is there any SiteTypeQuestions object in db
+	 * @return
+	 */
+	public boolean hasAnySiteTypeQuestions();
+	
+	/**
+	 * Get the SiteTypeQuestions object id the site type
 	 * @param siteType
 	 * @return
 	 */
-	public List<SiteSetupQuestion> getQuestions(String siteType);
+	public SiteTypeQuestions getSiteTypeQuestions(String siteType);
+	
+	/**
+	 * find the SiteSetupQuestion object by id
+	 * @param answerId
+	 * @return
+	 */
+	public SiteSetupQuestionAnswer getSiteSetupQuestionAnswer(String answerId);
 
 	/*********** SiteSetupQuestion **************/
 	/**
