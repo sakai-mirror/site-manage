@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
   <classpathentry excluding="**/.DS_Store" kind="src" path="tool/src/java"/>
-  <classpathentry sourcepath="JRE_SRC" kind="var" path="JRE_LIB"/>
   <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.0.4/commons-logging-1.0.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar"/>
   <classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
@@ -28,5 +27,6 @@
   <classpathentry combineaccessrules="false" kind="src" path="/entity-util"/>
   <classpathentry combineaccessrules="false" kind="src" path="/event-util"/>
   <classpathentry kind="var" path="M2_REPO/velocity-tools/velocity-tools/1.2/velocity-tools-1.2.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
   <classpathentry kind="output" path="bin"/>
 </classpath>
