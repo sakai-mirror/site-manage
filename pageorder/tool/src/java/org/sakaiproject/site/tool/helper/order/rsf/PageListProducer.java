@@ -102,7 +102,7 @@ public class PageListProducer
 
                 //default value is to allow the Title to be edited.  If the sakai properties 
                 //specifically requests this to be set to false, then do not allow this function
-                if(!"false".equals(serverConfigurationService.getString(ALLOW_TITLE_EDIT))){
+                if(serverConfigurationService.getBoolean(ALLOW_TITLE_EDIT, true)){
 
                 	UIInternalLink.make(pagerow, "edit-link", param).decorate(
                 			new UITooltipDecorator(messageLocator.getMessage("page_edit")
