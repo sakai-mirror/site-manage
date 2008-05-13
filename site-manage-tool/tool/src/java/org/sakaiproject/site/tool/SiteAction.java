@@ -120,6 +120,8 @@ import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.sitemanage.api.model.*;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
+import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.site.util.SiteParticipantHelper;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.time.api.Time;
@@ -1772,8 +1774,12 @@ public class SiteAction extends PagedResourceActionII {
 									.equalsIgnoreCase(Boolean.TRUE.toString()))) {
 						// show the group toolbar unless configured
 						// to not support group
-						b.add(new MenuEntry(rb.getString("java.group"),
-								"doMenu_group"));
+						// if the manage group helper is available, not
+						// stealthed and not hidden, show the link
+						if (notStealthOrHiddenTool("sakai-site-manage-group-helper")) {
+							b.add(new MenuEntry(rb.getString("java.group"),
+									"doManageGroupHelper"));
+						}
 					}
 				}
 				
@@ -2991,6 +2997,24 @@ public class SiteAction extends PagedResourceActionII {
 		// launch the helper
 		startHelper(data.getRequest(), "sakai-site-pageorder-helper");
 	}
+	
+	/**
+	 * Launch the Manage Group helper Tool -- for adding, editing and deleting groups
+	 * 
+	 */
+	public void doManageGroupHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "sakai-site-manage-group-helper");
+		
+	}
 
 	// htripath: import materials from classic
 	/**
@@ -3276,7 +3300,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void coursesIntoContext(SessionState state, Context context,
 			Site site) {
-		List providerCourseList = getProviderCourseList(StringUtil
+		List providerCourseList = SiteParticipantHelper.getProviderCourseList(StringUtil
 				.trimToNull(getExternalRealmId(state)));
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
@@ -3367,34 +3391,6 @@ public class SiteAction extends PagedResourceActionII {
 				.getAttribute(STATE_TERM_COURSE_LIST));
 		context.put("tlang", rb);
 	} // buildInstructorSectionsList
-
-	/**
-	 * getProviderCourseList a course site/realm id in one of three formats, for
-	 * a single section, for multiple sections of the same course, or for a
-	 * cross-listing having multiple courses. getProviderCourseList parses a
-	 * realm id into year, term, campus_code, catalog_nbr, section components.
-	 * 
-	 * @param id
-	 *            is a String representation of the course realm id (external
-	 *            id).
-	 */
-	private List getProviderCourseList(String id) {
-		Vector rv = new Vector();
-		if (id == null || NULL_STRING.equals(id) ) {
-			return rv;
-		}
-		// Break Provider Id into course id parts
-		String[] courseIds = groupProvider.unpackId(id);
-		
-		// Iterate through course ids
-		for (int i=0; i<courseIds.length; i++) {
-			String courseId = (String) courseIds[i];
-
-			rv.add(courseId);
-		}
-		return rv;
-
-	} // getProviderCourseList
 
 	/**
 	 * {@inheritDoc}
@@ -8141,211 +8137,18 @@ public class SiteAction extends PagedResourceActionII {
 				.getAttribute(STATE_SITE_INSTANCE_ID));
 
 		List providerCourseList = null;
-		providerCourseList = getProviderCourseList(StringUtil
+		providerCourseList = SiteParticipantHelper.getProviderCourseList(StringUtil
 				.trimToNull(getExternalRealmId(state)));
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		Collection participants = prepareParticipants(realmId, providerCourseList);
+		Collection participants = SiteParticipantHelper.prepareParticipants(realmId, providerCourseList);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
 
 	} // getParticipantList
-
-	private Collection prepareParticipants(String realmId, List providerCourseList) {
-		Map participantsMap = new ConcurrentHashMap();
-		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			realm.getProviderGroupId();
-			
-			// iterate through the provider list first
-			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
-			{
-				String providerCourseEid = (String) i.next();
-				try
-				{
-					Section section = cms.getSection(providerCourseEid);
-					if (section != null)
-					{
-						// in case of Section eid
-						EnrollmentSet enrollmentSet = section.getEnrollmentSet();
-						addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, section.getTitle());
-						// add memberships
-						Set memberships = cms.getSectionMemberships(providerCourseEid);
-						addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships, section.getTitle());
-					}
-				}
-				catch (IdNotFoundException e)
-				{
-					M_log.warn(this + ".prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid, e);
-				}
-			}
-			
-			// now for those not provided users
-			Set grants = realm.getMembers();
-			for (Iterator i = grants.iterator(); i.hasNext();) {
-				Member g = (Member) i.next();
-				try {
-					User user = UserDirectoryService.getUserByEid(g.getUserEid());
-					String userId = user.getId();
-					if (!participantsMap.containsKey(userId))
-					{
-						Participant participant;
-						if (participantsMap.containsKey(userId))
-						{
-							participant = (Participant) participantsMap.get(userId);
-						}
-						else
-						{
-							participant = new Participant();
-						}
-						participant.name = user.getSortName();
-						participant.uniqname = userId;
-						participant.role = g.getRole()!=null?g.getRole().getId():"";
-						participant.removeable = true;
-						participant.active = g.isActive();
-						participantsMap.put(userId, participant);
-					}
-				} catch (UserNotDefinedException e) {
-					// deal with missing user quietly without throwing a
-					// warning message
-					M_log.warn(this + ".prepareParticipants: "+ e.getMessage(), e);
-				}
-			}
-
-		} catch (GroupNotDefinedException ee) {
-			M_log.warn(this + ".prepareParticipants:  IdUnusedException " + realmId, ee);
-		}
-		return participantsMap.values();
-	}
-
-	/**
-	 * Add participant from provider-defined membership set
-	 * @param participants
-	 * @param realm
-	 * @param providerCourseEid
-	 * @param memberships
-	 */
-	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships, String sectionTitle) {
-		if (memberships != null)
-		{
-			for (Iterator mIterator = memberships.iterator();mIterator.hasNext();)
-			{
-				Membership m = (Membership) mIterator.next();
-				try 
-				{
-					User user = UserDirectoryService.getUserByEid(m.getUserId());
-					String userId = user.getId();
-					Member member = realm.getMember(userId);
-					if (member != null && member.isProvided())
-					{
-						// get or add provided participant
-						Participant participant;
-						if (participantsMap.containsKey(userId))
-						{
-							participant = (Participant) participantsMap.get(userId);
-							if (!participant.getSectionEidList().contains(sectionTitle)) {
-								participant.section = participant.section.concat(", <br />" + sectionTitle);
-							}
-						}
-						else
-						{
-							participant = new Participant();
-							participant.credits = "";
-							participant.name = user.getSortName();
-							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-							participant.regId = "";
-							participant.removeable = false;
-							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.addSectionEidToList(sectionTitle);
-							participant.uniqname = userId;
-							participant.active=member.isActive();
-						}
-						
-						participantsMap.put(userId, participant);
-					}
-				} catch (UserNotDefinedException exception) {
-					// deal with missing user quietly without throwing a
-					// warning message
-					M_log.warn(this + ".addParticipantsFromMemberships: user id = " + m.getUserId(), exception);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Add participant from provider-defined enrollment set
-	 * @param participants
-	 * @param realm
-	 * @param providerCourseEid
-	 * @param enrollmentSet
-	 */
-	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet, String sectionTitle) {
-		if (enrollmentSet != null)
-		{
-			Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
-			if (enrollments != null)
-			{
-				for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
-				{
-					Enrollment e = (Enrollment) eIterator.next();
-					
-					// ignore the dropped enrollments
-					if(e.isDropped()){
-						continue;
-					}
-					
-					try 
-					{
-						User user = UserDirectoryService.getUserByEid(e.getUserId());
-						String userId = user.getId();
-						Member member = realm.getMember(userId);
-						if (member != null && member.isProvided())
-						{
-							try
-							{
-							// get or add provided participant
-							Participant participant;
-							if (participantsMap.containsKey(userId))
-							{
-								participant = (Participant) participantsMap.get(userId);
-								//does this section contain the eid already
-								if (!participant.getSectionEidList().contains(sectionTitle)) {
-									participant.addSectionEidToList(sectionTitle);
-								}
-								participant.credits = participant.credits.concat(", <br />" + e.getCredits());
-							}
-							else
-							{
-								participant = new Participant();
-								participant.credits = e.getCredits();
-								participant.name = user.getSortName();
-								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-								participant.regId = "";
-								participant.removeable = false;
-								participant.role = member.getRole()!=null?member.getRole().getId():"";
-								participant.addSectionEidToList(sectionTitle);
-								participant.uniqname = userId;
-								participant.active = member.isActive();
-							}
-							participantsMap.put(userId, participant);
-							}
-							catch (Exception ee)
-							{
-								M_log.warn(this + ".addParticipantsFromEnrollmentSet: " + ee.getMessage() + " user id = " + userId, ee);
-							}
-						}
-					} catch (UserNotDefinedException exception) {
-						// deal with missing user quietly without throwing a
-						// warning message
-						M_log.warn(this + ".addParticipantsFromEnrollmentSet: " + exception.getMessage() + " user id = " + e.getUserId(), exception);
-					}
-				}
-			}
-		}
-	}
 
 	/**
 	 * getRoles
@@ -11014,131 +10817,6 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // WorksiteSetupPage
-
-	/**
-	 * Participant in site access roles
-	 * 
-	 */
-	public class Participant {
-		public String name = NULL_STRING;
-
-		// Note: uniqname is really a user ID
-		public String uniqname = NULL_STRING;
-
-		public String role = NULL_STRING;
-
-		/** role from provider */
-		public String providerRole = NULL_STRING;
-
-		/** The member credits */
-		protected String credits = NULL_STRING;
-
-		/** The section */
-		public String section = NULL_STRING;
-
-		private Set sectionEidList;
-		
-		/** The regestration id */
-		public String regId = NULL_STRING;
-
-		/** removeable if not from provider */
-		public boolean removeable = true;
-		
-		/** the status, active vs. inactive */
-		public boolean active = true;
-
-		public String getName() {
-			return name;
-		}
-
-		public String getUniqname() {
-			return uniqname;
-		}
-
-		public String getRole() {
-			return role;
-		} // cast to Role
-
-		public String getProviderRole() {
-			return providerRole;
-		}
-
-		public boolean isRemoveable() {
-			return removeable;
-		}
-		
-		public boolean isActive()  {
-			return active;
-		}
-
-		// extra info from provider
-		public String getCredits() {
-			return credits;
-		} // getCredits
-
-		public String getSection() {
-			if (sectionEidList == null)
-				return "";
-			
-			StringBuilder sb = new StringBuilder();
-			Iterator it = sectionEidList.iterator();
-			for (int i = 0; i < sectionEidList.size(); i ++) {
-				String sectionEid = (String)it.next();
-				if (i > 0)
-					sb.append(",<br />");
-				sb.append(sectionEid);
-			}
-					
-			return sb.toString();
-		} // getSection
-		
-		public Set getSectionEidList() {
-			if (sectionEidList == null)
-				sectionEidList = new HashSet();
-			
-			return sectionEidList;
-		}
-		
-		public void addSectionEidToList(String eid) {
-			if (sectionEidList == null)
-				sectionEidList = new HashSet();
-				
-				sectionEidList.add(eid);
-		}
-
-		public String getRegId() {
-			return regId;
-		} // getRegId
-
-		/**
-		 * Access the user eid, if we can find it - fall back to the id if not.
-		 * 
-		 * @return The user eid.
-		 */
-		public String getEid() {
-			try {
-				return UserDirectoryService.getUserEid(uniqname);
-			} catch (UserNotDefinedException e) {
-				return uniqname;
-			}
-		}
-
-		/**
-		 * Access the user display id, if we can find it - fall back to the id
-		 * if not.
-		 * 
-		 * @return The user display id.
-		 */
-		public String getDisplayId() {
-			try {
-				User user = UserDirectoryService.getUser(uniqname);
-				return user.getDisplayId();
-			} catch (UserNotDefinedException e) {
-				return uniqname;
-			}
-		}
-
-	} // Participant
 
 	public class SiteInfo {
 		public String site_id = NULL_STRING; // getId of Resource

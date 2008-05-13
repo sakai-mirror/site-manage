@@ -11,6 +11,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.sakaiproject.authz.api.AuthzGroup;
+import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
@@ -24,6 +26,7 @@ import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.util.SortedIterator;
+import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Web;
 
 /**
@@ -45,6 +48,8 @@ public class SiteManageGroupHandler {
     public String test = null;
     public boolean update = false;
     public boolean done = false;
+    
+    private String NULL_STRING = "";
     
     //Just something dumb to bind to in order to supress warning messages
     public String nil = null;

@@ -11,9 +11,7 @@
 <body>
 <div class="portletBody">
 	<form rsf:id="groups-form">
-		<h3 rsf:id="prompt">
-			Revising site tools for Test
-		</h3>
+		<h3 rsf:id="prompt"></h3>
 		<p rsf:id="instructions" class="instruction">
 		</p>
 		<span rsf:id="select-tools"></span>
@@ -25,16 +23,39 @@
 					rsf:id="group_title" /></td>
 			</tr>
 			<tr>
-				<td colspan="2">
+				<td valign="top">
 					<label rsf:id="group_description_label">
 						Description
 					</label>
 				</td>
+				<td>
+					<div rsf:id="group_description"><textarea rsf:id="input" name="Description" cols="50" rows="3" wrap="virtual"></textarea></div>
+				</td>
 			</tr>
 		</table>
-		<p>
-			<div rsf:id="group_description"><textarea name="Description" cols="50" rows="3"></textarea></div>
-		</p>
+		<h3 rsf:id="membership_label"></h3>
+		<table>
+			<tr>
+				<td>
+					<h3 rsf:id="membership_site_label">
+					<input accesskey ="a" rsf:id="addMember" value="addMember" type="submit"/>
+					</h3>
+				</td>
+				<td>
+					<h3 rsf:id="membership_group_label"></h3>
+					<input accesskey ="a" rsf:id="removeMember" value="removeMember" type="submit"/>
+					</h3>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<select name="minOptions" rsf:id="min-votes">
+				</td>
+				<td>
+					
+				</td>
+			</tr>
+		</table>
 		<p class="act">
 			<input accesskey ="s" rsf:id="save" class="active" value="Save" type="submit"/>
 			<input accesskey ="x" rsf:id="cancel" value="Cancel" type="submit"/>

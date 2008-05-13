@@ -1,11 +1,10 @@
 package org.sakaiproject.site.tool.helper.managegroup.rsf;
 
 import java.net.URLDecoder;
+import java.util.Iterator;
 
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
-import org.sakaiproject.site.api.Site;
-import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.tool.helper.managegroup.impl.SiteManageGroupHandler;
 
 import uk.org.ponder.messageutil.MessageLocator;
@@ -37,7 +36,7 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
     public static final String VIEW_ID = "GroupEdit";
     public MessageLocator messageLocator;
     
-    private TextInputEvolver richTextEvolver;
+	private TextInputEvolver richTextEvolver;
 	public void setRichTextEvolver(TextInputEvolver richTextEvolver) {
 				this.richTextEvolver = richTextEvolver;
 	}
@@ -48,30 +47,64 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
 
     public void fillComponents(UIContainer arg0, ViewParameters arg1, ComponentChecker arg2) {
     	
-    	 UIForm toolsForm = UIForm.make(arg0, "groups-form");
+    	 UIForm groupForm = UIForm.make(arg0, "groups-form");
 
         // List tools = handler.getAvailableTools();
 
          StringList toolItems = new StringList();
          
-         UISelect toolSelect = UISelect.makeMultiple(toolsForm, "select-tools",
+         UISelect toolSelect = UISelect.makeMultiple(groupForm, "select-tools",
                        null, "#{SitePageEditHandler.selectedTools}", new String[] {});
 
-         UIOutput.make(toolsForm, "prompt", messageLocator.getMessage("group.newgroup"));
-         UIOutput.make(toolsForm, "instructions", messageLocator.getMessage("editgroup.instruction"));
+         UIOutput.make(groupForm, "prompt", messageLocator.getMessage("group.newgroup"));
+         UIOutput.make(groupForm, "instructions", messageLocator.getMessage("editgroup.instruction"));
          
          UIMessage titleTextLabel = UIMessage.make(arg0, "group_title_label", "group.title");
-         UIInput titleTextIn = UIInput.make(toolsForm, "group_title", "","");
+         UIInput titleTextIn = UIInput.make(groupForm, "group_title", "","");
 		 UILabelTargetDecorator.targetLabel(titleTextLabel, titleTextIn);
 		 
 
-		 UIMessage groupDescrLabel = UIMessage.make(arg0, "group_descr_label", "group.description"); 
-		 UIInput groupDescr = UIInput.make(toolsForm, "group_description", "", ""); 
+		 UIMessage groupDescrLabel = UIMessage.make(arg0, "group_description_label", "group.description"); 
+		 UIInput groupDescr = UIInput.make(groupForm, "group_description", "", ""); 
 		 richTextEvolver.evolveTextInput(groupDescr);
 		 UILabelTargetDecorator.targetLabel(groupDescrLabel, groupDescr);
+		 
+		 UIOutput.make(groupForm, "membership_label", messageLocator.getMessage("editgroup.membership"));
+		 UIOutput.make(groupForm, "membership_site_label", messageLocator.getMessage("editgroup.generallist"));
+		 UIOutput.make(groupForm, "membership_group_label", messageLocator.getMessage("editgroup.grouplist"));
+		 
+		 UICommand.make(groupForm, "addMember", messageLocator.getMessage("editgroup.addmember"), "#{SiteManageGroupHandler.addmember}");
+		 UICommand.make(groupForm, "removeMember", messageLocator.getMessage("editgroup.removemember"), "#{SiteManageGroupHandler.removemember}");
             
+		 /*String[] minVotes = new String[]{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		 String[] maxVotes = new String[]{"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		 
+		 String[] siteMemberLabels = new String[gradebook_items.size()+1];
+		 Group g = getStateGroup(state);
+			if (g != null) {
+				context.put("group", g);
+				context.put("newgroup", Boolean.FALSE);
+			} else {
+				context.put("newgroup", Boolean.TRUE);
+			}
+			if (state.getAttribute(STATE_GROUP_TITLE) != null) {
+				context.put("title", state.getAttribute(STATE_GROUP_TITLE));
+			}
+			if (state.getAttribute(STATE_GROUP_DESCRIPTION) != null) {
+				context.put("description", state
+						.getAttribute(STATE_GROUP_DESCRIPTION));
+			}
+			Iterator siteMembers = new SortedIterator(getParticipantList(state)
+					.iterator(), new SiteComparator(SORTED_BY_PARTICIPANT_NAME,
+					Boolean.TRUE.toString()));
+			if (siteMembers != null && siteMembers.hasNext()) {
+				context.put("generalMembers", siteMembers);
+			}
+		 UISelect siteMember = UISelect.make(groupForm,"siteMembers",siteMemberValues,siteMemberLabels,null);
+		 UISelect groupMember = UISelect.make(groupForm,"groupMembers",groupMemberValues,groupMemberLabels,null);*/
+		 
        /*  for (int i = 0; i < tools.size(); i++ ) {
-             UIBranchContainer toolRow = UIBranchContainer.make(toolsForm, "tool-row:", Integer.toString(i));
+             UIBranchContainer toolRow = UIBranchContainer.make(groupForm, "tool-row:", Integer.toString(i));
 
              Tool tool = (Tool) tools.get(i);
              
@@ -85,11 +118,9 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
          
          toolSelect.optionlist.setValue(toolItems.toStringArray());
          
-         UICommand.make(toolsForm, "save", messageLocator.getMessage("editgroup.update"), 
-                        "#{SitePageEditHandler.addTools}");
+         UICommand.make(groupForm, "save", messageLocator.getMessage("editgroup.update"), "#{SiteManageGroupHandler.addGroup}");
 
-         UICommand.make(toolsForm, "cancel", messageLocator.getMessage("editgroup.cancel"), 
-                        "#{SitePageEditHandler.back}");
+         UICommand.make(groupForm, "cancel", messageLocator.getMessage("editgroup.cancel"), "#{SiteManageGroupHandler.back}");
     }
     
     public ViewParameters getViewParameters() {
