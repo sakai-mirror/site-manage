@@ -1,11 +1,17 @@
 package org.sakaiproject.site.tool.helper.managegroup.rsf;
 
+import java.util.Collection;
 import java.net.URLDecoder;
 import java.util.Iterator;
 
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.tool.helper.managegroup.impl.SiteManageGroupHandler;
+import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.site.util.SiteComparator;
+import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.util.SortedIterator;
+import org.sakaiproject.util.SortedIterator;
 
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.rsf.components.UIBranchContainer;
@@ -76,48 +82,35 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
 		 UICommand.make(groupForm, "addMember", messageLocator.getMessage("editgroup.addmember"), "#{SiteManageGroupHandler.addmember}");
 		 UICommand.make(groupForm, "removeMember", messageLocator.getMessage("editgroup.removemember"), "#{SiteManageGroupHandler.removemember}");
             
-		 /*String[] minVotes = new String[]{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
+		 String[] minVotes = new String[]{"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
 		 String[] maxVotes = new String[]{"1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"};
 		 
-		 String[] siteMemberLabels = new String[gradebook_items.size()+1];
-		 Group g = getStateGroup(state);
-			if (g != null) {
-				context.put("group", g);
-				context.put("newgroup", Boolean.FALSE);
-			} else {
-				context.put("newgroup", Boolean.TRUE);
-			}
-			if (state.getAttribute(STATE_GROUP_TITLE) != null) {
-				context.put("title", state.getAttribute(STATE_GROUP_TITLE));
-			}
-			if (state.getAttribute(STATE_GROUP_DESCRIPTION) != null) {
-				context.put("description", state
-						.getAttribute(STATE_GROUP_DESCRIPTION));
-			}
-			Iterator siteMembers = new SortedIterator(getParticipantList(state)
-					.iterator(), new SiteComparator(SORTED_BY_PARTICIPANT_NAME,
-					Boolean.TRUE.toString()));
-			if (siteMembers != null && siteMembers.hasNext()) {
-				context.put("generalMembers", siteMembers);
-			}
+		 // for the site members list
+		 Collection siteMembers= handler.getSiteParticipant();
+		 String[] siteMemberLabels = new String[siteMembers.size()];
+		 String[] siteMemberValues = new String[siteMembers.size()];
 		 UISelect siteMember = UISelect.make(groupForm,"siteMembers",siteMemberValues,siteMemberLabels,null);
-		 UISelect groupMember = UISelect.make(groupForm,"groupMembers",groupMemberValues,groupMemberLabels,null);*/
-		 
-       /*  for (int i = 0; i < tools.size(); i++ ) {
-             UIBranchContainer toolRow = UIBranchContainer.make(groupForm, "tool-row:", Integer.toString(i));
-
-             Tool tool = (Tool) tools.get(i);
-             
-             UIOutput.make(toolRow, "tool-name", tool.getTitle());
-             UIOutput.make(toolRow, "tool-id", tool.getId());
-             UIOutput.make(toolRow, "tool-description", tool.getDescription());  
-             UISelectChoice.make(toolRow, "tool-select", toolSelect.getFullID(), i);
-             
-             toolItems.add(tool.getId());
-         }*/
-         
-         toolSelect.optionlist.setValue(toolItems.toStringArray());
-         
+		 int i =0;
+		 Iterator<Participant> sIterator = new SortedIterator(siteMembers.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME, Boolean.TRUE.toString()));
+	     for (; sIterator.hasNext();i++){
+	        	Participant p = (Participant) sIterator.next();
+				siteMemberLabels[i] = p.getName();
+				siteMemberValues[i] = p.getRegId();
+	        }
+	     
+	     // for the group members list
+	     Collection<Participant> groupMembers= handler.getGroupParticipant();
+		 String[] groupMemberLabels = new String[groupMembers.size()];
+		 String[] groupMemberValues = new String[groupMembers.size()];
+		 UISelect groupMember = UISelect.make(groupForm,"groupMembers",groupMemberValues,groupMemberLabels,null);
+		 i =0;
+		 Iterator<Participant> gIterator = new SortedIterator(groupMembers.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME, Boolean.TRUE.toString()));
+	     for (; gIterator.hasNext();i++){
+	        	Participant p = (Participant) gIterator.next();
+				groupMemberLabels[i] = p.getName();
+				groupMemberValues[i] = p.getRegId();
+	        }
+	     
          UICommand.make(groupForm, "save", messageLocator.getMessage("editgroup.update"), "#{SiteManageGroupHandler.addGroup}");
 
          UICommand.make(groupForm, "cancel", messageLocator.getMessage("editgroup.cancel"), "#{SiteManageGroupHandler.back}");

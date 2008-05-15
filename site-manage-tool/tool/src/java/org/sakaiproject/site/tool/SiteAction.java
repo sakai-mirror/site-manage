@@ -122,6 +122,8 @@ import org.sakaiproject.sitemanage.api.model.*;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
 import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteParticipantHelper;
+import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.site.util.SiteComparator;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.time.api.Time;
@@ -299,35 +301,6 @@ public class SiteAction extends PagedResourceActionII {
 	 * by
 	 */
 	private static final String SORTED_BY = "site.sorted.by";
-
-	/** the list of criteria for sorting */
-	private static final String SORTED_BY_TITLE = "title";
-
-	private static final String SORTED_BY_DESCRIPTION = "description";
-
-	private static final String SORTED_BY_TYPE = "type";
-
-	private static final String SORTED_BY_STATUS = "status";
-
-	private static final String SORTED_BY_CREATION_DATE = "creationdate";
-
-	private static final String SORTED_BY_JOINABLE = "joinable";
-
-	private static final String SORTED_BY_PARTICIPANT_NAME = "participant_name";
-
-	private static final String SORTED_BY_PARTICIPANT_UNIQNAME = "participant_uniqname";
-
-	private static final String SORTED_BY_PARTICIPANT_ROLE = "participant_role";
-
-	private static final String SORTED_BY_PARTICIPANT_ID = "participant_id";
-
-	private static final String SORTED_BY_PARTICIPANT_COURSE = "participant_course";
-
-	private static final String SORTED_BY_PARTICIPANT_CREDITS = "participant_credits";
-	
-	private static final String SORTED_BY_PARTICIPANT_STATUS = "participant_status";
-
-	private static final String SORTED_BY_MEMBER_NAME = "member_name";
 
 	/** Name of the state attribute holding the site list column to sort by */
 	private static final String SORTED_ASC = "site.sort.asc";
@@ -1888,9 +1861,8 @@ public class SiteAction extends PagedResourceActionII {
 					sortedBy = (String) state.getAttribute(SORTED_BY);
 					sortedAsc = (String) state.getAttribute(SORTED_ASC);
 					if (sortedBy == null) {
-						state.setAttribute(SORTED_BY,
-								SORTED_BY_PARTICIPANT_NAME);
-						sortedBy = SORTED_BY_PARTICIPANT_NAME;
+						state.setAttribute(SORTED_BY, SiteConstants.SORTED_BY_PARTICIPANT_NAME);
+						sortedBy = SiteConstants.SORTED_BY_PARTICIPANT_NAME;
 					}
 					if (sortedAsc == null) {
 						sortedAsc = Boolean.TRUE.toString();
@@ -2796,7 +2768,7 @@ public class SiteAction extends PagedResourceActionII {
 						.getAttribute(STATE_GROUP_DESCRIPTION));
 			}
 			Iterator siteMembers = new SortedIterator(getParticipantList(state)
-					.iterator(), new SiteComparator(SORTED_BY_PARTICIPANT_NAME,
+					.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME,
 					Boolean.TRUE.toString()));
 			if (siteMembers != null && siteMembers.hasNext()) {
 				context.put("generalMembers", siteMembers);
@@ -2804,7 +2776,7 @@ public class SiteAction extends PagedResourceActionII {
 			Set groupMembersSet = (Set) state.getAttribute(STATE_GROUP_MEMBERS);
 			if (state.getAttribute(STATE_GROUP_MEMBERS) != null) {
 				context.put("groupMembers", new SortedIterator(groupMembersSet
-						.iterator(), new SiteComparator(SORTED_BY_MEMBER_NAME,
+						.iterator(), new SiteComparator(SiteConstants.SORTED_BY_MEMBER_NAME,
 						Boolean.TRUE.toString())));
 			}
 			context.put("groupMembersClone", groupMembersSet);
@@ -3300,8 +3272,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void coursesIntoContext(SessionState state, Context context,
 			Site site) {
-		List providerCourseList = SiteParticipantHelper.getProviderCourseList(StringUtil
-				.trimToNull(getExternalRealmId(state)));
+		List providerCourseList = SiteParticipantHelper.getProviderCourseList((String) state.getAttribute(STATE_SITE_INSTANCE_ID));
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 			
@@ -3892,7 +3863,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteId = (String) chosenList.get(0);
 			getReviseSite(state, siteId);
 
-			state.setAttribute(SORTED_BY, SORTED_BY_PARTICIPANT_NAME);
+			state.setAttribute(SORTED_BY, SiteConstants.SORTED_BY_PARTICIPANT_NAME);
 			state.setAttribute(SORTED_ASC, Boolean.TRUE.toString());
 		}
 		
@@ -8110,40 +8081,20 @@ public class SiteAction extends PagedResourceActionII {
 	} // updateSiteInfo
 
 	/**
-	 * getExternalRealmId
-	 * 
-	 */
-	private String getExternalRealmId(SessionState state) {
-		String realmId = SiteService.siteReference((String) state
-				.getAttribute(STATE_SITE_INSTANCE_ID));
-		String rv = null;
-		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			rv = realm.getProviderGroupId();
-		} catch (GroupNotDefinedException e) {
-			M_log.warn(this + ".getExternalRealmId: site realm not found", e);
-		}
-		return rv;
-
-	} // getExternalRealmId
-
-	/**
 	 * getParticipantList
 	 * 
 	 */
 	private Collection getParticipantList(SessionState state) {
 		List members = new Vector();
-		String realmId = SiteService.siteReference((String) state
-				.getAttribute(STATE_SITE_INSTANCE_ID));
+		String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
 
 		List providerCourseList = null;
-		providerCourseList = SiteParticipantHelper.getProviderCourseList(StringUtil
-				.trimToNull(getExternalRealmId(state)));
+		providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		Collection participants = SiteParticipantHelper.prepareParticipants(realmId, providerCourseList);
+		Collection participants = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
@@ -10444,275 +10395,6 @@ public class SiteAction extends PagedResourceActionII {
 						selectedParticipantList);
 
 	} // setSelectedParticipantRol3es
-
-	/**
-	 * the SiteComparator class
-	 */
-	private class SiteComparator implements Comparator {
-		
-		Collator collator = Collator.getInstance();
-		
-		/**
-		 * the criteria
-		 */
-		String m_criterion = null;
-
-		String m_asc = null;
-
-		/**
-		 * constructor
-		 * 
-		 * @param criteria
-		 *            The sort criteria string
-		 * @param asc
-		 *            The sort order string. TRUE_STRING if ascending; "false"
-		 *            otherwise.
-		 */
-		public SiteComparator(String criterion, String asc) {
-			m_criterion = criterion;
-			m_asc = asc;
-
-		} // constructor
-
-		/**
-		 * implementing the Comparator compare function
-		 * 
-		 * @param o1
-		 *            The first object
-		 * @param o2
-		 *            The second object
-		 * @return The compare result. 1 is o1 < o2; -1 otherwise
-		 */
-		public int compare(Object o1, Object o2) {
-			int result = -1;
-
-			if (m_criterion == null)
-				m_criterion = SORTED_BY_TITLE;
-
-			/** *********** for sorting site list ****************** */
-			if (m_criterion.equals(SORTED_BY_TITLE)) {
-				// sorted by the worksite title
-				String s1 = ((Site) o1).getTitle();
-				String s2 = ((Site) o2).getTitle();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_DESCRIPTION)) {
-
-				// sorted by the site short description
-				String s1 = ((Site) o1).getShortDescription();
-				String s2 = ((Site) o2).getShortDescription();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_TYPE)) {
-				// sorted by the site type
-				String s1 = ((Site) o1).getType();
-				String s2 = ((Site) o2).getType();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SortType.CREATED_BY_ASC.toString())) {
-				// sorted by the site creator
-				String s1 = ((Site) o1).getProperties().getProperty(
-						"CHEF:creator");
-				String s2 = ((Site) o2).getProperties().getProperty(
-						"CHEF:creator");
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_STATUS)) {
-				// sort by the status, published or unpublished
-				int i1 = ((Site) o1).isPublished() ? 1 : 0;
-				int i2 = ((Site) o2).isPublished() ? 1 : 0;
-				if (i1 > i2) {
-					result = 1;
-				} else {
-					result = -1;
-				}
-			} else if (m_criterion.equals(SORTED_BY_JOINABLE)) {
-				// sort by whether the site is joinable or not
-				boolean b1 = ((Site) o1).isJoinable();
-				boolean b2 = ((Site) o2).isJoinable();
-				result = compareBoolean(b1, b2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_NAME)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getName();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getName();
-				}
-				
-				result = compareString(s1, s2);
-
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_UNIQNAME)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getUniqname();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getUniqname();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_ROLE)) {
-				String s1 = "";
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getRole();
-				}
-
-				String s2 = "";
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getRole();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_COURSE)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getSection();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getSection();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_ID)) {
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getRegId();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getRegId();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_CREDITS)) {
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getCredits();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getCredits();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_STATUS)) {
-				boolean a1 = true;
-				if (o1.getClass().equals(Participant.class)) {
-					a1 = ((Participant) o1).isActive();
-				}
-
-				boolean a2 = true;
-				if (o2.getClass().equals(Participant.class)) {
-					a2 = ((Participant) o2).isActive();
-				}
-				// let the active users show first when sort ascendingly
-				result = -compareBoolean(a1, a2);
-			} else if (m_criterion.equals(SORTED_BY_CREATION_DATE)) {
-				// sort by the site's creation date
-				Time t1 = null;
-				Time t2 = null;
-
-				// get the times
-				try {
-					t1 = ((Site) o1).getProperties().getTimeProperty(
-							ResourceProperties.PROP_CREATION_DATE);
-				} catch (EntityPropertyNotDefinedException e) {
-				} catch (EntityPropertyTypeException e) {
-				}
-
-				try {
-					t2 = ((Site) o2).getProperties().getTimeProperty(
-							ResourceProperties.PROP_CREATION_DATE);
-				} catch (EntityPropertyNotDefinedException e) {
-				} catch (EntityPropertyTypeException e) {
-				}
-				if (t1 == null) {
-					result = -1;
-				} else if (t2 == null) {
-					result = 1;
-				} else if (t1.before(t2)) {
-					result = -1;
-				} else {
-					result = 1;
-				}
-			} else if (m_criterion.equals(rb.getString("group.title"))) {
-				// sorted by the group title
-				String s1 = ((Group) o1).getTitle();
-				String s2 = ((Group) o2).getTitle();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(rb.getString("group.number"))) {
-				// sorted by the group title
-				int n1 = ((Group) o1).getMembers().size();
-				int n2 = ((Group) o2).getMembers().size();
-				result = (n1 > n2) ? 1 : -1;
-			} else if (m_criterion.equals(SORTED_BY_MEMBER_NAME)) {
-				// sorted by the member name
-				String s1 = null;
-				String s2 = null;
-
-				try {
-					s1 = UserDirectoryService
-							.getUser(((Member) o1).getUserId()).getSortName();
-				} catch (Exception ignore) {
-
-				}
-
-				try {
-					s2 = UserDirectoryService
-							.getUser(((Member) o2).getUserId()).getSortName();
-				} catch (Exception ignore) {
-
-				}
-				result = compareString(s1, s2);
-			}
-
-			if (m_asc == null)
-				m_asc = Boolean.TRUE.toString();
-
-			// sort ascending or descending
-			if (m_asc.equals(Boolean.FALSE.toString())) {
-				result = -result;
-			}
-
-			return result;
-
-		} // compare
-
-		private int compareBoolean(boolean b1, boolean b2) {
-			int result;
-			if (b1 == b2) {
-				result = 0;
-			} else if (b1 == true) {
-				result = 1;
-			} else {
-				result = -1;
-			}
-			return result;
-		}
-
-		private int compareString(String s1, String s2) {
-			int result;
-			if (s1 == null && s2 == null) {
-				result = 0;
-			} else if (s2 == null) {
-				result = 1;
-			} else if (s1 == null) {
-				result = -1;
-			} else {
-				result = collator.compare(s1, s2);
-			}
-			return result;
-		}
-
-	} // SiteComparator
 
 	private class ToolComparator implements Comparator {
 		/**

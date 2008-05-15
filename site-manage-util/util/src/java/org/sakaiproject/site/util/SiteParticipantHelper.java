@@ -21,6 +21,7 @@ import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.PermissionsHelper;
 import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.coursemanagement.api.Enrollment;
 import org.sakaiproject.coursemanagement.api.EnrollmentSet;
@@ -170,6 +171,23 @@ public class SiteParticipantHelper {
 	}
 	
 	/**
+	 * getExternalRealmId
+	 * 
+	 */
+	private static String getExternalRealmId(String siteId) {
+		String realmId = SiteService.siteReference(siteId);
+		String rv = null;
+		try {
+			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
+			rv = realm.getProviderGroupId();
+		} catch (GroupNotDefinedException e) {
+			M_log.warn("SiteParticipantHelper.getExternalRealmId: site realm not found", e);
+		}
+		return rv;
+
+	} // getExternalRealmId
+	
+	/**
 	 * getProviderCourseList a course site/realm id in one of three formats, for
 	 * a single section, for multiple sections of the same course, or for a
 	 * cross-listing having multiple courses. getProviderCourseList parses a
@@ -179,8 +197,10 @@ public class SiteParticipantHelper {
 	 *            is a String representation of the course realm id (external
 	 *            id).
 	 */
-	public static List getProviderCourseList(String id) {
-		Vector rv = new Vector();
+	public static List<String> getProviderCourseList(String siteId) {
+		String id = getExternalRealmId(siteId);
+		
+		Vector<String> rv = new Vector<String>();
 		if (id == null || NULL_STRING.equals(id) ) {
 			return rv;
 		}
@@ -197,14 +217,15 @@ public class SiteParticipantHelper {
 
 	} // getProviderCourseList
 	
-	public static Collection prepareParticipants(String realmId, List providerCourseList) {
-		Map participantsMap = new ConcurrentHashMap();
+	public static Collection<Participant> prepareParticipants(String siteId, List<String> providerCourseList) {
+		String realmId = SiteService.siteReference(siteId);
+		Map<String, Participant> participantsMap = new ConcurrentHashMap<String, Participant>();
 		try {
 			AuthzGroup realm = authzGroupService.getAuthzGroup(realmId);
 			realm.getProviderGroupId();
 			
 			// iterate through the provider list first
-			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
+			for (Iterator<String> i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
 				try
@@ -227,8 +248,8 @@ public class SiteParticipantHelper {
 			}
 			
 			// now for those not provided users
-			Set grants = realm.getMembers();
-			for (Iterator i = grants.iterator(); i.hasNext();) {
+			Set<Member> grants = realm.getMembers();
+			for (Iterator<Member> i = grants.iterator(); i.hasNext();) {
 				Member g = (Member) i.next();
 				try {
 					User user = UserDirectoryService.getUserByEid(g.getUserEid());

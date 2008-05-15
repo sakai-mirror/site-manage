@@ -21,6 +21,8 @@ import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService;
+import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.site.util.SiteParticipantHelper;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
@@ -226,6 +228,28 @@ public class SiteManageGroupHandler {
         }
         
         return tools;
+    }
+    
+    public Collection<Participant> getSiteParticipant()
+    {
+    	Collection<Participant> rv = new Vector<Participant>();
+    	if (site != null)
+    	{
+    		String siteId = site.getId();
+    		String realmId = siteService.siteReference(siteId);
+
+    		List<String> providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
+    		rv = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
+    	}
+    	
+    	return rv;
+    }
+    
+    public Collection<Participant> getGroupParticipant()
+    {
+    	Collection<Participant> rv = new Vector<Participant>();
+    	
+    	return rv;
     }
     
     /**

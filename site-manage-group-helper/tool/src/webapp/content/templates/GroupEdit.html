@@ -37,18 +37,21 @@
 		<table>
 			<tr>
 				<td>
-					<h3 rsf:id="membership_site_label">
-					<input accesskey ="a" rsf:id="addMember" value="addMember" type="submit"/>
-					</h3>
+					<h3 rsf:id="membership_site_label"></h3>
+					<input accesskey ="a" rsf:id="addMember" value="addMember" type="submit"/><br/>
+					<select rsf:id="siteMembers" size="10" ondblclick="doAddMember(this)">
+					</select>
 				</td>
-				<td>
+				<td valign="top">
 					<h3 rsf:id="membership_group_label"></h3>
-					<input accesskey ="a" rsf:id="removeMember" value="removeMember" type="submit"/>
+					<input accesskey ="r" rsf:id="removeMember" value="removeMember" type="submit"/><br/>
+					<select rsf:id="groupMembers" size="10" ondblclick="doRemoveMember(this)">
+					</select>
 				</td>
 			</tr>
 			<tr>
 				<td>
-					<select name="minOptions" rsf:id="min-votes">
+					
 				</td>
 				<td>
 					
