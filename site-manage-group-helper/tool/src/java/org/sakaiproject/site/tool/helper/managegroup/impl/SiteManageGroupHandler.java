@@ -1,5 +1,7 @@
 package org.sakaiproject.site.tool.helper.managegroup.impl;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,6 +20,7 @@ import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Group;
+import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService;
@@ -27,6 +30,9 @@ import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.user.api.User;
+import org.sakaiproject.user.api.UserNotDefinedException;
+import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Web;
@@ -37,16 +43,18 @@ import org.sakaiproject.util.Web;
  *
  */
 public class SiteManageGroupHandler {
+	private Collection<Member> groupMembers;
+	
     public Site site = null;
     public SiteService siteService = null;
     public ToolManager toolManager = null;
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
     private Map groups = null;
-    public String[] selectedTools = new String[] {};
+    public String[] selectedSiteMembers = new String[] {};
+    public String[] selectedGroupMembers = new String[] {};
     private Set unhideables = null;
-    public String state = null;
-    public String title = "";
+    public String state = "";
     public String test = null;
     public boolean update = false;
     public boolean done = false;
@@ -78,23 +86,57 @@ public class SiteManageGroupHandler {
     private String[] defaultMultiTools = {"sakai.news", "sakai.iframe"};
     
 	private static final String GROUP_PROP_WSETUP_CREATED = "group_prop_wsetup_created";
-
-    /**
-     * Gets the current tool
-     * @return Tool
-     */
-    public Tool getCurrentTool() {
-        return toolManager.getCurrentTool();
-    }
-
-    /**
-     * Generates the currentPlacementId as used by the portal to name the iframe the tool lives in
-     * @return String currentPlacementId
-     */
-    public String getCurrentPlacementId() {
-        return Web.escapeJavascript("Main" + toolManager.getCurrentPlacement().getId());
-    }
     
+	// group title
+	private String title;
+	
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	// group description
+	private String description;
+	
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	
+	/**
+	 * the action to add member
+	 * @return
+	 */
+	public String addMember() {
+		if (state != null) {
+            String[] members = state.split(" ");
+            for (int i = 0; i < members.length; i++) {
+            	String memberId = members[i];
+            	try {
+					User u = UserDirectoryService.getUser(memberId);
+					groupMembers.add(site.getMember(u.getId()));
+				} catch (UserNotDefinedException e) {
+					try {
+						User u2 = UserDirectoryService
+								.getUserByEid(memberId);
+						groupMembers.add(site.getMember(u2.getId()));
+					} catch (UserNotDefinedException ee) {
+						//M_log.warn(this + ".doGroup_update: cannot find user " + memberId, e);
+					}
+				}
+            }
+		}
+		
+		
+		return "done";
+	}
+	
     /**
      * Gets the groups for the current site
      * @return Map of groups (id, group)
@@ -160,6 +202,11 @@ public class SiteManageGroupHandler {
                 unhideables.add(toolIds[i].trim());
             }
         }
+        
+        if (groupMembers == null)
+        {
+        	groupMembers = new Vector<Member>();
+        }
     }
     
     /**
@@ -170,64 +217,6 @@ public class SiteManageGroupHandler {
      */
     public void saveSite(Site site) throws IdUnusedException, PermissionException {
         siteService.save(site);
-    }
-    
-    /**
-     * Gets the list of tools that can be added to the current site
-     * @return List of Tools
-     */
-    public List getAvailableTools() {
-
-        List tools = new Vector();
-
-        if (site == null) {
-            init();
-        }
-        
-        Set categories = new HashSet();
-
-        if (site.getType() == null || siteService.isUserSite(site.getId())) {
-            categories.add("myworkspace");
-        }
-        else {
-            categories.add(site.getType());
-        }
-        
-        Set toolRegistrations = toolManager.findTools(categories, null);
-        
-        Vector multiPlacementToolIds = new Vector();
-
-        String items[];
-        if (serverConfigurationService.getString(MULTI_TOOLS) != null && 
-                !"".equals(serverConfigurationService.getString(MULTI_TOOLS)))
-            items = serverConfigurationService.getString(MULTI_TOOLS).split(",");
-        else
-            items = defaultMultiTools;
-
-        for (int i = 0; i < items.length; i++) {
-            multiPlacementToolIds.add(items[i]);
-        }
-     
-        List currentTools = new Vector();
-        
-        SortedIterator i = new SortedIterator(toolRegistrations.iterator(), new ToolComparator());
-        for (; i.hasNext();)
-        {
-            Tool tr = (Tool) i.next();
-            Properties config = tr.getRegisteredConfig();
-            String allowMultiple = config.getProperty(TOOL_CFG_MULTI);
-
-            if (tr != null) {
-                if (multiPlacementToolIds.contains(tr.getId()) || "true".equals(allowMultiple)) {
-                    tools.add(tr);
-                }
-                else if (site.getToolForCommonId(tr.getId()) == null) {
-                    tools.add(tr);
-                }
-            }
-        }
-        
-        return tools;
     }
     
     public Collection<Participant> getSiteParticipant()
@@ -245,47 +234,10 @@ public class SiteManageGroupHandler {
     	return rv;
     }
     
-    public Collection<Participant> getGroupParticipant()
+    public Collection<Member> getGroupParticipant()
     {
-    	Collection<Participant> rv = new Vector<Participant>();
     	
-    	return rv;
-    }
-    
-    /**
-     * Process the 'Save' post on page ordering.
-     *
-     */
-    public String saveGroups () {
-        if (state != null) {
-          /*  String[] pages = state.split(" ");
-            for (int i = 0; i < pages.length; i++) {
-                if (pages[i] != null) {
-                    SiteGroup realGroup = site.getGroup(pages[i]);
-                    realGroup.setPosition(i);
-                }
-            }
-            site.setCustomGroupOrdered(true);
-            try {
-                siteService.save(site);
-                EventTrackingService.post(
-                    EventTrackingService.newEvent(SITE_REORDER, "/site/" + site.getId(), false));
-
-            } 
-            catch (IdUnusedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } 
-            catch (PermissionException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }*/
-        }
-
-        ToolSession session = sessionManager.getCurrentToolSession();
-        session.setAttribute(ATTR_TOP_REFRESH, Boolean.TRUE);
-
-        return "done";
+    	return groupMembers;
     }
     
     /**
@@ -325,45 +277,6 @@ public class SiteManageGroupHandler {
 
         return "";
     }
-
-    /**
-     * Checks if a given toolId is required or not for the current site being edited
-     *
-     * @param toolId
-     * @return true if the tool is required
-     */
-    public boolean isRequired(String toolId) {
-        if (site == null) {
-            init();
-        }
-
-        List requiredTools = null;
-        if (site.getType() == null || siteService.isUserSite(site.getId())) {
-            requiredTools = serverConfigurationService.getToolsRequired("myworkspace");
-        }
-        else {
-            requiredTools = serverConfigurationService.getToolsRequired(site.getType());
-        }
-
-        if (requiredTools != null && requiredTools.contains(toolId)) {
-            return true;
-        }
-        return false;
-    }   
-
-    /**
-     * Checks to see if a given tool is allowed to be hidden.
-     *
-     * Useful for tools that have other requried permissions where setting the page
-     * as visible may not make it visible to all users and thus causes some confusion.
-     *
-     * @return true if this tool is allowed to be hidden
-     */
-    public boolean allowsHide(String toolId) {
-        if (unhideables == null || !unhideables.contains(toolId))
-            return true;
-        return false;
-    }
     
     /**
      * Adds a new group to the current site
@@ -371,7 +284,7 @@ public class SiteManageGroupHandler {
      * @param title
      * @return the newly added Group
      */
-    public Group addGroup (String toolId, String title) {
+    public Group addGroup () {
         Group group = null;
         /*try {
             group= site.addGroup();
@@ -417,36 +330,6 @@ public class SiteManageGroupHandler {
         
         return group.getTitle();
     }
-    
-    
-    /**
-     * ** Copied from SiteAction.java.. should be in a common place such as util?
-     * 
-     * @author joshuaryan
-     *
-     */
-    private class ToolComparator
-    implements Comparator
-    {    
-        /**
-        * implementing the Comparator compare function
-        * @param o1 The first object
-        * @param o2 The second object
-        * @return The compare result. 1 is o1 < o2; 0 is o1.equals(o2); -1 otherwise
-        */
-        public int compare ( Object o1, Object o2)
-        {
-            try
-            {
-                return ((Tool) o1).getTitle().compareTo(((Tool) o2).getTitle());
-            }
-            catch (Exception e)
-            {
-            }
-            return -1;
-            
-        }    // compare
-        
-    } //ToolComparator    
+   
 }
 

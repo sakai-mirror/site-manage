@@ -55,8 +55,8 @@ public class GroupListProducer
 
     public void fillComponents(UIContainer tofill, ViewParameters viewparams,
             ComponentChecker checker) {
-
-        if (handler.update) {
+    
+        //if (handler.update) {
             GroupEditViewParameters addParam = new GroupEditViewParameters();
             addParam.viewID = GroupEditProducer.VIEW_ID;
             UIInternalLink.make(tofill, "add-link", messageLocator.getMessage("group.newgroup"), addParam).decorators =
@@ -73,40 +73,38 @@ public class GroupListProducer
             frameAdjustingProducer.fillComponents(tofill, "resize", "resetFrame");
             
             siteGroups = handler.getGroups();
-            for (Iterator it=siteGroups.keySet().iterator(); it.hasNext(); ) {
-                Object key = it.next();
-                Group group = (Group) siteGroups.get(key);
-                UIBranchContainer grouprow = 
-                    UIBranchContainer.make(groupForm, "group-row:", group.getId());
-    
-                grouprow.decorate(new UITooltipDecorator(messageLocator
-                        .getMessage("group_click_n_drag")));
-                
-                UIOutput.make(grouprow, "group-name", group.getTitle());
-                UIInput name = 
-                    UIInput.make(grouprow, "group-name-input", "#{SitegroupEditHandler.nil}", group.getTitle());
-                UIOutput nameLabel = 
-                    UIOutput.make(grouprow, "group-name-label", messageLocator.getMessage("title"));
-                
-                nameLabel.decorate(new UILabelTargetDecorator(name));
+            if (siteGroups != null)
+            {
+	            for (Iterator it=siteGroups.keySet().iterator(); it.hasNext(); ) {
+	                Object key = it.next();
+	                Group group = (Group) siteGroups.get(key);
+	                UIBranchContainer grouprow = 
+	                    UIBranchContainer.make(groupForm, "group-row:", group.getId());
+	    
+	                grouprow.decorate(new UITooltipDecorator(messageLocator
+	                        .getMessage("group_click_n_drag")));
+	                
+	                UIOutput.make(grouprow, "group-name", group.getTitle());
+	                UIInput name = 
+	                    UIInput.make(grouprow, "group-name-input", "#{SitegroupEditHandler.nil}", group.getTitle());
+	                UIOutput nameLabel = 
+	                    UIOutput.make(grouprow, "group-name-label", messageLocator.getMessage("title"));
+	                
+	                nameLabel.decorate(new UILabelTargetDecorator(name));
+	            }
             }
-
  
-        }
+       /* }
         else {
             //error messages
             UIBranchContainer error = UIBranchContainer.make(tofill, "error:");
             UIOutput.make(error, "message", messageLocator
                     .getMessage("access_error"));
-        }
+        }*/
     }
 
     public List reportNavigationCases() {
-        Tool tool = handler.getCurrentTool();
         List togo = new ArrayList();
-        togo.add(new NavigationCase(null, new SimpleViewParameters(VIEW_ID)));
-        togo.add(new NavigationCase("done", 
-                 new RawViewParameters(SakaiURLUtil.getHelperDoneURL(tool, sessionManager))));
         
 
         return togo;
