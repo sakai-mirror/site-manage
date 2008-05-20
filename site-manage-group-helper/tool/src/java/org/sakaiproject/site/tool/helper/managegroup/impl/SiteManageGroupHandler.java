@@ -13,8 +13,11 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
-import org.sakaiproject.authz.cover.AuthzGroupService;
+import org.sakaiproject.authz.api.AuthzGroupService;
+import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
@@ -43,10 +46,15 @@ import org.sakaiproject.util.Web;
  *
  */
 public class SiteManageGroupHandler {
+	
+	/** Our log (commons). */
+	private static Log M_log = LogFactory.getLog(SiteManageGroupHandler.class);
+	
 	private Collection<Member> groupMembers;
 	
     public Site site = null;
     public SiteService siteService = null;
+    public AuthzGroupService authzGroupService = null;
     public ToolManager toolManager = null;
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
@@ -107,34 +115,6 @@ public class SiteManageGroupHandler {
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-	
-	/**
-	 * the action to add member
-	 * @return
-	 */
-	public String addMember() {
-		if (state != null) {
-            String[] members = state.split(" ");
-            for (int i = 0; i < members.length; i++) {
-            	String memberId = members[i];
-            	try {
-					User u = UserDirectoryService.getUser(memberId);
-					groupMembers.add(site.getMember(u.getId()));
-				} catch (UserNotDefinedException e) {
-					try {
-						User u2 = UserDirectoryService
-								.getUserByEid(memberId);
-						groupMembers.add(site.getMember(u2.getId()));
-					} catch (UserNotDefinedException ee) {
-						//M_log.warn(this + ".doGroup_update: cannot find user " + memberId, e);
-					}
-				}
-            }
-		}
-		
-		
-		return "done";
 	}
 	
     /**
@@ -285,26 +265,45 @@ public class SiteManageGroupHandler {
      * @return the newly added Group
      */
     public Group addGroup () {
+    	String siteReference = siteService.siteReference(site.getId());
         Group group = null;
-        /*try {
+        try {
             group= site.addGroup();
-            group.setTitle(title);
-            ToolConfiguration placement = group.addTool(toolId);        
+            group.setTitle("new group");
+            group.setDescription("");   
+            
+            if (state != null) {
+                String[] members = state.split(",");
+                for (int i = 0; i < members.length; i++) {
+                	String memberId = members[i];
+                	try {
+    					User u = UserDirectoryService.getUser(memberId);
+    					try
+    					{
+    						AuthzGroup authzGroup = authzGroupService.getAuthzGroup(siteReference);
+	    					Member siteMember = authzGroup.getMember(memberId);
+	    					group.addMember(memberId, siteMember.getRole().getId(), siteMember.isActive(), siteMember.isProvided());
+    					}
+    					catch (GroupNotDefinedException gNotDefinedException)
+    					{
+    						M_log.warn(this + ".addGroup: cannot find site " + siteReference, gNotDefinedException);
+    					}
+    				} catch (UserNotDefinedException e) {
+    					M_log.warn(this + ".addGroup: cannot find user " + memberId, e);
+    				}
+                }
+    		}
+                
             siteService.save(site);
-            EventTrackingService.post(
-                EventTrackingService.newEvent(GROUP_ADD, "/site/" + site.getId() +
-                    "/page/" + group.getId() +
-                    "/tool/" + toolId +
-                    "/placement/" + placement.getId(), false));
         } 
         catch (IdUnusedException e) {
-            e.printStackTrace();
+        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
             return null;
         } 
         catch (PermissionException e) {
-            e.printStackTrace();
+        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
             return null;
-        }*/
+        }
         init();
         
         return group;

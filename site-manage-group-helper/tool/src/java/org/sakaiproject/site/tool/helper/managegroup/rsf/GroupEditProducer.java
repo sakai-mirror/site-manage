@@ -103,14 +103,11 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
 				groupMemberValues[i] = p.getUserId();
 	        }
 	        
-    	 UICommand.make(groupForm, "addMember", "#{SiteManageGroupHandler.addMember}").decorate(new UITooltipDecorator(messageLocator.getMessage("editgroup.addmember")));
-		 UICommand.make(groupForm, "removeMember", messageLocator.getMessage("editgroup.removemember"), "#{SiteManageGroupHandler.removeMember}");
-         
-         UICommand.make(groupForm, "save", messageLocator.getMessage("editgroup.update"), "#{SiteManageGroupHandler.addGroup}");
+    	 UICommand.make(groupForm, "save", messageLocator.getMessage("editgroup.update"), "#{SiteManageGroupHandler.addGroup}");
 
          UICommand.make(groupForm, "cancel", messageLocator.getMessage("editgroup.cancel"), "#{SiteManageGroupHandler.back}");
          
-         UIInput.make(groupForm, "state-init", "#{SiteManageGroupHandler.state}", state);
+         UIInput.make(groupForm, "newRight", "#{SiteManageGroupHandler.state}", state);
     }
     
     public ViewParameters getViewParameters() {
