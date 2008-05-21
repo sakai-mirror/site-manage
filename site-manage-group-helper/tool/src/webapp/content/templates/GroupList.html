@@ -10,38 +10,48 @@
 	<script type="text/javascript" language="JavaScript" src="/library/js/headscripts.js"></script>
 </head>
 
-<body>
- 	<div id="group-order-body" class="portletBody">
- 		 <div class="navIntraTool">
-			<a href="#" rsf:id="add-link" class="item_control" title="Display Groups Currently Available To Add To This Site" onclick="">Add Group</a>
-		</div>
-		<div rsf:id="content:">
-			<form rsf:id="groups-form" class="group_form">
-				<p class="act">
-					<input rsf:id="save" class="active" value="Save" type="submit" onclick="serialize('sort1');"/>
-					<input rsf:id="revert" value="Cancel" type="submit"/>
-					<input rsf:id="reset" value="Reset" type="submit" onclick="return checkReset();"/>
-				</p>
-				<div class="alertMessage" id="call-results">
-					<strong rsf:id="message">Note: Changes to group ordering will not take effect until you click 'Save'. Deleting, Adding or Editing a Group is saved immediately</strong>
-				</div>
-	 			<table class="listHier lines nolines" style="width:auto" summary="Group list. Column 1: group title. Column 2: group size. ">
-					<tr>
-						<th rsf:id="group-title" class="skip">Title</th>
-						<th rsf:id="groupsize-title" class="skip">Size</th>
-					</tr>
-				</table>
-				<input rsf:id="state-init" id="content:::state-init" type="hidden"/>
-				<span id="del-message"><strong rsf:id="del-message" class="hidden"/></span>
-				<span id="exit-message"><strong rsf:id="exit-message" class="hidden"/></span>
-				<span id="reset-message"><strong rsf:id="reset-message" class="hidden"/></span>
-				<p class="act">
-					<input accesskey ="s" class="active" rsf:id="save" value="Save" type="submit" onclick="serialize('sort1');"/>
-					<input accesskey ="x" rsf:id="revert" value="Cancel" type="submit"/>
-					<input accesskey ="r" rsf:id="reset" value="Reset" type="submit" onclick="return checkReset();"/>
-				</p>					
-			</form>
-		</div>
-	</div>
+<body rsf:id="scr=sakai-body">
+<div class="portletBody">
+
+<div class="navIntraTool">
+	<a href="#" rsf:id="add-link" class="item_control" title="Display Groups Currently Available To Add To This Site" onclick="">Add Group</a>
+</div>
+	
+<h3 rsf:id="group-list-title">Groups</h3>
+
+
+<form rsf:id="delete-group-form">
+<!-- This span is needed here to guide the renderer away to the checkboxes -->
+<span rsf:id="delete-group"/>
+<table class="listHier" border="0" cellspacing="0">
+  <thead>
+    <tr> 
+      <th rsf:id="group-title-title">Title</th>
+      <th rsf:id="group-size-title">Size</th>
+      <th rsf:id="group-remove-title">Remove?</th>
+    </tr>
+  </thead>
+  <tbody id="tasks:grouplist:tbody_element">
+
+    <tr rsf:id="group-row:"> 
+          <td><span rsf:id="group-title">Group Title</span>
+          <div class="itemAction"><a href="GroupEdit.html" target="_self"  rsf:id="group-revise">Edit</a></div>
+       </td>
+      <td rsf:id="group-size">
+      	opening date
+      </td>
+      <td>
+      	<label rsf:id="delete-label" id="check-2" class="skip">Label for element</label>
+      	<input rsf:id="group-select" title="Select to remove" type="checkbox" id="check-2" name="deleteGroup" value="" /> 
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p class="act">
+<input type="submit" class="active" rsf:id="delete-groups" name="deleteSelectGroup" value="Update"  accesskey="s" />
+</p>
+</form>
+</div>
 </body>
 </html>

@@ -34,5 +34,7 @@ public class SiteConstants {
 	public static final String SORTED_BY_GROUP_TITLE = "group_title";
 	
 	public static final String SORTED_BY_GROUP_SIZE = "group_size";
+	
+	public static final String GROUP_PROP_WSETUP_CREATED = "group_prop_wsetup_created";
 
 }

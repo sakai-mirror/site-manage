@@ -15,7 +15,7 @@ public class GroupEditViewParameters extends SimpleViewParameters {
     public String url;
     public String newConfig;
     public String visible;
-    
+
     public String getParseSpec() {
         String togo = super.getParseSpec().concat(",groupId,newTitle,visible,url,newConfig");
         return togo;

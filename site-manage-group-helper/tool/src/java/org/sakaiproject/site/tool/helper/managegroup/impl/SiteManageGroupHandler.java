@@ -29,6 +29,7 @@ import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteParticipantHelper;
+import org.sakaiproject.site.util.SiteConstants;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
@@ -40,6 +41,8 @@ import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Web;
 
+import uk.org.ponder.messageutil.TargettedMessage;
+import uk.org.ponder.messageutil.TargettedMessageList;
 /**
  * 
  * @author Joshua Ryan joshua.ryan@asu.edu
@@ -58,7 +61,7 @@ public class SiteManageGroupHandler {
     public ToolManager toolManager = null;
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
-    private Map groups = null;
+    private List<Group> groups = null;
     public String[] selectedSiteMembers = new String[] {};
     public String[] selectedGroupMembers = new String[] {};
     private Set unhideables = null;
@@ -92,9 +95,12 @@ public class SiteManageGroupHandler {
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
 
     private String[] defaultMultiTools = {"sakai.news", "sakai.iframe"};
-    
-	private static final String GROUP_PROP_WSETUP_CREATED = "group_prop_wsetup_created";
-    
+	
+	private TargettedMessageList messages;
+	public void setMessages(TargettedMessageList messages) {
+		this.messages = messages;
+	}
+	
 	// group title
 	private String title;
 	
@@ -117,16 +123,19 @@ public class SiteManageGroupHandler {
 		this.description = description;
 	}
 	
+	// for those to be deleted groups
+	public String[] deleteGroupIds;
+	 
     /**
      * Gets the groups for the current site
      * @return Map of groups (id, group)
      */
-    public Map getGroups() {
+    public List<Group> getGroups() {
         if (site == null) {
             init();
         }
         if (update) {
-            groups = new LinkedHashMap();
+            groups = new Vector<Group>();
             if (site != null)
             {   
                 // only show groups created by WSetup tool itself
@@ -134,9 +143,9 @@ public class SiteManageGroupHandler {
     			for (Iterator gIterator = allGroups.iterator(); gIterator.hasNext();) {
     				Group gNext = (Group) gIterator.next();
     				String gProp = gNext.getProperties().getProperty(
-    						GROUP_PROP_WSETUP_CREATED);
+    						SiteConstants.GROUP_PROP_WSETUP_CREATED);
     				if (gProp != null && gProp.equals(Boolean.TRUE.toString())) {
-    					groups.put(gNext.getId(), gNext);
+    					groups.add(gNext);
     				}
     			}
             }
@@ -265,46 +274,57 @@ public class SiteManageGroupHandler {
      * @return the newly added Group
      */
     public Group addGroup () {
-    	String siteReference = siteService.siteReference(site.getId());
+
         Group group = null;
-        try {
-            group= site.addGroup();
-            group.setTitle("new group");
-            group.setDescription("");   
-            
-            if (state != null) {
-                String[] members = state.split(",");
-                for (int i = 0; i < members.length; i++) {
-                	String memberId = members[i];
-                	try {
-    					User u = UserDirectoryService.getUser(memberId);
-    					try
-    					{
-    						AuthzGroup authzGroup = authzGroupService.getAuthzGroup(siteReference);
-	    					Member siteMember = authzGroup.getMember(memberId);
-	    					group.addMember(memberId, siteMember.getRole().getId(), siteMember.isActive(), siteMember.isProvided());
-    					}
-    					catch (GroupNotDefinedException gNotDefinedException)
-    					{
-    						M_log.warn(this + ".addGroup: cannot find site " + siteReference, gNotDefinedException);
-    					}
-    				} catch (UserNotDefinedException e) {
-    					M_log.warn(this + ".addGroup: cannot find user " + memberId, e);
-    				}
-                }
-    		}
-                
-            siteService.save(site);
-        } 
-        catch (IdUnusedException e) {
-        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
-            return null;
-        } 
-        catch (PermissionException e) {
-        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
-            return null;
-        }
-        init();
+        
+    	String siteReference = siteService.siteReference(site.getId());
+    	
+    	if (title == null || title.length() == 0)
+    	{
+    		M_log.debug(this + ".addGroup: no title specified");
+    		messages.addMessage(new TargettedMessage("editgroup.titlemissing","no text"));
+    	}
+    	else
+    	{
+	        try {
+	            group= site.addGroup();
+				group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+	            group.setTitle(title);
+	            group.setDescription(description);   
+	            
+	            if (state != null) {
+	                String[] members = state.split(",");
+	                for (int i = 0; i < members.length; i++) {
+	                	String memberId = members[i];
+	                	try {
+	    					User u = UserDirectoryService.getUser(memberId);
+	    					try
+	    					{
+	    						AuthzGroup authzGroup = authzGroupService.getAuthzGroup(siteReference);
+		    					Member siteMember = authzGroup.getMember(memberId);
+		    					group.addMember(memberId, siteMember.getRole().getId(), siteMember.isActive(), siteMember.isProvided());
+	    					}
+	    					catch (GroupNotDefinedException gNotDefinedException)
+	    					{
+	    						M_log.warn(this + ".addGroup: cannot find site " + siteReference, gNotDefinedException);
+	    					}
+	    				} catch (UserNotDefinedException e) {
+	    					M_log.warn(this + ".addGroup: cannot find user " + memberId, e);
+	    				}
+	                }
+	    		}
+	                
+	            siteService.save(site);
+	        } 
+	        catch (IdUnusedException e) {
+	        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
+	            return null;
+	        } 
+	        catch (PermissionException e) {
+	        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
+	            return null;
+	        }
+    	}
         
         return group;
     }
@@ -329,6 +349,14 @@ public class SiteManageGroupHandler {
         
         return group.getTitle();
     }
+
+	public String[] getDeleteGroupIds() {
+		return deleteGroupIds;
+	}
+
+	public void setDeleteGroupIds(String[] deleteGroupIds) {
+		this.deleteGroupIds = deleteGroupIds;
+	}
    
 }
 

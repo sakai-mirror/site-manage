@@ -26,12 +26,15 @@
 </head>
 <body onLoad="opt.init(document.forms[0])">
 <div class="portletBody">
+	<div rsf:id="error-row:">
+		<div class="alertMessage" rsf:id="error">We Have Errors!</div>
+	</div>
 	<form rsf:id="groups-form">
 		<h3 rsf:id="prompt"></h3>
 		<p rsf:id="instructions" class="instruction">
 		</p>
 		 <table>
-		<!--  <tr>
+			<tr>
 				<td><span class="reqStarInline">*</span> <label
 					rsf:id="group_title_label">Title</label></td>
 				<td><input name="Title" type="text" size="50"
@@ -46,7 +49,7 @@
 				<td>
 					<div rsf:id="group_description"><textarea rsf:id="input" name="Description" cols="50" rows="3" wrap="virtual"></textarea></div>
 				</td>
-			</tr>-->
+			</tr>
 		</table>
 		<h3 rsf:id="membership_label"></h3>
 		<table>

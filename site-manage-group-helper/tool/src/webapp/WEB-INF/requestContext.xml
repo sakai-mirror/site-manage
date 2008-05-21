@@ -28,12 +28,15 @@
     <property name="handler" ref="SiteManageGroupHandler" />
     <property name="messageLocator" ref="messageLocator"/>
     <property name="richTextEvolver" ref="richTextEvolver" />
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
   </bean>
 
   <bean id="GroupDelProdcuer" 
       class="org.sakaiproject.site.tool.helper.managegroup.rsf.GroupDelProducer">
     <property name="handler" ref="SiteManageGroupHandler" />
     <property name="messageLocator" ref="messageLocator"/>
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
   </bean>
 
   <bean id="SiteManageGroupHandler" init-method="init"
@@ -43,5 +46,6 @@
     <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager" />
     <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
     <property name="authzGroupService" ref="org.sakaiproject.authz.api.AuthzGroupService" />
+    <property name="messages" ref="targettedMessageList" />
   </bean>
 </beans>

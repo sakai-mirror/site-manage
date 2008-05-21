@@ -14,7 +14,9 @@ import org.sakaiproject.site.util.SiteConstants;
 import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.SortedIterator;
 
+import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
 import uk.org.ponder.messageutil.MessageLocator;
+import uk.org.ponder.messageutil.TargettedMessageList;
 import uk.org.ponder.rsf.components.UIBranchContainer;
 import uk.org.ponder.rsf.components.UIContainer;
 import uk.org.ponder.rsf.components.UIInput;
@@ -43,6 +45,7 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
     public SiteManageGroupHandler handler;
     public static final String VIEW_ID = "GroupEdit";
     public MessageLocator messageLocator;
+    public FrameAdjustingProducer frameAdjustingProducer;
     
 	private TextInputEvolver richTextEvolver;
 	public void setRichTextEvolver(TextInputEvolver richTextEvolver) {
@@ -52,6 +55,11 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
     public String getViewID() {
         return VIEW_ID;
     }
+    
+    private TargettedMessageList tml;
+	public void setTargettedMessageList(TargettedMessageList tml) {
+		this.tml = tml;
+	}
 
     public void fillComponents(UIContainer arg0, ViewParameters arg1, ComponentChecker arg2) {
     	
@@ -63,14 +71,14 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
          UIOutput.make(groupForm, "prompt", messageLocator.getMessage("group.newgroup"));
          UIOutput.make(groupForm, "instructions", messageLocator.getMessage("editgroup.instruction"));
          
-         /*UIOutput.make(groupForm, "group_title_label", messageLocator.getMessage("group.title"));
-         UIInput titleTextIn = UIInput.make(groupForm, "group_title", "","");
+         UIOutput.make(groupForm, "group_title_label", messageLocator.getMessage("group.title"));
+         UIInput titleTextIn = UIInput.make(groupForm, "group_title", "#{SiteManageGroupHandler.title}","");
 		 
 		
 		 UIMessage groupDescrLabel = UIMessage.make(arg0, "group_description_label", "group.description"); 
-		 UIInput groupDescr = UIInput.make(groupForm, "group_description", "", ""); 
+		 UIInput groupDescr = UIInput.make(groupForm, "group_description", "#{SiteManageGroupHandler.description}", ""); 
 		 richTextEvolver.evolveTextInput(groupDescr);
-		 UILabelTargetDecorator.targetLabel(groupDescrLabel, groupDescr);*/
+		 UILabelTargetDecorator.targetLabel(groupDescrLabel, groupDescr);
 		 
 		 UIOutput.make(groupForm, "membership_label", messageLocator.getMessage("editgroup.membership"));
 		 UIOutput.make(groupForm, "membership_site_label", messageLocator.getMessage("editgroup.generallist"));
@@ -108,6 +116,21 @@ public class GroupEditProducer implements ViewComponentProducer, ViewParamsRepor
          UICommand.make(groupForm, "cancel", messageLocator.getMessage("editgroup.cancel"), "#{SiteManageGroupHandler.back}");
          
          UIInput.make(groupForm, "newRight", "#{SiteManageGroupHandler.state}", state);
+         
+         //process any messages
+         if (tml.size() > 0) {
+ 			for (i = 0; i < tml.size(); i ++ ) {
+ 				UIBranchContainer errorRow = UIBranchContainer.make(arg0,"error-row:", new Integer(i).toString());
+ 				if (tml.messageAt(i).args != null ) {	    		
+ 					UIMessage.make(errorRow,"error",tml.messageAt(i).acquireMessageCode(),(String[])tml.messageAt(i).args[0]);
+ 				} else {
+ 		    			UIMessage.make(errorRow,"error",tml.messageAt(i).acquireMessageCode());
+ 				}
+ 		    		
+ 			}
+         }
+         
+         frameAdjustingProducer.fillComponents(arg0, "resize", "resetFrame");
     }
     
     public ViewParameters getViewParameters() {

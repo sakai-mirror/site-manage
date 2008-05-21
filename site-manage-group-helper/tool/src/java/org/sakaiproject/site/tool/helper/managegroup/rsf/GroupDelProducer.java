@@ -5,6 +5,7 @@ import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.tool.helper.managegroup.impl.SiteManageGroupHandler;
 
+import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.rsf.components.UIBranchContainer;
 import uk.org.ponder.rsf.components.UIContainer;
@@ -23,7 +24,8 @@ public class GroupDelProducer implements ViewComponentProducer, ViewParamsReport
     
     public static final String VIEW_ID = "GroupDel";
     public MessageLocator messageLocator;
-    public SiteManageGroupHandler handler;      
+    public SiteManageGroupHandler handler;
+    public FrameAdjustingProducer frameAdjustingProducer;
     
     public String getViewID() {    
         return VIEW_ID;
@@ -71,6 +73,7 @@ public class GroupDelProducer implements ViewComponentProducer, ViewParamsReport
                 e.printStackTrace();
             }
         }
+        frameAdjustingProducer.fillComponents(arg0, "resize", "resetFrame");
     }
     
     public ViewParameters getViewParameters() {
