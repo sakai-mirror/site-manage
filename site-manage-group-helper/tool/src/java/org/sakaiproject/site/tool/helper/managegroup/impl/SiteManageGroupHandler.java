@@ -18,6 +18,7 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
+import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
@@ -62,18 +63,15 @@ public class SiteManageGroupHandler {
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
     private List<Group> groups = null;
-    public String[] selectedSiteMembers = new String[] {};
-    public String[] selectedGroupMembers = new String[] {};
     private Set unhideables = null;
-    public String state = "";
-    public String test = null;
+    public String memberList = "";
     public boolean update = false;
     public boolean done = false;
     
-    private String NULL_STRING = "";
+    public String[] selectedGroupMembers = new String[]{};
+    public String[] selectedSiteMembers = new String[]{};
     
-    //Just something dumb to bind to in order to supress warning messages
-    public String nil = null;
+    private String NULL_STRING = "";
     
     private final String TOOL_CFG_FUNCTIONS = "functions.require";
     private final String TOOL_CFG_MULTI = "allowMultiple";
@@ -88,18 +86,25 @@ public class SiteManageGroupHandler {
     private final String SITE_REORDER = "group.reorder";
     private final String SITE_RESET = "group.reset";
 
-    //System config for which tools can be added to a site more then once
-    private final String MULTI_TOOLS = "sakai.site.multiPlacementTools";
-
     // Tool session attribute name used to schedule a whole page refresh.
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
-
-    private String[] defaultMultiTools = {"sakai.news", "sakai.iframe"};
 	
 	private TargettedMessageList messages;
 	public void setMessages(TargettedMessageList messages) {
 		this.messages = messages;
 	}
+	
+	// the group title
+	private String id;
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+	
 	
 	// group title
 	private String title;
@@ -125,6 +130,19 @@ public class SiteManageGroupHandler {
 	
 	// for those to be deleted groups
 	public String[] deleteGroupIds;
+	
+	/**
+	 * reset the variables
+	 */
+	public void resetParams()
+	{
+		id = "";
+		title = "";
+		description ="";
+		deleteGroupIds=new String[]{};
+		selectedGroupMembers = new String[]{};
+	    selectedSiteMembers = new String[]{};
+	}
 	 
     /**
      * Gets the groups for the current site
@@ -181,7 +199,7 @@ public class SiteManageGroupHandler {
             }
         }
         update = siteService.allowUpdateSite(site.getId());
-        title = site.getTitle();
+        title = "";
         
         String conf = serverConfigurationService.getString(UNHIDEABLES_CFG);
         if (conf != null) {
@@ -233,7 +251,7 @@ public class SiteManageGroupHandler {
      * Allows the Cancel button to return control to the tool calling this helper
      *
      */
-    public String cancel() {
+    public String processCancel() {
         ToolSession session = sessionManager.getCurrentToolSession();
         session.setAttribute(ATTR_TOP_REFRESH, Boolean.TRUE);
 
@@ -244,8 +262,8 @@ public class SiteManageGroupHandler {
      * Cancel out of the current action and go back to main view
      * 
      */
-    public String back() {
-      return "back";
+    public String processBack() {
+      return "cancel";
     }
     
     public String reset() {
@@ -273,60 +291,173 @@ public class SiteManageGroupHandler {
      * @param title
      * @return the newly added Group
      */
-    public Group addGroup () {
+    public String processAddGroup () {
 
         Group group = null;
+        
+        id = StringUtil.trimToNull(id);
         
     	String siteReference = siteService.siteReference(site.getId());
     	
     	if (title == null || title.length() == 0)
     	{
-    		M_log.debug(this + ".addGroup: no title specified");
+    		M_log.debug(this + ".processAddGroup: no title specified");
     		messages.addMessage(new TargettedMessage("editgroup.titlemissing","no text"));
+    		return null;
     	}
-    	else
+    	else if (id == null)
     	{
-	        try {
-	            group= site.addGroup();
-				group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
-	            group.setTitle(title);
-	            group.setDescription(description);   
+    		Collection siteGroups = site.getGroups();
+    		if (siteGroups != null && siteGroups.size() > 0)
+    		{
+	    		// when adding a group, check whether the group title has
+				// been used already
+				boolean titleExist = false;
+				for (Iterator iGroups = siteGroups.iterator(); !titleExist
+						&& iGroups.hasNext();) {
+					Group iGroup = (Group) iGroups.next();
+					if (title.equals(iGroup.getTitle())) {
+						// found same title
+						titleExist = true;
+					}
+				}
+				if (titleExist) {
+					messages.addMessage(new TargettedMessage("group.title.same","group with same existing title"));
+					return null;
+				}
+    		}
+    	}
+
+		if (id != null)
+		{
+			// editing existing group
+			group = site.getGroup(id);
+		}
+		else
+		{
+			// adding a new group
+	        group= site.addGroup();
+	        group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+		}
+		
+		if (group != null)
+		{
+			group.setTitle(title);
+            group.setDescription(description);   
+            
+            boolean found = false;
+            // remove those no longer included in the group
+			Set members = group.getMembers();
+			String[] membersSelected = memberList.split(",");
+			for (Iterator iMembers = members.iterator(); iMembers
+					.hasNext();) {
+				found = false;
+				String mId = ((Member) iMembers.next()).getUserId();
+				for (int i = 0; !found && i < membersSelected.length; i++)
+				{
+					if (mId.equals(membersSelected[i])) {
+						found = true;
+					}
+
+				}
+				if (!found) {
+					group.removeMember(mId);
+				}
+			}
+
+			// add those seleted members
+			for (int i = 0; i < membersSelected.length; i++) {
+				String memberId = membersSelected[i];
+				if (group.getUserRole(memberId) == null) {
+					Role r = site.getUserRole(memberId);
+					Member m = site.getMember(memberId);
+					// for every member added through the "Manage
+					// Groups" interface, he should be defined as
+					// non-provided
+					group.addMember(memberId, r != null ? r.getId()
+							: "", m != null ? m.isActive() : true,
+							false);
+				}
+			}
 	            
-	            if (state != null) {
-	                String[] members = state.split(",");
-	                for (int i = 0; i < members.length; i++) {
-	                	String memberId = members[i];
-	                	try {
-	    					User u = UserDirectoryService.getUser(memberId);
-	    					try
-	    					{
-	    						AuthzGroup authzGroup = authzGroupService.getAuthzGroup(siteReference);
-		    					Member siteMember = authzGroup.getMember(memberId);
-		    					group.addMember(memberId, siteMember.getRole().getId(), siteMember.isActive(), siteMember.isProvided());
-	    					}
-	    					catch (GroupNotDefinedException gNotDefinedException)
-	    					{
-	    						M_log.warn(this + ".addGroup: cannot find site " + siteReference, gNotDefinedException);
-	    					}
-	    				} catch (UserNotDefinedException e) {
-	    					M_log.warn(this + ".addGroup: cannot find user " + memberId, e);
-	    				}
-	                }
-	    		}
-	                
-	            siteService.save(site);
+    		// save the changes
+    		try
+    		{
+    			siteService.save(site);
+    			// reset the form params
+    			resetParams();
 	        } 
 	        catch (IdUnusedException e) {
-	        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
+	        	M_log.warn(this + ".processAddGroup: cannot find site " + site.getId(), e);
 	            return null;
 	        } 
 	        catch (PermissionException e) {
-	        	M_log.warn(this + ".addGroup: cannot find site " + site.getId(), e);
+	        	M_log.warn(this + ".processAddGroup: cannot find site " + site.getId(), e);
 	            return null;
 	        }
     	}
         
-        return group;
+        return "success";
+    }
+    
+    public String processConfirmGroupDelete()
+    {
+    	if (deleteGroupIds == null || deleteGroupIds.length == 0)
+    	{
+    		// no group chosen to be deleted
+    		M_log.debug(this + ".processConfirmGroupDelete: no group chosen to be deleted.");
+    		messages.addMessage(new TargettedMessage("delete_group_nogroup","no group chosen"));
+    		return null;
+    	}
+    	else
+    	{
+    		List<Group> groups = new Vector<Group>();
+    		
+	    	for (int i = 0; i < deleteGroupIds.length; i ++) {
+	    		String groupId = deleteGroupIds[i];
+	    		//
+	    		try
+	    		{
+	    			Group g = site.getGroup(groupId);
+	    			groups.add(g);
+	    		}
+	    		catch (Exception e)
+	    		{
+	    			
+	    		}
+	    	}
+	    	return "confirm";
+    	}
+    }
+    
+    public String processDeleteGroups()
+    {
+    	if (site != null)
+    	{
+	    	for (int i = 0; i < deleteGroupIds.length; i ++) {
+		    	String groupId = deleteGroupIds[i];
+		    	Group g = site.getGroup(groupId);
+				if (g != null) {
+					site.removeGroup(g);
+				}
+			}
+			try {
+				siteService.save(site);
+			} catch (IdUnusedException e) {
+				messages.addMessage(new TargettedMessage("editgroup.site.notfound.alert","cannot find site"));
+				M_log.warn(this + ".processDeleteGroups: Problem of saving site after group removal: site id =" + site.getId(), e);
+			} catch (PermissionException e) {
+				messages.addMessage(new TargettedMessage("editgroup.site.permission.alert","not allowed to find site"));
+				M_log.warn(this + ".processDeleteGroups: Permission problem of saving site after group removal: site id=" + site.getId(), e);
+			}
+	    	
+	    }
+    	return "success";
+    }
+    
+    public String processCancelelete()
+    {
+    	return "cancel";
     }
     
     /**
@@ -353,10 +484,40 @@ public class SiteManageGroupHandler {
 	public String[] getDeleteGroupIds() {
 		return deleteGroupIds;
 	}
+	
+	public List<Group> getSelectedGroups()
+	{
+		List<Group> rv = new Vector<Group>();
+		if (deleteGroupIds != null && deleteGroupIds.length > 0 && site != null)
+		{
+			for (int i = 0; i<deleteGroupIds.length; i++)
+			{
+				String groupId = deleteGroupIds[i];
+				try
+				{
+					Group g = site.getGroup(groupId);
+					rv.add(g);
+				}
+				catch (Exception e)
+				{
+					M_log.debug(this + ":getSelectedGroups: cannot get group with id " + groupId);
+				}
+			}
+		}
+		return rv;
+	}
 
 	public void setDeleteGroupIds(String[] deleteGroupIds) {
 		this.deleteGroupIds = deleteGroupIds;
 	}
+	
+    /**
+     * Gets the current tool
+     * @return Tool
+     */
+    public Tool getCurrentTool() {
+        return toolManager.getCurrentTool();
+    }
    
 }
 

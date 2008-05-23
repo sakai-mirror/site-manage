@@ -21,6 +21,7 @@
     <property name="messageLocator" ref="messageLocator"/>
     <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>
     <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
   </bean>
    
   <bean id="GroupEditProdcuer" 
@@ -30,16 +31,11 @@
     <property name="richTextEvolver" ref="richTextEvolver" />
     <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
     <property name="targettedMessageList" ref="targettedMessageList" />
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
   </bean>
 
-  <bean id="GroupDelProdcuer" 
-      class="org.sakaiproject.site.tool.helper.managegroup.rsf.GroupDelProducer">
-    <property name="handler" ref="SiteManageGroupHandler" />
-    <property name="messageLocator" ref="messageLocator"/>
-    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
-  </bean>
-
-  <bean id="SiteManageGroupHandler" init-method="init"
+ 	<bean id="SiteManageGroupHandler" init-method="init"
       class="org.sakaiproject.site.tool.helper.managegroup.impl.SiteManageGroupHandler">
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
     <property name="toolManager" ref="org.sakaiproject.tool.api.ToolManager" />
@@ -47,5 +43,13 @@
     <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
     <property name="authzGroupService" ref="org.sakaiproject.authz.api.AuthzGroupService" />
     <property name="messages" ref="targettedMessageList" />
+  </bean>
+  
+    <bean id="GroupDelProdcuer" 
+      class="org.sakaiproject.site.tool.helper.managegroup.rsf.GroupDelProducer">
+    <property name="handler" ref="SiteManageGroupHandler" />
+    <property name="messageLocator" ref="messageLocator"/>
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
   </bean>
 </beans>

@@ -10,25 +10,29 @@ import uk.org.ponder.rsf.viewstate.ViewParameters;
  */
 public class GroupEditViewParameters extends SimpleViewParameters {
 
-    public String groupId;
-    public String newTitle;
-    public String url;
-    public String newConfig;
-    public String visible;
+    public String id;
 
-    public String getParseSpec() {
-        String togo = super.getParseSpec().concat(",groupId,newTitle,visible,url,newConfig");
-        return togo;
-    }
+    public GroupEditViewParameters(String id) {
+		super();
+		this.id = id;
+	}
     
-    public ViewParameters copyBase() {
-        GroupEditViewParameters togo = (GroupEditViewParameters) super.copyBase();
-        togo.groupId = groupId;
-        togo.newTitle = newTitle;
-        togo.visible = visible;
-        togo.url = url;
-        togo.newConfig = newConfig;
-        return togo;
+    public GroupEditViewParameters() {
+		super();
+	}
+    
+	public GroupEditViewParameters(String viewId, String id) {
+		this.id= id;
+		this.viewID = viewId;
+	}
+    
+    public String getId()
+    {
+    	return id;
     }
+
+	public void setId(String id) {
+		this.id = id;
+	}
     
 }

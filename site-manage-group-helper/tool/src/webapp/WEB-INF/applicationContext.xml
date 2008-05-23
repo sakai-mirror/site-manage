@@ -20,5 +20,10 @@
     class="uk.org.ponder.springutil.BooleanFactory">
     <property name="value" value="true" />
   </bean>
-   
+  
+  <!-- Create a scope to preserve the SiteManageGroupHandler (int the HTTP session for a standalone app -->
+  <bean id = "resultScope" parent="beanScopeParent">
+  	<property name="copyPreservingBeans" value="SiteManageGroupHandler" />
+  	<property name="exclusive" value="true" />
+  </bean>
 </beans>
