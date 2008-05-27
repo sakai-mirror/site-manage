@@ -46,7 +46,7 @@ import uk.org.ponder.messageutil.TargettedMessage;
 import uk.org.ponder.messageutil.TargettedMessageList;
 /**
  * 
- * @author Joshua Ryan joshua.ryan@asu.edu
+ * @author 
  *
  */
 public class SiteManageGroupHandler {
