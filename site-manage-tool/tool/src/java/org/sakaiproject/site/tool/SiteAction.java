@@ -20,6 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.site.tool;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -43,6 +44,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -116,11 +120,18 @@ import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.sitemanage.api.model.*;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
+import org.sakaiproject.site.util.Participant;
+import org.sakaiproject.site.util.SiteParticipantHelper;
+import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.site.util.SiteComparator;
 import org.sakaiproject.sitemanage.api.SectionField;
+import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
 import org.sakaiproject.time.cover.TimeService;
 import org.sakaiproject.tool.api.Tool;
+import org.sakaiproject.tool.api.ToolException;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.user.api.User;
@@ -182,6 +193,10 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String SITE_MODE_SITESETUP = "sitesetup";
 
 	private static final String SITE_MODE_SITEINFO = "siteinfo";
+	
+	private static final String SITE_MODE_HELPER = "helper";
+	
+	private static final String SITE_MODE_HELPER_DONE = "helper.done";
 
 	private static final String STATE_SITE_MODE = "site_mode";
 
@@ -236,12 +251,18 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importMtrlCopy", // 46
 			"-siteInfo-importMtrlCopyConfirm",
 			"-siteInfo-importMtrlCopyConfirmMsg", // 48
-			"-siteInfo-group", // 49
-			"-siteInfo-groupedit", // 50
-			"-siteInfo-groupDeleteConfirm", // 51,
+			"",//"-siteInfo-group", // 49					moved to the group helper
+			"",//"-siteInfo-groupedit", // 50				moved to the group helper
+			"",//"-siteInfo-groupDeleteConfirm", // 51,		moved to the group helper
 			"",
 			"-findCourse", // 53
-			"-questions" // 54
+			"-questions", // 54
+			"",// 55
+			"",// 56
+			"",// 57
+			"-siteInfo-importSelection",   //58
+			"-siteInfo-importMigrate",    //59
+			"-importSitesMigrate"  //60
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -280,35 +301,6 @@ public class SiteAction extends PagedResourceActionII {
 	 * by
 	 */
 	private static final String SORTED_BY = "site.sorted.by";
-
-	/** the list of criteria for sorting */
-	private static final String SORTED_BY_TITLE = "title";
-
-	private static final String SORTED_BY_DESCRIPTION = "description";
-
-	private static final String SORTED_BY_TYPE = "type";
-
-	private static final String SORTED_BY_STATUS = "status";
-
-	private static final String SORTED_BY_CREATION_DATE = "creationdate";
-
-	private static final String SORTED_BY_JOINABLE = "joinable";
-
-	private static final String SORTED_BY_PARTICIPANT_NAME = "participant_name";
-
-	private static final String SORTED_BY_PARTICIPANT_UNIQNAME = "participant_uniqname";
-
-	private static final String SORTED_BY_PARTICIPANT_ROLE = "participant_role";
-
-	private static final String SORTED_BY_PARTICIPANT_ID = "participant_id";
-
-	private static final String SORTED_BY_PARTICIPANT_COURSE = "participant_course";
-
-	private static final String SORTED_BY_PARTICIPANT_CREDITS = "participant_credits";
-	
-	private static final String SORTED_BY_PARTICIPANT_STATUS = "participant_status";
-
-	private static final String SORTED_BY_MEMBER_NAME = "member_name";
 
 	/** Name of the state attribute holding the site list column to sort by */
 	private static final String SORTED_ASC = "site.sort.asc";
@@ -555,19 +547,6 @@ public class SiteAction extends PagedResourceActionII {
 	// page size for site info tool
 	private static final String STATE_PAGESIZE_SITEINFO = "state_pagesize_siteinfo";
 
-	// group info
-	private static final String STATE_GROUP_INSTANCE_ID = "state_group_instance_id";
-
-	private static final String STATE_GROUP_TITLE = "state_group_title";
-
-	private static final String STATE_GROUP_DESCRIPTION = "state_group_description";
-
-	private static final String STATE_GROUP_MEMBERS = "state_group_members";
-
-	private static final String STATE_GROUP_REMOVE = "state_group_remove";
-
-	private static final String GROUP_PROP_WSETUP_CREATED = "group_prop_wsetup_created";
-
 	private static final String IMPORT_DATA_SOURCE = "import_data_source";
 
 	private static final String EMAIL_CHAR = "@";
@@ -628,6 +607,20 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected void initState(SessionState state, VelocityPortlet portlet,
 			JetspeedRunData rundata) {
+		
+
+		// Cleanout if the helper has been asked to start afresh.
+		if (state.getAttribute(SiteHelper.SITE_CREATE_START) != null) {
+			cleanState(state);
+			cleanStateHelper(state);
+			
+			// Removed from possible previous invokations.
+			state.removeAttribute(SiteHelper.SITE_CREATE_START);
+			state.removeAttribute(SiteHelper.SITE_CREATE_CANCELLED);
+			state.removeAttribute(SiteHelper.SITE_CREATE_SITE_ID);
+			
+		}
+		
 		super.initState(state, portlet, rundata);
 
 		// store current userId in state
@@ -742,10 +735,17 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(EDIT_VIEW_ROSTER_SITE_TYPE, siteTypes);
 		}
 
-		// get site tool mode from tool registry
-		String site_mode = portlet.getPortletConfig().getInitParameter(
-				STATE_SITE_MODE);
-		state.setAttribute(STATE_SITE_MODE, site_mode);
+		if (state.getAttribute(STATE_SITE_MODE) == null) {
+				// get site tool mode from tool registry
+				String site_mode = config.getInitParameter(STATE_SITE_MODE);
+		 
+				// When in helper mode we don't have 
+				if (site_mode == null) {
+					site_mode = SITE_MODE_HELPER;
+				}
+	
+				state.setAttribute(STATE_SITE_MODE, site_mode);
+			}
 
 
 		
@@ -1284,7 +1284,16 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 
+			if (state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) != null) {
+				context.put("titleEditableSiteType", Boolean.FALSE);
+				siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			} else {
+				context.put("titleEditableSiteType", state
+						.getAttribute(TITLE_EDITABLE_SITE_TYPE));
+			}
 			context.put(FORM_TITLE, siteInfo.title);
+			
+			
 			context.put(FORM_SHORT_DESCRIPTION, siteInfo.short_description);
 			context.put(FORM_DESCRIPTION, siteInfo.description);
 
@@ -1439,6 +1448,14 @@ public class SiteAction extends PagedResourceActionII {
 					.getString("officialAccountName"));
 			context.put("officialAccountLabel", ServerConfigurationService
 					.getString("officialAccountLabel"));
+			String pickerAction = ServerConfigurationService.getString("officialAccountPickerAction");
+			if (pickerAction != null && !"".equals(pickerAction))
+			{
+				context.put("hasPickerDefined", Boolean.TRUE);
+				context.put("officialAccountPickerLabel", ServerConfigurationService
+					.getString("officialAccountPickerLabel"));
+				context.put("officialAccountPickerAction", pickerAction);
+			}
 			if (state.getAttribute("officialAccountValue") != null) {
 				context.put("officialAccountValue", (String) state
 						.getAttribute("officialAccountValue"));
@@ -1717,8 +1734,12 @@ public class SiteAction extends PagedResourceActionII {
 									.equalsIgnoreCase(Boolean.TRUE.toString()))) {
 						// show the group toolbar unless configured
 						// to not support group
-						b.add(new MenuEntry(rb.getString("java.group"),
-								"doMenu_group"));
+						// if the manage group helper is available, not
+						// stealthed and not hidden, show the link
+						if (notStealthOrHiddenTool("sakai-site-manage-group-helper")) {
+							b.add(new MenuEntry(rb.getString("java.group"),
+									"doManageGroupHelper"));
+						}
 					}
 				}
 				
@@ -1760,10 +1781,18 @@ public class SiteAction extends PagedResourceActionII {
 							// import link should be visible even if only one
 							// site
 							if (updatableSites.size() > 0) {
-								b.add(new MenuEntry(
+								//a configuration param for showing/hiding Import From Site with Clean Up
+								String importFromSite = ServerConfigurationService.getString("clean.import.site",Boolean.TRUE.toString());
+								if (importFromSite.equalsIgnoreCase("true")) {
+									b.add(new MenuEntry(
+										rb.getString("java.import"),
+										"doMenu_siteInfo_importSelection"));
+								}
+								else {
+									b.add(new MenuEntry(
 										rb.getString("java.import"),
 										"doMenu_siteInfo_import"));
-
+								}
 								// a configuration param for
 								// showing/hiding import
 								// from file choice
@@ -1819,9 +1848,8 @@ public class SiteAction extends PagedResourceActionII {
 					sortedBy = (String) state.getAttribute(SORTED_BY);
 					sortedAsc = (String) state.getAttribute(SORTED_ASC);
 					if (sortedBy == null) {
-						state.setAttribute(SORTED_BY,
-								SORTED_BY_PARTICIPANT_NAME);
-						sortedBy = SORTED_BY_PARTICIPANT_NAME;
+						state.setAttribute(SORTED_BY, SiteConstants.SORTED_BY_PARTICIPANT_NAME);
+						sortedBy = SiteConstants.SORTED_BY_PARTICIPANT_NAME;
 					}
 					if (sortedAsc == null) {
 						sortedAsc = Boolean.TRUE.toString();
@@ -2269,6 +2297,41 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("importSupportedTools", importTools());
 
 			return (String) getContext(data).get("template") + TEMPLATE[27];
+		case 60:
+			/*
+			 * buildContextForTemplate chef_site-importSitesMigrate.vm
+			 * 
+			 */
+			existingSite = site != null ? true : false;
+			site_type = (String) state.getAttribute(STATE_SITE_TYPE);
+			if (existingSite) {
+				// revising a existing site's tool
+				context.put("continue", "12");
+				context.put("back", "28");
+				context.put("totalSteps", "2");
+				context.put("step", "2");
+				context.put("currentSite", site);
+			} else {
+				// new site, go to edit access page
+				context.put("back", "3");
+				if (fromENWModifyView(state)) {
+					context.put("continue", "26");
+				} else {
+					context.put("continue", "18");
+				}
+			}
+			context.put(STATE_TOOL_REGISTRATION_LIST, state
+					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			context.put("selectedTools", orderToolIds(state, site_type,
+					getToolsAvailableForImport(state))); // String toolId's
+			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
+			context.put("importSitesTools", state
+					.getAttribute(STATE_IMPORT_SITE_TOOL));
+			context.put("check_home", state
+					.getAttribute(STATE_TOOL_HOME_SELECTED));
+			context.put("importSupportedTools", importTools());
+
+			return (String) getContext(data).get("template") + TEMPLATE[60];		
 		case 28:
 			/*
 			 * buildContextForTemplate chef_siteinfo-import.vm
@@ -2281,6 +2344,31 @@ public class SiteAction extends PagedResourceActionII {
 					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
 					null, null, null, SortType.TITLE_ASC, null));
 			return (String) getContext(data).get("template") + TEMPLATE[28];
+		case 58:
+			/*
+			 * buildContextForTemplate chef_siteinfo-importSelection.vm
+			 * 
+			 */
+			context.put("currentSite", site);
+			context.put("importSiteList", state
+					.getAttribute(STATE_IMPORT_SITES));
+			context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
+			return (String) getContext(data).get("template") + TEMPLATE[58];
+		case 59:
+			/*
+			 * buildContextForTemplate chef_siteinfo-importMigrate.vm
+			 * 
+			 */
+			context.put("currentSite", site);
+			context.put("importSiteList", state
+					.getAttribute(STATE_IMPORT_SITES));
+			context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
+			return (String) getContext(data).get("template") + TEMPLATE[59];
+
 		case 29:
 			/*
 			 * buildContextForTemplate chef_siteinfo-duplicate.vm
@@ -2608,92 +2696,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("finalZipSites", state
 					.getAttribute(FINAL_ZIP_IMPORT_SITES));
 			return (String) getContext(data).get("template") + TEMPLATE[48];
-		case 49:
-			/*
-			 * buildContextForTemplate chef_siteInfo-group.vm
-			 * 
-			 */
-			context.put("site", site);
-			bar = new MenuImpl(portlet, data, (String) state
-					.getAttribute(STATE_ACTION));
-			if (SiteService.allowUpdateSite(site.getId())
-					|| SiteService.allowUpdateGroupMembership(site.getId())) {
-				bar.add(new MenuEntry(rb.getString("java.newgroup"), "doGroup_new"));
-			}
-			context.put("menu", bar);
-
-			// the group list
-			sortedBy = (String) state.getAttribute(SORTED_BY);
-			sortedAsc = (String) state.getAttribute(SORTED_ASC);
-
-			if (sortedBy != null)
-				context.put("currentSortedBy", sortedBy);
-			if (sortedAsc != null)
-				context.put("currentSortAsc", sortedAsc);
-
-			// only show groups created by WSetup tool itself
-			Collection groups = (Collection) site.getGroups();
-			List groupsByWSetup = new Vector();
-			for (Iterator gIterator = groups.iterator(); gIterator.hasNext();) {
-				Group gNext = (Group) gIterator.next();
-				String gProp = gNext.getProperties().getProperty(
-						GROUP_PROP_WSETUP_CREATED);
-				if (gProp != null && gProp.equals(Boolean.TRUE.toString())) {
-					groupsByWSetup.add(gNext);
-				}
-			}
-			if (sortedBy != null && sortedAsc != null) {
-				context.put("groups", new SortedIterator(groupsByWSetup
-						.iterator(), new SiteComparator(sortedBy, sortedAsc)));
-			}
-			return (String) getContext(data).get("template") + TEMPLATE[49];
-		case 50:
-			/*
-			 * buildContextForTemplate chef_siteInfo-groupedit.vm
-			 * 
-			 */
-			Group g = getStateGroup(state);
-			if (g != null) {
-				context.put("group", g);
-				context.put("newgroup", Boolean.FALSE);
-			} else {
-				context.put("newgroup", Boolean.TRUE);
-			}
-			if (state.getAttribute(STATE_GROUP_TITLE) != null) {
-				context.put("title", state.getAttribute(STATE_GROUP_TITLE));
-			}
-			if (state.getAttribute(STATE_GROUP_DESCRIPTION) != null) {
-				context.put("description", state
-						.getAttribute(STATE_GROUP_DESCRIPTION));
-			}
-			Iterator siteMembers = new SortedIterator(getParticipantList(state)
-					.iterator(), new SiteComparator(SORTED_BY_PARTICIPANT_NAME,
-					Boolean.TRUE.toString()));
-			if (siteMembers != null && siteMembers.hasNext()) {
-				context.put("generalMembers", siteMembers);
-			}
-			Set groupMembersSet = (Set) state.getAttribute(STATE_GROUP_MEMBERS);
-			if (state.getAttribute(STATE_GROUP_MEMBERS) != null) {
-				context.put("groupMembers", new SortedIterator(groupMembersSet
-						.iterator(), new SiteComparator(SORTED_BY_MEMBER_NAME,
-						Boolean.TRUE.toString())));
-			}
-			context.put("groupMembersClone", groupMembersSet);
-			context.put("userDirectoryService", UserDirectoryService
-					.getInstance());
-			return (String) getContext(data).get("template") + TEMPLATE[50];
-		case 51:
-			/*
-			 * buildContextForTemplate chef_siteInfo-groupDeleteConfirm.vm
-			 * 
-			 */
-			context.put("site", site);
-
-			context
-					.put("removeGroupIds", new ArrayList(Arrays
-							.asList((String[]) state
-									.getAttribute(STATE_GROUP_REMOVE))));
-			return (String) getContext(data).get("template") + TEMPLATE[51];
+		// case 49, 50, 51 have been implemented in helper mode
 		case 53: {
 			/*
 			 * build context for chef_site-findCourse.vm
@@ -2867,6 +2870,24 @@ public class SiteAction extends PagedResourceActionII {
 
 		// launch the helper
 		startHelper(data.getRequest(), "sakai-site-pageorder-helper");
+	}
+	
+	/**
+	 * Launch the Manage Group helper Tool -- for adding, editing and deleting groups
+	 * 
+	 */
+	public void doManageGroupHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "sakai-site-manage-group-helper");
+		
 	}
 
 	// htripath: import materials from classic
@@ -3153,8 +3174,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void coursesIntoContext(SessionState state, Context context,
 			Site site) {
-		List providerCourseList = getProviderCourseList(StringUtil
-				.trimToNull(getExternalRealmId(state)));
+		List providerCourseList = SiteParticipantHelper.getProviderCourseList((String) state.getAttribute(STATE_SITE_INSTANCE_ID));
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 			
@@ -3244,34 +3264,6 @@ public class SiteAction extends PagedResourceActionII {
 				.getAttribute(STATE_TERM_COURSE_LIST));
 		context.put("tlang", rb);
 	} // buildInstructorSectionsList
-
-	/**
-	 * getProviderCourseList a course site/realm id in one of three formats, for
-	 * a single section, for multiple sections of the same course, or for a
-	 * cross-listing having multiple courses. getProviderCourseList parses a
-	 * realm id into year, term, campus_code, catalog_nbr, section components.
-	 * 
-	 * @param id
-	 *            is a String representation of the course realm id (external
-	 *            id).
-	 */
-	private List getProviderCourseList(String id) {
-		Vector rv = new Vector();
-		if (id == null || NULL_STRING.equals(id) ) {
-			return rv;
-		}
-		// Break Provider Id into course id parts
-		String[] courseIds = groupProvider.unpackId(id);
-		
-		// Iterate through course ids
-		for (int i=0; i<courseIds.length; i++) {
-			String courseId = (String) courseIds[i];
-
-			rv.add(courseId);
-		}
-		return rv;
-
-	} // getProviderCourseList
 
 	/**
 	 * {@inheritDoc}
@@ -3721,27 +3713,6 @@ public class SiteAction extends PagedResourceActionII {
 	} // getStateSite
 
 	/**
-	 * get the Group object based on SessionState attribute values
-	 * 
-	 * @return Group object related to current state; null if no such Group
-	 *         object could be found
-	 */
-	protected Group getStateGroup(SessionState state) {
-		Group group = null;
-		Site site = getStateSite(state);
-
-		if (site != null && state.getAttribute(STATE_GROUP_INSTANCE_ID) != null) {
-			try {
-				group = site.getGroup((String) state
-						.getAttribute(STATE_GROUP_INSTANCE_ID));
-			} catch (Exception ignore) {
-			}
-		}
-		return group;
-
-	} // getStateGroup
-
-	/**
 	 * do called when "eventSubmit_do" is in the request parameters to c is
 	 * called from site list menu entry Revise... to get a locked site as
 	 * editable and to go to the correct template to begin DB version of writes
@@ -3773,7 +3744,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteId = (String) chosenList.get(0);
 			getReviseSite(state, siteId);
 
-			state.setAttribute(SORTED_BY, SORTED_BY_PARTICIPANT_NAME);
+			state.setAttribute(SORTED_BY, SiteConstants.SORTED_BY_PARTICIPANT_NAME);
 			state.setAttribute(SORTED_ASC, Boolean.TRUE.toString());
 		}
 		
@@ -4085,330 +4056,6 @@ public class SiteAction extends PagedResourceActionII {
 	public void doChange_user(RunData data) {
 		doSite_type(data);
 	} // doChange_user
-
-	/**
-	 * cleanEditGroupParams clean the state parameters used by editing group
-	 * process
-	 * 
-	 */
-	public void cleanEditGroupParams(SessionState state) {
-		state.removeAttribute(STATE_GROUP_INSTANCE_ID);
-		state.removeAttribute(STATE_GROUP_TITLE);
-		state.removeAttribute(STATE_GROUP_DESCRIPTION);
-		state.removeAttribute(STATE_GROUP_MEMBERS);
-		state.removeAttribute(STATE_GROUP_REMOVE);
-
-	} // cleanEditGroupParams
-
-	/**
-	 * doGroup_edit
-	 * 
-	 */
-	public void doGroup_update(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		ParameterParser params = data.getParameters();
-
-		Set gMemberSet = (Set) state.getAttribute(STATE_GROUP_MEMBERS);
-		Site site = getStateSite(state);
-
-		String title = StringUtil.trimToNull(params.getString(rb
-				.getString("group.title")));
-		state.setAttribute(STATE_GROUP_TITLE, title);
-
-		String description = StringUtil.trimToZero(params.getString(rb
-				.getString("group.description")));
-		state.setAttribute(STATE_GROUP_DESCRIPTION, description);
-
-		boolean found = false;
-		String option = params.getString("option");
-
-		if (option.equals("add")) {
-			// add selected members into it
-			if (params.getStrings("generallist") != null) {
-				List addMemberIds = new ArrayList(Arrays.asList(params
-						.getStrings("generallist")));
-				for (int i = 0; i < addMemberIds.size(); i++) {
-					String aId = (String) addMemberIds.get(i);
-					found = false;
-					for (Iterator iSet = gMemberSet.iterator(); !found
-							&& iSet.hasNext();) {
-						if (((Member) iSet.next()).getUserEid().equals(aId)) {
-							found = true;
-						}
-					}
-					if (!found) {
-						try {
-							User u = UserDirectoryService.getUser(aId);
-							gMemberSet.add(site.getMember(u.getId()));
-						} catch (UserNotDefinedException e) {
-							try {
-								User u2 = UserDirectoryService
-										.getUserByEid(aId);
-								gMemberSet.add(site.getMember(u2.getId()));
-							} catch (UserNotDefinedException ee) {
-								M_log.warn(this + ".doGroup_update: cannot find user " + aId, e);
-							}
-						}
-					}
-				}
-			}
-			state.setAttribute(STATE_GROUP_MEMBERS, gMemberSet);
-		} else if (option.equals("remove")) {
-			// update the group member list by remove selected members from it
-			if (params.getStrings("grouplist") != null) {
-				List removeMemberIds = new ArrayList(Arrays.asList(params
-						.getStrings("grouplist")));
-				for (int i = 0; i < removeMemberIds.size(); i++) {
-					found = false;
-					for (Iterator iSet = gMemberSet.iterator(); !found
-							&& iSet.hasNext();) {
-						Member mSet = (Member) iSet.next();
-						if (mSet.getUserId().equals(
-								(String) removeMemberIds.get(i))) {
-							found = true;
-							gMemberSet.remove(mSet);
-						}
-					}
-				}
-			}
-			state.setAttribute(STATE_GROUP_MEMBERS, gMemberSet);
-		} else if (option.equals("cancel")) {
-			// cancel from the update the group member process
-			doCancel(data);
-			cleanEditGroupParams(state);
-
-		} else if (option.equals("save")) {
-			Group group = null;
-			if (site != null
-					&& state.getAttribute(STATE_GROUP_INSTANCE_ID) != null) {
-				try {
-					group = site.getGroup((String) state
-							.getAttribute(STATE_GROUP_INSTANCE_ID));
-				} catch (Exception ignore) {
-				}
-			}
-
-			if (title == null) {
-				addAlert(state, rb.getString("editgroup.titlemissing"));
-			} else {
-				if (group == null) {
-					// when adding a group, check whether the group title has
-					// been used already
-					boolean titleExist = false;
-					for (Iterator iGroups = site.getGroups().iterator(); !titleExist
-							&& iGroups.hasNext();) {
-						Group iGroup = (Group) iGroups.next();
-						if (iGroup.getTitle().equals(title)) {
-							// found same title
-							titleExist = true;
-						}
-					}
-					if (titleExist) {
-						addAlert(state, rb.getString("group.title.same"));
-					}
-				}
-			}
-
-			if (state.getAttribute(STATE_MESSAGE) == null) {
-				if (group == null) {
-					// adding new group
-					group = site.addGroup();
-					group.getProperties().addProperty(
-							GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
-				}
-
-				if (group != null) {
-					group.setTitle(title);
-					group.setDescription(description);
-
-					// save the modification to group members
-
-					// remove those no longer included in the group
-					Set members = group.getMembers();
-					for (Iterator iMembers = members.iterator(); iMembers
-							.hasNext();) {
-						found = false;
-						String mId = ((Member) iMembers.next()).getUserId();
-						for (Iterator iMemberSet = gMemberSet.iterator(); !found
-								&& iMemberSet.hasNext();) {
-							if (mId.equals(((Member) iMemberSet.next())
-									.getUserId())) {
-								found = true;
-							}
-
-						}
-						if (!found) {
-							group.removeMember(mId);
-						}
-					}
-
-					// add those seleted members
-					for (Iterator iMemberSet = gMemberSet.iterator(); iMemberSet
-							.hasNext();) {
-						String memberId = ((Member) iMemberSet.next())
-								.getUserId();
-						if (group.getUserRole(memberId) == null) {
-							Role r = site.getUserRole(memberId);
-							Member m = site.getMember(memberId);
-							// for every member added through the "Manage
-							// Groups" interface, he should be defined as
-							// non-provided
-							group.addMember(memberId, r != null ? r.getId()
-									: "", m != null ? m.isActive() : true,
-									false);
-						}
-					}
-
-					if (state.getAttribute(STATE_MESSAGE) == null) {
-						try {
-							SiteService.save(site);
-						} catch (IdUnusedException e) {
-						} catch (PermissionException e) {
-						}
-
-						// return to group list view
-						state.setAttribute(STATE_TEMPLATE_INDEX, "49");
-						cleanEditGroupParams(state);
-					}
-				}
-			}
-		}
-
-	} // doGroup_updatemembers
-
-	/**
-	 * doGroup_new
-	 * 
-	 */
-	public void doGroup_new(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		if (state.getAttribute(STATE_GROUP_TITLE) == null) {
-			state.setAttribute(STATE_GROUP_TITLE, "");
-		}
-		if (state.getAttribute(STATE_GROUP_DESCRIPTION) == null) {
-			state.setAttribute(STATE_GROUP_DESCRIPTION, "");
-		}
-		if (state.getAttribute(STATE_GROUP_MEMBERS) == null) {
-			state.setAttribute(STATE_GROUP_MEMBERS, new HashSet());
-		}
-		state.setAttribute(STATE_TEMPLATE_INDEX, "50");
-
-	} // doGroup_new
-
-	/**
-	 * doGroup_edit
-	 * 
-	 */
-	public void doGroup_edit(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		String groupId = data.getParameters().getString("groupId");
-		state.setAttribute(STATE_GROUP_INSTANCE_ID, groupId);
-
-		Site site = getStateSite(state);
-		if (site != null) {
-			Group g = site.getGroup(groupId);
-			if (g != null) {
-				if (state.getAttribute(STATE_GROUP_TITLE) == null) {
-					state.setAttribute(STATE_GROUP_TITLE, g.getTitle());
-				}
-				if (state.getAttribute(STATE_GROUP_DESCRIPTION) == null) {
-					state.setAttribute(STATE_GROUP_DESCRIPTION, g
-							.getDescription());
-				}
-				if (state.getAttribute(STATE_GROUP_MEMBERS) == null) {
-					// double check the member existance
-					Set gMemberSet = g.getMembers();
-					Set rvGMemberSet = new HashSet();
-					for (Iterator iSet = gMemberSet.iterator(); iSet.hasNext();) {
-						Member member = (Member) iSet.next();
-						try {
-							UserDirectoryService.getUser(member.getUserId());
-							((Set) rvGMemberSet).add(member);
-						} catch (UserNotDefinedException e) {
-							// cannot find user
-							M_log.warn(this + ".doGroup_edit: " + rb.getString("user.notdefined")
-									+ member.getUserId(), e);
-						}
-					}
-					state.setAttribute(STATE_GROUP_MEMBERS, rvGMemberSet);
-				}
-			}
-		}
-		state.setAttribute(STATE_TEMPLATE_INDEX, "50");
-
-	} // doGroup_edit
-
-	/**
-	 * doGroup_remove_prep Go to confirmation page before deleting group(s)
-	 * 
-	 */
-	public void doGroup_remove_prep(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		String[] removeGroupIds = data.getParameters().getStrings(
-				"removeGroups");
-
-		if (removeGroupIds.length > 0) {
-			state.setAttribute(STATE_GROUP_REMOVE, removeGroupIds);
-			state.setAttribute(STATE_TEMPLATE_INDEX, "51");
-		}
-
-	} // doGroup_remove_prep
-
-	/**
-	 * doGroup_remove_confirmed Delete selected groups after confirmation
-	 * 
-	 */
-	public void doGroup_remove_confirmed(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		String[] removeGroupIds = (String[]) state
-				.getAttribute(STATE_GROUP_REMOVE);
-
-		Site site = getStateSite(state);
-		for (int i = 0; i < removeGroupIds.length; i++) {
-			if (site != null) {
-				Group g = site.getGroup(removeGroupIds[i]);
-				if (g != null) {
-					site.removeGroup(g);
-				}
-			}
-		}
-		try {
-			SiteService.save(site);
-		} catch (IdUnusedException e) {
-			addAlert(state, rb.getString("editgroup.site.notfound.alert"));
-			M_log.warn(this + ".doGroup_remove_confirmed: Problem of saving site after group removal: site id =" + site.getId(), e);
-		} catch (PermissionException e) {
-			addAlert(state, rb.getString("editgroup.site.permission.alert"));
-			M_log.warn(this + ".doGroup_remove_confirmed: Permission problem of saving site after group removal: site id=" + site.getId(), e);
-		}
-
-		if (state.getAttribute(STATE_MESSAGE) == null) {
-			cleanEditGroupParams(state);
-			state.setAttribute(STATE_TEMPLATE_INDEX, "49");
-		}
-
-	} // doGroup_remove_confirmed
-
-	/**
-	 * doMenu_edit_site_info The menu choice to enter group view
-	 * 
-	 */
-	public void doMenu_group(RunData data) {
-		SessionState state = ((JetspeedRunData) data)
-				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-
-		// reset sort criteria
-		state.setAttribute(SORTED_BY, rb.getString("group.title"));
-		state.setAttribute(SORTED_ASC, Boolean.TRUE.toString());
-
-		state.setAttribute(STATE_TEMPLATE_INDEX, "49");
-
-	} // doMenu_group
 	
 	/**
 	 * 
@@ -4978,6 +4625,10 @@ public class SiteAction extends PagedResourceActionII {
 			// clean state variables
 			cleanState(state);
 
+			if (SITE_MODE_HELPER.equals(state.getAttribute(STATE_SITE_MODE))) {
+				state.setAttribute(SiteHelper.SITE_CREATE_SITE_ID, site.getId());
+				state.setAttribute(STATE_SITE_MODE, SITE_MODE_HELPER_DONE);
+			}
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
 
 		}
@@ -5573,6 +5224,14 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		removeAddClassContext(state);
 		state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+		
+		if (SITE_MODE_HELPER.equals(state.getAttribute(STATE_SITE_MODE))) {
+			state.setAttribute(STATE_SITE_MODE, SITE_MODE_HELPER_DONE);
+			state.setAttribute(SiteHelper.SITE_CREATE_CANCELLED, Boolean.TRUE);
+		} else {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+		}
+		
 		resetVisitedTemplateListToIndex(state, (String) state.getAttribute(STATE_TEMPLATE_INDEX));
 
 	} // doCancel_create
@@ -5641,7 +5300,7 @@ public class SiteAction extends PagedResourceActionII {
 					.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
 				state.setAttribute(STATE_TEMPLATE_INDEX, "18");
 			}
-		} else if (currentIndex.equals("27") || currentIndex.equals("28")) {
+		} else if (currentIndex.equals("27") || currentIndex.equals("28") || currentIndex.equals("59") || currentIndex.equals("60")) {
 			// from import
 			if (((String) state.getAttribute(STATE_SITE_MODE))
 					.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
@@ -5944,6 +5603,22 @@ public class SiteAction extends PagedResourceActionII {
 	} // doMenu_siteInfo_cancel_access
 
 	/**
+	 * doMenu_siteInfo_importSelection
+	 */
+	public void doMenu_siteInfo_importSelection(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// get the tools
+		siteToolsIntoState(state);
+
+		if (state.getAttribute(STATE_MESSAGE) == null) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "58");
+		}
+
+	} // doMenu_siteInfo_importSelection
+	
+	/**
 	 * doMenu_siteInfo_import
 	 */
 	public void doMenu_siteInfo_import(RunData data) {
@@ -5958,6 +5633,19 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doMenu_siteInfo_import
+	
+	public void doMenu_siteInfo_importMigrate(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// get the tools
+		siteToolsIntoState(state);
+
+		if (state.getAttribute(STATE_MESSAGE) == null) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "59");
+		}
+
+	} // doMenu_siteInfo_importMigrate
 
 	/**
 	 * doMenu_siteInfo_editClass
@@ -6244,11 +5932,11 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_PAGESIZE_SITEINFO, new Hashtable());
 		}
 
-		if (((String) state.getAttribute(STATE_SITE_MODE))
-				.equalsIgnoreCase(SITE_MODE_SITESETUP)) {
+		if (SITE_MODE_SITESETUP.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "0");
-		} else if (((String) state.getAttribute(STATE_SITE_MODE))
-				.equalsIgnoreCase(SITE_MODE_SITEINFO)) {
+		} else if (SITE_MODE_HELPER.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))) {
+			state.setAttribute(STATE_TEMPLATE_INDEX, "1");
+		} else if (SITE_MODE_SITEINFO.equalsIgnoreCase((String) state.getAttribute(STATE_SITE_MODE))){
 
 			String siteId = ToolManager.getCurrentPlacement().getContext();
 			getReviseSite(state, siteId);
@@ -6279,7 +5967,13 @@ public class SiteAction extends PagedResourceActionII {
 					
 				state.setAttribute(STATE_SITE_TYPES, types);
 			} else {
-				state.setAttribute(STATE_SITE_TYPES, new Vector());
+				t = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TYPES);
+				if (t != null) {
+					state.setAttribute(STATE_SITE_TYPES, new ArrayList(Arrays
+						.asList(t.split(","))));
+				} else {
+					state.setAttribute(STATE_SITE_TYPES, new Vector());
+				}
 			}
 		}
 		
@@ -6985,7 +6679,80 @@ public class SiteAction extends PagedResourceActionII {
 				updateCurrentStep(state, forward);
 			}
 			break;
+		case 60:
+			/*
+			 * actionForTemplate chef_site-importSitesMigrate.vm
+			 * 
+			 */
+			if (forward) {
+				Site existingSite = getStateSite(state);
+				if (existingSite != null) {
+					// revising a existing site's tool
+					if (select_import_tools(params, state)) {
+						Hashtable importTools = (Hashtable) state
+								.getAttribute(STATE_IMPORT_SITE_TOOL);
+						List selectedTools = (List) state
+								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+						// Remove all old contents before importing contents from new site
+						importToolIntoSiteMigrate(selectedTools, importTools,
+								existingSite);
+
+						existingSite = getStateSite(state); // refresh site for
+						// WC and News
+
+						if (state.getAttribute(STATE_MESSAGE) == null) {
+							commitSite(existingSite);
+							state.removeAttribute(STATE_IMPORT_SITE_TOOL);
+							state.removeAttribute(STATE_IMPORT_SITES);
+						}
+					} else {
+						// show alert and remain in current page
+						addAlert(state, rb.getString("java.toimporttool"));
+					}
+				} else {
+					// new site
+					select_import_tools(params, state);
+				}
+			} else {
+				// read form input about import tools
+				select_import_tools(params, state);
+			}
+			if (state.getAttribute(STATE_MESSAGE) == null) {
+				updateCurrentStep(state, forward);
+			}
+			break;
 		case 28:
+			/*
+			 * actionForTemplate chef_siteinfo-import.vm
+			 * 
+			 */
+			if (forward) {
+				if (params.getStrings("importSites") == null) {
+					addAlert(state, rb.getString("java.toimport") + " ");
+					state.removeAttribute(STATE_IMPORT_SITES);
+				} else {
+					List importSites = new ArrayList(Arrays.asList(params
+							.getStrings("importSites")));
+					Hashtable sites = new Hashtable();
+					for (index = 0; index < importSites.size(); index++) {
+						try {
+							Site s = SiteService.getSite((String) importSites
+									.get(index));
+							sites.put(s, new Vector());
+						} catch (IdUnusedException e) {
+						}
+					}
+					state.setAttribute(STATE_IMPORT_SITES, sites);
+				}
+			}
+			break;
+		case 58:
+			/*
+			 * actionForTemplate chef_siteinfo-importSelection.vm
+			 * 
+			 */
+			break;
+		case 59:
 			/*
 			 * actionForTemplate chef_siteinfo-import.vm
 			 * 
@@ -7292,12 +7059,6 @@ public class SiteAction extends PagedResourceActionII {
 				removeAddClassContext(state);
 			}
 
-			break;
-		case 49:
-			if (!forward) {
-				state.removeAttribute(SORTED_BY);
-				state.removeAttribute(SORTED_ASC);
-			}
 			break;
 		case 54:
 			if (forward) {
@@ -7871,238 +7632,25 @@ public class SiteAction extends PagedResourceActionII {
 	} // updateSiteInfo
 
 	/**
-	 * getExternalRealmId
-	 * 
-	 */
-	private String getExternalRealmId(SessionState state) {
-		String realmId = SiteService.siteReference((String) state
-				.getAttribute(STATE_SITE_INSTANCE_ID));
-		String rv = null;
-		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			rv = realm.getProviderGroupId();
-		} catch (GroupNotDefinedException e) {
-			M_log.warn(this + ".getExternalRealmId: site realm not found", e);
-		}
-		return rv;
-
-	} // getExternalRealmId
-
-	/**
 	 * getParticipantList
 	 * 
 	 */
 	private Collection getParticipantList(SessionState state) {
 		List members = new Vector();
-		String realmId = SiteService.siteReference((String) state
-				.getAttribute(STATE_SITE_INSTANCE_ID));
+		String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
 
 		List providerCourseList = null;
-		providerCourseList = getProviderCourseList(StringUtil
-				.trimToNull(getExternalRealmId(state)));
+		providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		Collection participants = prepareParticipants(realmId, providerCourseList);
+		Collection participants = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
 
 	} // getParticipantList
-
-	private Collection prepareParticipants(String realmId, List providerCourseList) {
-		Map participantsMap = new ConcurrentHashMap();
-		try {
-			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			realm.getProviderGroupId();
-			
-			// iterate through the provider list first
-			for (Iterator i=providerCourseList.iterator(); i.hasNext();)
-			{
-				String providerCourseEid = (String) i.next();
-				try
-				{
-					Section section = cms.getSection(providerCourseEid);
-					if (section != null)
-					{
-						// in case of Section eid
-						EnrollmentSet enrollmentSet = section.getEnrollmentSet();
-						addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, section.getTitle());
-						// add memberships
-						Set memberships = cms.getSectionMemberships(providerCourseEid);
-						addParticipantsFromMemberships(participantsMap, realm, providerCourseEid, memberships, section.getTitle());
-					}
-				}
-				catch (IdNotFoundException e)
-				{
-					M_log.warn(this + ".prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid, e);
-				}
-			}
-			
-			// now for those not provided users
-			Set grants = realm.getMembers();
-			for (Iterator i = grants.iterator(); i.hasNext();) {
-				Member g = (Member) i.next();
-				try {
-					User user = UserDirectoryService.getUserByEid(g.getUserEid());
-					String userId = user.getId();
-					if (!participantsMap.containsKey(userId))
-					{
-						Participant participant;
-						if (participantsMap.containsKey(userId))
-						{
-							participant = (Participant) participantsMap.get(userId);
-						}
-						else
-						{
-							participant = new Participant();
-						}
-						participant.name = user.getSortName();
-						participant.uniqname = userId;
-						participant.role = g.getRole()!=null?g.getRole().getId():"";
-						participant.removeable = true;
-						participant.active = g.isActive();
-						participantsMap.put(userId, participant);
-					}
-				} catch (UserNotDefinedException e) {
-					// deal with missing user quietly without throwing a
-					// warning message
-					M_log.warn(this + ".prepareParticipants: "+ e.getMessage(), e);
-				}
-			}
-
-		} catch (GroupNotDefinedException ee) {
-			M_log.warn(this + ".prepareParticipants:  IdUnusedException " + realmId, ee);
-		}
-		return participantsMap.values();
-	}
-
-	/**
-	 * Add participant from provider-defined membership set
-	 * @param participants
-	 * @param realm
-	 * @param providerCourseEid
-	 * @param memberships
-	 */
-	private void addParticipantsFromMemberships(Map participantsMap, AuthzGroup realm, String providerCourseEid, Set memberships, String sectionTitle) {
-		if (memberships != null)
-		{
-			for (Iterator mIterator = memberships.iterator();mIterator.hasNext();)
-			{
-				Membership m = (Membership) mIterator.next();
-				try 
-				{
-					User user = UserDirectoryService.getUserByEid(m.getUserId());
-					String userId = user.getId();
-					Member member = realm.getMember(userId);
-					if (member != null && member.isProvided())
-					{
-						// get or add provided participant
-						Participant participant;
-						if (participantsMap.containsKey(userId))
-						{
-							participant = (Participant) participantsMap.get(userId);
-							if (!participant.getSectionEidList().contains(sectionTitle)) {
-								participant.section = participant.section.concat(", <br />" + sectionTitle);
-							}
-						}
-						else
-						{
-							participant = new Participant();
-							participant.credits = "";
-							participant.name = user.getSortName();
-							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-							participant.regId = "";
-							participant.removeable = false;
-							participant.role = member.getRole()!=null?member.getRole().getId():"";
-							participant.addSectionEidToList(sectionTitle);
-							participant.uniqname = userId;
-							participant.active=member.isActive();
-						}
-						
-						participantsMap.put(userId, participant);
-					}
-				} catch (UserNotDefinedException exception) {
-					// deal with missing user quietly without throwing a
-					// warning message
-					M_log.warn(this + ".addParticipantsFromMemberships: user id = " + m.getUserId(), exception);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Add participant from provider-defined enrollment set
-	 * @param participants
-	 * @param realm
-	 * @param providerCourseEid
-	 * @param enrollmentSet
-	 */
-	private void addParticipantsFromEnrollmentSet(Map participantsMap, AuthzGroup realm, String providerCourseEid, EnrollmentSet enrollmentSet, String sectionTitle) {
-		if (enrollmentSet != null)
-		{
-			Set enrollments = cms.getEnrollments(enrollmentSet.getEid());
-			if (enrollments != null)
-			{
-				for (Iterator eIterator = enrollments.iterator();eIterator.hasNext();)
-				{
-					Enrollment e = (Enrollment) eIterator.next();
-					
-					// ignore the dropped enrollments
-					if(e.isDropped()){
-						continue;
-					}
-					
-					try 
-					{
-						User user = UserDirectoryService.getUserByEid(e.getUserId());
-						String userId = user.getId();
-						Member member = realm.getMember(userId);
-						if (member != null && member.isProvided())
-						{
-							try
-							{
-							// get or add provided participant
-							Participant participant;
-							if (participantsMap.containsKey(userId))
-							{
-								participant = (Participant) participantsMap.get(userId);
-								//does this section contain the eid already
-								if (!participant.getSectionEidList().contains(sectionTitle)) {
-									participant.addSectionEidToList(sectionTitle);
-								}
-								participant.credits = participant.credits.concat(", <br />" + e.getCredits());
-							}
-							else
-							{
-								participant = new Participant();
-								participant.credits = e.getCredits();
-								participant.name = user.getSortName();
-								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
-								participant.regId = "";
-								participant.removeable = false;
-								participant.role = member.getRole()!=null?member.getRole().getId():"";
-								participant.addSectionEidToList(sectionTitle);
-								participant.uniqname = userId;
-								participant.active = member.isActive();
-							}
-							participantsMap.put(userId, participant);
-							}
-							catch (Exception ee)
-							{
-								M_log.warn(this + ".addParticipantsFromEnrollmentSet: " + ee.getMessage() + " user id = " + userId, ee);
-							}
-						}
-					} catch (UserNotDefinedException exception) {
-						// deal with missing user quietly without throwing a
-						// warning message
-						M_log.warn(this + ".addParticipantsFromEnrollmentSet: " + exception.getMessage() + " user id = " + e.getUserId(), exception);
-					}
-				}
-			}
-		}
-	}
 
 	/**
 	 * getRoles
@@ -9000,6 +8548,52 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	} // importToolIntoSite
 
+	
+	private void importToolIntoSiteMigrate(List toolIds, Hashtable importTools,
+			Site site) {
+		
+		if (importTools != null) {
+			// import resources first
+			boolean resourcesImported = false;
+			for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
+				String toolId = (String) toolIds.get(i);
+
+				if (toolId.equalsIgnoreCase("sakai.resources")
+						&& importTools.containsKey(toolId)) {
+					List importSiteIds = (List) importTools.get(toolId);
+
+					for (int k = 0; k < importSiteIds.size(); k++) {
+						String fromSiteId = (String) importSiteIds.get(k);
+						String toSiteId = site.getId();
+
+						String fromSiteCollectionId = m_contentHostingService
+								.getSiteCollection(fromSiteId);
+						String toSiteCollectionId = m_contentHostingService
+								.getSiteCollection(toSiteId);
+						transferCopyEntitiesMigrate(toolId, fromSiteCollectionId,
+								toSiteCollectionId);
+						resourcesImported = true;
+					}
+				}
+			}
+
+			// import other tools then
+			for (int i = 0; i < toolIds.size(); i++) {
+				String toolId = (String) toolIds.get(i);
+				if (!toolId.equalsIgnoreCase("sakai.resources")
+						&& importTools.containsKey(toolId)) {
+					List importSiteIds = (List) importTools.get(toolId);
+					for (int k = 0; k < importSiteIds.size(); k++) {
+						String fromSiteId = (String) importSiteIds.get(k);
+						String toSiteId = site.getId();
+						transferCopyEntitiesMigrate(toolId, fromSiteId, toSiteId);
+					}
+				}
+			}
+		}
+	} // importToolIntoSiteMigrate
+
+
 	public void saveSiteStatus(SessionState state, boolean published) {
 		Site site = getStateSite(state);
 		site.setPublished(published);
@@ -9718,14 +9312,17 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				// get the type of template
 				String type = site.getType();
-				// populate the list according to template site type
-				List<Site> subTemplateList = new Vector<Site>();
-				if (templateList.containsKey(type))
+				if (type != null)
 				{
-					subTemplateList = templateList.get(type);
+					// populate the list according to template site type
+					List<Site> subTemplateList = new Vector<Site>();
+					if (templateList.containsKey(type))
+					{
+						subTemplateList = templateList.get(type);
+					}
+					subTemplateList.add(site);
+					templateList.put(type, subTemplateList);
 				}
-				subTemplateList.add(site);
-				templateList.put(type, subTemplateList);
 			}
 		}
 		
@@ -10350,275 +9947,6 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // setSelectedParticipantRol3es
 
-	/**
-	 * the SiteComparator class
-	 */
-	private class SiteComparator implements Comparator {
-		
-		Collator collator = Collator.getInstance();
-		
-		/**
-		 * the criteria
-		 */
-		String m_criterion = null;
-
-		String m_asc = null;
-
-		/**
-		 * constructor
-		 * 
-		 * @param criteria
-		 *            The sort criteria string
-		 * @param asc
-		 *            The sort order string. TRUE_STRING if ascending; "false"
-		 *            otherwise.
-		 */
-		public SiteComparator(String criterion, String asc) {
-			m_criterion = criterion;
-			m_asc = asc;
-
-		} // constructor
-
-		/**
-		 * implementing the Comparator compare function
-		 * 
-		 * @param o1
-		 *            The first object
-		 * @param o2
-		 *            The second object
-		 * @return The compare result. 1 is o1 < o2; -1 otherwise
-		 */
-		public int compare(Object o1, Object o2) {
-			int result = -1;
-
-			if (m_criterion == null)
-				m_criterion = SORTED_BY_TITLE;
-
-			/** *********** for sorting site list ****************** */
-			if (m_criterion.equals(SORTED_BY_TITLE)) {
-				// sorted by the worksite title
-				String s1 = ((Site) o1).getTitle();
-				String s2 = ((Site) o2).getTitle();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_DESCRIPTION)) {
-
-				// sorted by the site short description
-				String s1 = ((Site) o1).getShortDescription();
-				String s2 = ((Site) o2).getShortDescription();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_TYPE)) {
-				// sorted by the site type
-				String s1 = ((Site) o1).getType();
-				String s2 = ((Site) o2).getType();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SortType.CREATED_BY_ASC.toString())) {
-				// sorted by the site creator
-				String s1 = ((Site) o1).getProperties().getProperty(
-						"CHEF:creator");
-				String s2 = ((Site) o2).getProperties().getProperty(
-						"CHEF:creator");
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_STATUS)) {
-				// sort by the status, published or unpublished
-				int i1 = ((Site) o1).isPublished() ? 1 : 0;
-				int i2 = ((Site) o2).isPublished() ? 1 : 0;
-				if (i1 > i2) {
-					result = 1;
-				} else {
-					result = -1;
-				}
-			} else if (m_criterion.equals(SORTED_BY_JOINABLE)) {
-				// sort by whether the site is joinable or not
-				boolean b1 = ((Site) o1).isJoinable();
-				boolean b2 = ((Site) o2).isJoinable();
-				result = compareBoolean(b1, b2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_NAME)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getName();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getName();
-				}
-				
-				result = compareString(s1, s2);
-
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_UNIQNAME)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getUniqname();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getUniqname();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_ROLE)) {
-				String s1 = "";
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getRole();
-				}
-
-				String s2 = "";
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getRole();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_COURSE)) {
-				// sort by whether the site is joinable or not
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getSection();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getSection();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_ID)) {
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getRegId();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getRegId();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_CREDITS)) {
-				String s1 = null;
-				if (o1.getClass().equals(Participant.class)) {
-					s1 = ((Participant) o1).getCredits();
-				}
-
-				String s2 = null;
-				if (o2.getClass().equals(Participant.class)) {
-					s2 = ((Participant) o2).getCredits();
-				}
-
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_STATUS)) {
-				boolean a1 = true;
-				if (o1.getClass().equals(Participant.class)) {
-					a1 = ((Participant) o1).isActive();
-				}
-
-				boolean a2 = true;
-				if (o2.getClass().equals(Participant.class)) {
-					a2 = ((Participant) o2).isActive();
-				}
-				// let the active users show first when sort ascendingly
-				result = -compareBoolean(a1, a2);
-			} else if (m_criterion.equals(SORTED_BY_CREATION_DATE)) {
-				// sort by the site's creation date
-				Time t1 = null;
-				Time t2 = null;
-
-				// get the times
-				try {
-					t1 = ((Site) o1).getProperties().getTimeProperty(
-							ResourceProperties.PROP_CREATION_DATE);
-				} catch (EntityPropertyNotDefinedException e) {
-				} catch (EntityPropertyTypeException e) {
-				}
-
-				try {
-					t2 = ((Site) o2).getProperties().getTimeProperty(
-							ResourceProperties.PROP_CREATION_DATE);
-				} catch (EntityPropertyNotDefinedException e) {
-				} catch (EntityPropertyTypeException e) {
-				}
-				if (t1 == null) {
-					result = -1;
-				} else if (t2 == null) {
-					result = 1;
-				} else if (t1.before(t2)) {
-					result = -1;
-				} else {
-					result = 1;
-				}
-			} else if (m_criterion.equals(rb.getString("group.title"))) {
-				// sorted by the group title
-				String s1 = ((Group) o1).getTitle();
-				String s2 = ((Group) o2).getTitle();
-				result = compareString(s1, s2);
-			} else if (m_criterion.equals(rb.getString("group.number"))) {
-				// sorted by the group title
-				int n1 = ((Group) o1).getMembers().size();
-				int n2 = ((Group) o2).getMembers().size();
-				result = (n1 > n2) ? 1 : -1;
-			} else if (m_criterion.equals(SORTED_BY_MEMBER_NAME)) {
-				// sorted by the member name
-				String s1 = null;
-				String s2 = null;
-
-				try {
-					s1 = UserDirectoryService
-							.getUser(((Member) o1).getUserId()).getSortName();
-				} catch (Exception ignore) {
-
-				}
-
-				try {
-					s2 = UserDirectoryService
-							.getUser(((Member) o2).getUserId()).getSortName();
-				} catch (Exception ignore) {
-
-				}
-				result = compareString(s1, s2);
-			}
-
-			if (m_asc == null)
-				m_asc = Boolean.TRUE.toString();
-
-			// sort ascending or descending
-			if (m_asc.equals(Boolean.FALSE.toString())) {
-				result = -result;
-			}
-
-			return result;
-
-		} // compare
-
-		private int compareBoolean(boolean b1, boolean b2) {
-			int result;
-			if (b1 == b2) {
-				result = 0;
-			} else if (b1 == true) {
-				result = 1;
-			} else {
-				result = -1;
-			}
-			return result;
-		}
-
-		private int compareString(String s1, String s2) {
-			int result;
-			if (s1 == null && s2 == null) {
-				result = 0;
-			} else if (s2 == null) {
-				result = 1;
-			} else if (s1 == null) {
-				result = -1;
-			} else {
-				result = collator.compare(s1, s2);
-			}
-			return result;
-		}
-
-	} // SiteComparator
-
 	private class ToolComparator implements Comparator {
 		/**
 		 * implementing the Comparator compare function
@@ -10722,131 +10050,6 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // WorksiteSetupPage
-
-	/**
-	 * Participant in site access roles
-	 * 
-	 */
-	public class Participant {
-		public String name = NULL_STRING;
-
-		// Note: uniqname is really a user ID
-		public String uniqname = NULL_STRING;
-
-		public String role = NULL_STRING;
-
-		/** role from provider */
-		public String providerRole = NULL_STRING;
-
-		/** The member credits */
-		protected String credits = NULL_STRING;
-
-		/** The section */
-		public String section = NULL_STRING;
-
-		private Set sectionEidList;
-		
-		/** The regestration id */
-		public String regId = NULL_STRING;
-
-		/** removeable if not from provider */
-		public boolean removeable = true;
-		
-		/** the status, active vs. inactive */
-		public boolean active = true;
-
-		public String getName() {
-			return name;
-		}
-
-		public String getUniqname() {
-			return uniqname;
-		}
-
-		public String getRole() {
-			return role;
-		} // cast to Role
-
-		public String getProviderRole() {
-			return providerRole;
-		}
-
-		public boolean isRemoveable() {
-			return removeable;
-		}
-		
-		public boolean isActive()  {
-			return active;
-		}
-
-		// extra info from provider
-		public String getCredits() {
-			return credits;
-		} // getCredits
-
-		public String getSection() {
-			if (sectionEidList == null)
-				return "";
-			
-			StringBuilder sb = new StringBuilder();
-			Iterator it = sectionEidList.iterator();
-			for (int i = 0; i < sectionEidList.size(); i ++) {
-				String sectionEid = (String)it.next();
-				if (i > 0)
-					sb.append(",<br />");
-				sb.append(sectionEid);
-			}
-					
-			return sb.toString();
-		} // getSection
-		
-		public Set getSectionEidList() {
-			if (sectionEidList == null)
-				sectionEidList = new HashSet();
-			
-			return sectionEidList;
-		}
-		
-		public void addSectionEidToList(String eid) {
-			if (sectionEidList == null)
-				sectionEidList = new HashSet();
-				
-				sectionEidList.add(eid);
-		}
-
-		public String getRegId() {
-			return regId;
-		} // getRegId
-
-		/**
-		 * Access the user eid, if we can find it - fall back to the id if not.
-		 * 
-		 * @return The user eid.
-		 */
-		public String getEid() {
-			try {
-				return UserDirectoryService.getUserEid(uniqname);
-			} catch (UserNotDefinedException e) {
-				return uniqname;
-			}
-		}
-
-		/**
-		 * Access the user display id, if we can find it - fall back to the id
-		 * if not.
-		 * 
-		 * @return The user display id.
-		 */
-		public String getDisplayId() {
-			try {
-				User user = UserDirectoryService.getUser(uniqname);
-				return user.getDisplayId();
-			} catch (UserNotDefinedException e) {
-				return uniqname;
-			}
-		}
-
-	} // Participant
 
 	public class SiteInfo {
 		public String site_id = NULL_STRING; // getId of Resource
@@ -11176,6 +10379,30 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				} catch (Throwable t) {
 					M_log.warn(this + ".transferCopyEntities: Error encountered while asking EntityTransfer to transferCopyEntities from: "
+									+ fromContext + " to: " + toContext, t);
+				}
+			}
+		}
+	}
+
+	protected void transferCopyEntitiesMigrate(String toolId, String fromContext,
+			String toContext) {
+		
+		for (Iterator i = EntityManager.getEntityProducers().iterator(); i
+				.hasNext();) {
+			EntityProducer ep = (EntityProducer) i.next();
+			if (ep instanceof EntityTransferrer) {
+				try {
+					EntityTransferrer et = (EntityTransferrer) ep;
+
+					// if this producer claims this tool id
+					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
+						et.transferCopyEntities(fromContext, toContext,
+								new Vector(), true);
+					}
+				} catch (Throwable t) {
+					M_log.warn(
+							"Error encountered while asking EntityTransfer to transferCopyEntities from: "
 									+ fromContext + " to: " + toContext, t);
 				}
 			}
@@ -12175,5 +11402,49 @@ public class SiteAction extends PagedResourceActionII {
 		return rv;
 	}
 	
+	
+	protected void toolModeDispatch(String methodBase, String methodExt, HttpServletRequest req, HttpServletResponse res)
+	throws ToolException
+	{
+		ToolSession toolSession = SessionManager.getCurrentToolSession();
+		SessionState state = getState(req);
+ 
+		if (SITE_MODE_HELPER_DONE.equals(state.getAttribute(STATE_SITE_MODE)))
+		{
+			String url = (String) SessionManager.getCurrentToolSession().getAttribute(Tool.HELPER_DONE_URL);
 
-}
+			SessionManager.getCurrentToolSession().removeAttribute(Tool.HELPER_DONE_URL);
+
+			// TODO: Implement cleanup.
+			cleanState(state);
+			// Helper cleanup.
+
+			cleanStateHelper(state);
+			
+			if (M_log.isDebugEnabled())
+			{
+				M_log.debug("Sending redirect to: "+ url);
+			}
+			try
+			{
+				res.sendRedirect(url);
+			}
+			catch (IOException e)
+			{
+				M_log.warn("Problem sending redirect to: "+ url,  e);
+			}
+			return;
+		}
+		else
+		{
+			super.toolModeDispatch(methodBase, methodExt, req, res);
+		}
+	}
+
+	private void cleanStateHelper(SessionState state) {
+		state.removeAttribute(STATE_SITE_MODE);
+		state.removeAttribute(STATE_TEMPLATE_INDEX);
+		state.removeAttribute(STATE_INITIALIZED);
+	}
+
+ }
