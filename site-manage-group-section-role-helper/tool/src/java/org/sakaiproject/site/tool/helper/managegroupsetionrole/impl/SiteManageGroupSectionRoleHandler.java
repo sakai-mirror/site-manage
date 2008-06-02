@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -18,11 +19,13 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
+import org.sakaiproject.authz.api.GroupProvider;
 import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
+import org.sakaiproject.id.cover.IdManager;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.site.api.Site;
@@ -72,10 +75,10 @@ public class SiteManageGroupSectionRoleHandler {
     public String[] selectedSiteMembers = new String[]{};
     
     // selected rosters for autocreate groups
-    public String[] selectedSiteRosters = new String[]{};
+    public Map<String, Boolean> selectedRosters = new HashMap<String, Boolean>();
     
     // selected roles for autocreate groups
-    public String[] selectedSiteRoles = new String[]{};
+    public Map<String, Boolean> selectedRoles = new HashMap<String, Boolean>();
     
     private String NULL_STRING = "";
     
@@ -98,6 +101,12 @@ public class SiteManageGroupSectionRoleHandler {
 	private TargettedMessageList messages;
 	public void setMessages(TargettedMessageList messages) {
 		this.messages = messages;
+	}
+	
+	private GroupProvider groupProvider;
+	public void setGroupProvider(GroupProvider groupProvider)
+	{
+		this.groupProvider = groupProvider;
 	}
 	
 	// the group title
@@ -518,6 +527,85 @@ public class SiteManageGroupSectionRoleHandler {
     	return "cancel";
     }
     
+    /**
+     * atuo create group(s) based on selected roster(s) or role(s)
+     *
+     */
+    public String processAutoCreateGroup() {
+    	List<String> rosterList = new Vector<String>();
+    	if (!selectedRosters.isEmpty())
+    	{
+    		for (Iterator<String> iterRosters= selectedRosters.keySet().iterator(); iterRosters.hasNext(); ) {
+    			String roster = iterRosters.next();
+    			if (selectedRosters.get(roster) == Boolean.TRUE)
+    			{
+    				// selected roster
+    				rosterList.add(roster);
+    			}
+    		}
+    	}
+    	
+    	List<String> roleList = new Vector<String>();
+    	if (!selectedRoles.isEmpty())
+    	{
+    		for (Iterator<String> iterRoles = selectedRoles.keySet().iterator(); iterRoles.hasNext(); ) {
+    			String role = iterRoles.next();
+    			if (selectedRoles.get(role) == Boolean.TRUE)
+    			{
+    				// selected role
+    				roleList.add(role);
+    			}
+    		}
+    	}
+    	
+    	if (rosterList.isEmpty() && roleList.isEmpty())
+    	{
+    		// nothing selected, generate alert
+    		messages.addMessage(new TargettedMessage("group.autocreate.selectrosterorrole","Please select at lease one roster or role."));
+    	}
+    	else
+    	{
+    		// go and create the new group
+        	try
+        	{
+        		Group group = site.addGroup();
+        		group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+        		if (!rosterList.isEmpty())
+        		{
+        			// pack the provider id
+        			String[] providers = new String[rosterList.size()];
+        			providers = (String[]) rosterList.toArray(providers);
+        			String providerId =  groupProvider.packId(providers);
+        			group.setTitle(providerId);
+        			group.setProviderGroupId(providerId);
+        		}
+        		
+        		// save the changes
+        		try
+        		{
+        			siteService.save(site);
+        			// reset the form params
+        			resetParams();
+    	        } 
+    	        catch (IdUnusedException e) {
+    	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
+    	            return null;
+    	        } 
+    	        catch (PermissionException e) {
+    	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
+    	            return null;
+    	        }
+        	}
+        	catch (Exception ee)
+        	{
+        		M_log.warn(this + ".processAutoCreateGroup: cannot create group in site " + site.getId() + ee.toString());
+        	}
+        	
+        	
+        	
+    	}
+        return "done";
+    }
     /**
      * Removes a group from the site
      * 

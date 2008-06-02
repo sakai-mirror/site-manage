@@ -124,9 +124,8 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
          UIOutput.make(groupForm, "group_label", messageLocator.getMessage("group.title"));
          UIInput titleTextIn = UIInput.make(groupForm, "group_title", "#{SiteManageGroupSectionRoleHandler.title}",groupTitle);
 		 
-		 UIOutput.make(groupForm, "membership_label", messageLocator.getMessage("editgroup.membership"));
-		 UIOutput.make(groupForm, "membership_site_label", messageLocator.getMessage("editgroup.generallist"));
-		 UIOutput.make(groupForm, "membership_group_label", messageLocator.getMessage("editgroup.grouplist"));
+		 UIMessage.make(arg0, "instruction-roster", "instruction.roster");
+		 UIMessage.make(arg0, "instruction-role", "instruction.role");
 		 
 		 // for the site rosters list
 		 UIMessage.make(arg0, "roster-select-header", "table.roster_select");
@@ -134,7 +133,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
 		 Collection<String> siteRosters= handler.getRosters();
 		 for (String roster: siteRosters) {
 			 UIBranchContainer tablerow = UIBranchContainer.make(groupForm, "roster-row:");
-			 UIBoundBoolean.make(tablerow, "roster-checkbox", roster);
+			 UIBoundBoolean.make(tablerow, "roster-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRosters." + roster + "}");
 			 UIOutput.make(tablerow, "roster-title", roster);
 		 }
 		 
@@ -144,18 +143,14 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
 		 Collection<Role> siteRoles= handler.getRoles();
 		 for (Role role: siteRoles) {
 			 UIBranchContainer tablerow = UIBranchContainer.make(groupForm, "role-row:");
-			 UIBoundBoolean.make(tablerow, "role-checkbox", role.getId());
+			 UIBoundBoolean.make(tablerow, "role-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRoles." + role.getId() + "}");
+			 
 			 UIOutput.make(tablerow, "role-title", role.getId());
 		 }
 		 
-    	 UICommand.make(groupForm, "save", id != null?messageLocator.getMessage("editgroup.update"):messageLocator.getMessage("editgroup.new"), "#{SiteManageGroupSectionRoleHandler.processAddGroup}");
+    	 UICommand.make(groupForm, "save", messageLocator.getMessage("update"), "#{SiteManageGroupSectionRoleHandler.processAutoCreateGroup}");
 
-         UICommand.make(groupForm, "cancel", messageLocator.getMessage("editgroup.cancel"), "#{SiteManageGroupSectionRoleHandler.processBack}");
-         
-         UIInput.make(groupForm, "newRight", "#{SiteManageGroupSectionRoleHandler.memberList}", state);
-         
-         // hidden field for group id
-         UIInput.make(groupForm, "groupId", "#{SiteManageGroupSectionRoleHandler.id}", groupId);
+         UICommand.make(groupForm, "cancel", messageLocator.getMessage("cancel"), "#{SiteManageGroupSectionRoleHandler.processBack}");
          
          int i = 0;
          //process any messages
@@ -183,7 +178,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
     
     public List reportNavigationCases() {
         List togo = new ArrayList();
-        togo.add(new NavigationCase("success", new SimpleViewParameters(GroupListProducer.VIEW_ID)));
+        togo.add(new NavigationCase("done", new SimpleViewParameters(GroupListProducer.VIEW_ID)));
     	togo.add(new NavigationCase("cancel", new SimpleViewParameters(GroupListProducer.VIEW_ID)));
         return togo;
     }

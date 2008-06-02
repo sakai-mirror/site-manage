@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.tool.helper.managegroupsectionrole.impl.SiteManageGroupSectionRoleHandler;
@@ -115,7 +116,7 @@ public class GroupListProducer
                 
                 nameLabel.decorate(new UILabelTargetDecorator(name));
     			UIOutput.make(grouprow,"group-title",group.getTitle());
-    			UIOutput.make(grouprow,"group-size",String.valueOf(group.getMembers().size()));
+    			UIOutput.make(grouprow,"group-size",String.valueOf(((AuthzGroup)group).getMembers().size()));
 
     			UIInternalLink editLink = UIInternalLink.make(grouprow,"group-revise",messageLocator.getMessage("editgroup.revise"),  
     						new GroupEditViewParameters(GroupEditProducer.VIEW_ID, groupId));

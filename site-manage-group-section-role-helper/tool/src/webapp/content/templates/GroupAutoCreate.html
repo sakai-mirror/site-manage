@@ -19,9 +19,8 @@
 	</div>
 	<form rsf:id="groups-form">
 		<h3 rsf:id="prompt"></h3>
-		<p rsf:id="instructions" class="instruction">
-		</p>
-		<table border="0" cellspacing="0" cellpadding="0" class="listHier lines nolines" summary="placeholder summary">
+		<h3 rsf:id="instruction-roster">Select a course roster to create a separate group for that roster.</h3>
+		<table width="80%" border="0" cellspacing="0" cellpadding="0" class="listHier lines nolines" summary="placeholder summary">
             <thead>
                 <tr>
                     <th width="10%">
@@ -42,7 +41,8 @@
                 </tr>
             </tbody>
         </table>
-        <table border="0" cellspacing="0" cellpadding="0" class="listHier lines nolines" summary="placeholder summary">
+        <h3 rsf:id="instruction-role">Select a role to create a separate group for that role.</h3>
+        <table width="80%" border="0" cellspacing="0" cellpadding="0" class="listHier lines nolines" summary="placeholder summary">
             <thead>
                 <tr>
                     <th width="10%">
@@ -70,11 +70,14 @@
 	</form>
 </div>
 <script>
+	alert("here");
   var rosterSelectAllBox = jQuery('#rosterSelectAllNone');
   rosterSelectAllBox.change( function() {
   var onoff = rosterSelectAllBox.get(0).checked;
+  alert("onoff" + onoff);
   jQuery('.rostercheckbox').each(function(i) {
     this.checked = onoff;
+    alert(this);
   });
   var roleSelectAllBox = jQuery('#roleSelectAllNone');
   roleSelectAllBox.change( function() {
