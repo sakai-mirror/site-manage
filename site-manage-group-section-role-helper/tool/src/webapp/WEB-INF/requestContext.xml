@@ -34,6 +34,16 @@
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
     <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
   </bean>
+  
+  <bean id="GroupAutoCreateProdcuer" 
+      class="org.sakaiproject.site.tool.helper.managegroupsectionrole.rsf.GroupAutoCreateProducer">
+    <property name="handler" ref="SiteManageGroupSectionRoleHandler" />
+    <property name="messageLocator" ref="messageLocator"/>
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
+  </bean>
 
  	<bean id="SiteManageGroupSectionRoleHandler" init-method="init"
       class="org.sakaiproject.site.tool.helper.managegroupsectionrole.impl.SiteManageGroupSectionRoleHandler">

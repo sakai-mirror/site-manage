@@ -71,6 +71,12 @@ public class SiteManageGroupSectionRoleHandler {
     public String[] selectedGroupMembers = new String[]{};
     public String[] selectedSiteMembers = new String[]{};
     
+    // selected rosters for autocreate groups
+    public String[] selectedSiteRosters = new String[]{};
+    
+    // selected roles for autocreate groups
+    public String[] selectedSiteRoles = new String[]{};
+    
     private String NULL_STRING = "";
     
     private final String TOOL_CFG_FUNCTIONS = "functions.require";
@@ -171,6 +177,58 @@ public class SiteManageGroupSectionRoleHandler {
         return groups;
     }
     
+    /**
+     * Gets the rosters for the current site
+     * @return List of roster ids
+     */
+    public List<String> getRosters() {
+        if (site == null) {
+            init();
+        }
+        List<String> providerIds = null;
+        
+        if (update) {
+            providerIds = new Vector<String>();
+            if (site != null)
+            {   
+            	
+                // get all provider ids
+            	Set pIds = authzGroupService.getProviderIds(siteService.siteReference(site.getId()));
+            	providerIds.addAll(pIds);
+            }
+        }
+        return providerIds;
+    }
+    
+    /**
+     * Gets the roles for the current site
+     * @return Map of groups (id, group)
+     */
+    public List<Role> getRoles() {
+        if (site == null) {
+            init();
+        }
+        List<Role> roles = null;
+        
+        if (update) {
+            roles = new Vector<Role>();
+            if (site != null)
+            {   
+                // get the authz group
+            	String siteReference = siteService.siteReference(site.getId());
+            	try
+            	{
+            		AuthzGroup group = authzGroupService.getAuthzGroup(siteReference);
+            		roles.addAll(group.getRoles());
+            	}
+            	catch (GroupNotDefinedException e)
+            	{
+            		M_log.debug(this + ".getRoles: no authzgroup found for " + siteReference);
+            	}
+            }
+        }
+        return roles;
+    }
     /**
      * Initialization method, just gets the current site in preperation for other calls
      *
