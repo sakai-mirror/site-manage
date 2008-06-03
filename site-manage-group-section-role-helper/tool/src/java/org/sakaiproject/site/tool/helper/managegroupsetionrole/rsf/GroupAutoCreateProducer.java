@@ -130,7 +130,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
 		 // for the site rosters list
 		 UIMessage.make(arg0, "roster-select-header", "table.roster_select");
 		 UIMessage.make(arg0, "roster-title-header", "table.roster_title");
-		 Collection<String> siteRosters= handler.getRosters();
+		 Collection<String> siteRosters= handler.getSiteRosters(null);
 		 for (String roster: siteRosters) {
 			 UIBranchContainer tablerow = UIBranchContainer.make(groupForm, "roster-row:");
 			 UIBoundBoolean.make(tablerow, "roster-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRosters." + roster + "}");
@@ -140,7 +140,7 @@ public class GroupAutoCreateProducer implements ViewComponentProducer, DynamicNa
 		 // for the site roles list
 		 UIMessage.make(arg0, "role-select-header", "table.role_select");
 		 UIMessage.make(arg0, "role-title-header", "table.role_title");
-		 Collection<Role> siteRoles= handler.getRoles();
+		 Collection<Role> siteRoles= handler.getSiteRoles(null);
 		 for (Role role: siteRoles) {
 			 UIBranchContainer tablerow = UIBranchContainer.make(groupForm, "role-row:");
 			 UIBoundBoolean.make(tablerow, "role-checkbox", "#{SiteManageGroupSectionRoleHandler.selectedRoles." + role.getId() + "}");

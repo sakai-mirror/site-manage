@@ -10,6 +10,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
+import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Group;
@@ -57,6 +58,9 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(GroupEditProducer.class);
 	
+	private String SECTION_PREFIX = "Section: ";
+	private String ROLE_PREFIX = "Role: ";
+	
     public SiteManageGroupSectionRoleHandler handler;
     public static final String VIEW_ID = "GroupEdit";
     public MessageLocator messageLocator;
@@ -87,6 +91,8 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
     	
     	String state="";
     	
+    	// group
+    	Group g = null;
     	// id for group
     	String groupId = null;
     	// title for group
@@ -95,6 +101,10 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
     	String groupDescription = null;
     	// member list for group
     	Collection<Member> groupMembers = new Vector<Member>();
+    	// group provider id
+    	String groupProviderId = null;
+    	// group role provider id
+    	String groupRoleProviderId = null;
     	
     	UIForm groupForm = UIForm.make(arg0, "groups-form");
 
@@ -103,11 +113,13 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
     	 {
     		 try
     		 {
-    			 Group g = siteService.findGroup(id);
+    			 g = siteService.findGroup(id);
     			 groupId = g.getId();
     			 groupTitle = g.getTitle();
     			 groupDescription = g.getDescription();
     			 groupMembers = g.getMembers();
+    			 groupProviderId = g.getProviderGroupId();
+    			 groupRoleProviderId = g.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
     		 }
     		 catch (Exception e)
     		 {
@@ -136,40 +148,122 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
 		 UIOutput.make(groupForm, "membership_site_label", messageLocator.getMessage("editgroup.generallist"));
 		 UIOutput.make(groupForm, "membership_group_label", messageLocator.getMessage("editgroup.grouplist"));
 		 
-		 // for the site members list
-		 Collection siteMembers= handler.getSiteParticipant();
-		 String[] siteMemberLabels = new String[siteMembers.size()];
-		 String[] siteMemberValues = new String[siteMembers.size()];
+		 /********************** for the site members list **************************/
+		 List<String> siteRosters= handler.getSiteRosters(g);
+		 List<Role> siteRoles= handler.getSiteRoles(g);
+		 List<Participant> siteMembers= handler.getSiteParticipant(g);
+		 int totalListSize = siteRosters.size() + siteRoles.size() + siteMembers.size();
+		 String[] siteMemberLabels = new String[totalListSize];
+		 String[] siteMemberValues = new String[totalListSize];
 		 UISelect siteMember = UISelect.makeMultiple(groupForm,"siteMembers",siteMemberValues,siteMemberLabels,"#{SiteManageGroupSectionRoleHandler.selectedSiteMembers}", new String[] {});
 		 
 		 int i =0;
+		 // add site roster
+		 for (String roster:siteRosters)
+		 {
+			 // not include in the group yet
+			 if (groupProviderId == null || !groupProviderId.contains(roster))
+			 {
+				 siteMemberLabels[i] = SECTION_PREFIX + roster;
+				 siteMemberValues[i] = roster;
+				 i++;
+			 }
+		 }
+		 // add site role
+		 for (Role role:siteRoles)
+		 {
+			 // not include in the group yet
+			 if (groupRoleProviderId == null || !groupRoleProviderId.contains(role.getId()))
+			 {
+				 siteMemberLabels[i] = ROLE_PREFIX + role.getId();
+				 siteMemberValues[i] = role.getId();
+				 i++;
+			 }
+		 }
+		 // add site members to the list
 		 Iterator<Participant> sIterator = new SortedIterator(siteMembers.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME, Boolean.TRUE.toString()));
 	     for (; sIterator.hasNext();i++){
 	        	Participant p = (Participant) sIterator.next();
-				siteMemberLabels[i] = p.getName();
-				siteMemberValues[i] = p.getUniqname();
+	        	// not in the group yet
+	        	if (g == null || g.getMember(p.getUniqname()) == null)
+	        	{
+					siteMemberLabels[i] = p.getName();
+					siteMemberValues[i] = p.getUniqname();
+	        	}
 	        }
 	     
-	     // for the group members list
-		 String[] groupMemberLabels = new String[groupMembers.size()];
-		 String[] groupMemberValues = new String[groupMembers.size()];
+	     
+	     /********************** for the group members list **************************/
+	     // rosters
+	     List<String> groupRosters = handler.getGroupRosters(g);
+	     if (groupRosters != null)
+	     {
+	    	 totalListSize = groupRosters.size();
+	     }
+	     // roles
+	     List<String> groupProviderRoles = handler.getGroupProviderRoles(g);
+	     if (groupProviderRoles != null)
+	     {
+	    	 totalListSize += groupProviderRoles.size();
+	     }
+	     // group members
+	     List<Member> groupMembersCopy = new Vector<Member>();
+	     groupMembersCopy.addAll(groupMembers);
+	     for (Iterator<Member> gItr=groupMembersCopy.iterator(); gItr.hasNext();i++){
+	        	Member p = (Member) gItr.next();
+	        	
+	        	// exclude those user with provided roles and rosters
+	        	String userId = p.getUserId();
+	        	if (handler.isUserFromProvider(userId, g, groupRosters, groupProviderRoles))
+	        	{
+	        		groupMembers.remove(p);
+	        	}
+	     }
+	     if (groupMembers != null)
+	     {
+	    	 totalListSize +=groupMembers.size();
+	     }
+	     
+		 String[] groupMemberLabels = new String[totalListSize];
+		 String[] groupMemberValues = new String[totalListSize];
 		 UISelect groupMember = UISelect.make(groupForm,"groupMembers",groupMemberValues,groupMemberLabels,null);
 		 i =0;
+		 // add the rosters first
+		 if (groupRosters != null)
+		 {
+			 for (String groupRoster:groupRosters)
+			 {
+				 groupMemberLabels[i] = SECTION_PREFIX + groupRoster;
+				 groupMemberValues[i] = groupRoster;
+				 i++;
+			 }
+		 }
+		 // add the roles next
+		 if (groupProviderRoles != null)
+		 {
+			 for (String groupProviderRole:groupProviderRoles)
+			 {
+				 groupMemberLabels[i] = ROLE_PREFIX + groupProviderRole;
+				 groupMemberValues[i] = groupProviderRole;
+				 i++;
+			 }
+		 }
+		 // add the members last
 		 Iterator<Member> gIterator = new SortedIterator(groupMembers.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME, Boolean.TRUE.toString()));
 	     for (; gIterator.hasNext();i++){
-	        	Member p = (Member) gIterator.next();
-	        	String userId = p.getUserId();
-	        	try
-	        	{
-	        		User u = userDirectoryService.getUser(userId);
-	        		groupMemberLabels[i] = u.getSortName();
-	        	}
-	        	catch (Exception e)
-	        	{
-	        		M_log.warn(this + ":fillComponents: cannot find user " + userId);
-	        	}
-				groupMemberValues[i] = userId;
-	        }
+        	Member p = (Member) gIterator.next();
+        	String userId = p.getUserId();
+        	try
+        	{
+        		User u = userDirectoryService.getUser(userId);
+        		groupMemberLabels[i] = u.getSortName();
+        	}
+        	catch (Exception e)
+        	{
+        		M_log.warn(this + ":fillComponents: cannot find user " + userId);
+        	}
+			groupMemberValues[i] = userId;
+		}
 	        
     	 UICommand.make(groupForm, "save", id != null?messageLocator.getMessage("editgroup.update"):messageLocator.getMessage("editgroup.new"), "#{SiteManageGroupSectionRoleHandler.processAddGroup}");
 

@@ -11,6 +11,7 @@
 	<script type="text/javascript" src="../js/selectbox.js" rsf:id="scr=rewrite-url"></script>
 	<script type="text/javascript" src="../js/optionTransfer.js" rsf:id="scr=rewrite-url"></script>
 	<script type="text/javascript" src="../js/util.js" rsf:id="scr=rewrite-url"></script>
+    <script type="text/javascript" language="JavaScript" src="/sakai-site-manage-group-section-role-helper/content/js/jquery/jquery.js"></script>
 </head>
 <body>
 <div class="portletBody">
@@ -70,22 +71,20 @@
 	</form>
 </div>
 <script>
-	alert("here");
   var rosterSelectAllBox = jQuery('#rosterSelectAllNone');
   rosterSelectAllBox.change( function() {
-  var onoff = rosterSelectAllBox.get(0).checked;
-  alert("onoff" + onoff);
-  jQuery('.rostercheckbox').each(function(i) {
-    this.checked = onoff;
-    alert(this);
+	  var onoff = rosterSelectAllBox.get(0).checked;
+	  jQuery('.rostercheckbox').each(function(i) {
+	    this.checked = onoff;
+	  });
   });
   var roleSelectAllBox = jQuery('#roleSelectAllNone');
   roleSelectAllBox.change( function() {
-  var onoff = roleSelectAllBox.get(0).checked;
-  jQuery('.rolecheckbox').each(function(i) {
-    this.checked = onoff;
+	  var onoff = roleSelectAllBox.get(0).checked;
+	  jQuery('.rolecheckbox').each(function(i) {
+	    this.checked = onoff;
+	  });
   });
-});
 </script>
 </body>
 </html>

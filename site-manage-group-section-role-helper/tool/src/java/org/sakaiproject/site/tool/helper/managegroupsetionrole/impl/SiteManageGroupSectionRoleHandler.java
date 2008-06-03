@@ -57,7 +57,7 @@ public class SiteManageGroupSectionRoleHandler {
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(SiteManageGroupSectionRoleHandler.class);
 	
-	private Collection<Member> groupMembers;
+	private List<Member> groupMembers;
 	
     public Site site = null;
     public SiteService siteService = null;
@@ -187,10 +187,10 @@ public class SiteManageGroupSectionRoleHandler {
     }
     
     /**
-     * Gets the rosters for the current site
+     * Gets the rosters for the current site excluding the group
      * @return List of roster ids
      */
-    public List<String> getRosters() {
+    public List<String> getSiteRosters(Group group) {
         if (site == null) {
             init();
         }
@@ -200,9 +200,34 @@ public class SiteManageGroupSectionRoleHandler {
             providerIds = new Vector<String>();
             if (site != null)
             {   
-            	
                 // get all provider ids
             	Set pIds = authzGroupService.getProviderIds(siteService.siteReference(site.getId()));
+            	providerIds.addAll(pIds);
+            	if (group != null)
+            	{
+            		Set groupPIds = authzGroupService.getProviderIds(authzGroupService.authzGroupReference(group.getId()));
+            		providerIds.removeAll(groupPIds);
+            	}
+            }
+        }
+        return providerIds;
+    }
+    
+    /**
+     * Gets the rosters for the group
+     * @return List of roster ids
+     */
+    public List<String> getGroupRosters(Group g) {
+    	
+        List<String> providerIds = null;
+        
+        if (update) {
+            providerIds = new Vector<String>();
+            if (g != null)
+            {   
+            	
+                // get all provider ids
+            	Set pIds = authzGroupService.getProviderIds(authzGroupService.authzGroupReference(g.getId()));
             	providerIds.addAll(pIds);
             }
         }
@@ -210,10 +235,10 @@ public class SiteManageGroupSectionRoleHandler {
     }
     
     /**
-     * Gets the roles for the current site
+     * Gets the roles for the current site excluding the group
      * @return Map of groups (id, group)
      */
-    public List<Role> getRoles() {
+    public List<Role> getSiteRoles(Group group) {
         if (site == null) {
             init();
         }
@@ -227,17 +252,107 @@ public class SiteManageGroupSectionRoleHandler {
             	String siteReference = siteService.siteReference(site.getId());
             	try
             	{
-            		AuthzGroup group = authzGroupService.getAuthzGroup(siteReference);
-            		roles.addAll(group.getRoles());
+            		AuthzGroup siteGroup = authzGroupService.getAuthzGroup(siteReference);
+            		roles.addAll(siteGroup.getRoles());
             	}
             	catch (GroupNotDefinedException e)
             	{
             		M_log.debug(this + ".getRoles: no authzgroup found for " + siteReference);
             	}
+            	
+            	if (group != null)
+            	{
+            		String roleProviderId = group.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
+            		if (roleProviderId != null)
+            		{
+            			String[] groupProvidedRoles = groupProvider.unpackId(roleProviderId);
+            			for(int i=0; i<groupProvidedRoles.length;i++)
+            			{
+            				roles.remove(group.getRole(groupProvidedRoles[i]));
+            			}
+            		}
+            	}
             }
         }
         return roles;
     }
+    
+    /**
+     * Gets the role ids for the current site
+     * @return Map of groups (id, group)
+     */
+    public List<String> getSiteRoleIds() {
+    	List<String> rv = new Vector<String>();
+        List<Role> roles = getSiteRoles(null);
+        if (roles != null)
+        {
+        	for(Role r:roles)
+        	{
+        		rv.add(r.getId());
+        	}
+        }
+        return rv;
+    }
+    
+    public boolean isUserFromProvider(String userId, Group g, List<String> rosterIds, List<String> roleIds)
+    {
+    	boolean rv = false;
+    	
+    	// check roster first
+    	if (rosterIds != null)
+    	{
+	    	for (int i = 0; !rv && i < rosterIds.size(); i++)
+	    	{
+	    		String providerId = rosterIds.get(i);
+		    	if (groupProvider.getRole(providerId, userId) != null)
+		    	{
+		    		rv =  true;
+		    	}
+	    	}
+    	}
+    	
+    	// check role next
+    	if (!rv && roleIds != null)
+    	{
+    		for (int i = 0; !rv && i < roleIds.size(); i++)
+	    	{
+    			String roleId = roleIds.get(i);
+		    	if (g.getUserRole(userId).getId().equals(roleId))
+		    	{
+		    		rv =  true;
+		    	}
+	    	}
+    	}
+    	
+    	return rv;
+    }
+    
+    /**
+     * Gets the roles for the group
+     * @return Map of groups (id, group)
+     */
+    public List<String> getGroupProviderRoles(Group g) {
+        List<String> rv = null;
+        
+        if (update) {
+            rv = new Vector<String>();
+            if (g != null)
+            {   
+                // get the authz group
+            	String roleProviderId = g.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
+            	if (roleProviderId != null)
+            	{
+            		String[] roleStrings = groupProvider.unpackId(roleProviderId);
+            		for(String roleString:roleStrings)
+            		{
+            			rv.add(roleString);
+            		}
+            	}
+            }
+        }
+        return rv;
+    }
+    
     /**
      * Initialization method, just gets the current site in preperation for other calls
      *
@@ -293,22 +408,36 @@ public class SiteManageGroupSectionRoleHandler {
         siteService.save(site);
     }
     
-    public Collection<Participant> getSiteParticipant()
+    public List<Participant> getSiteParticipant(Group group)
     {
-    	Collection<Participant> rv = new Vector<Participant>();
+    	List<Participant> rv = new Vector<Participant>();
     	if (site != null)
     	{
     		String siteId = site.getId();
     		String realmId = siteService.siteReference(siteId);
 
     		List<String> providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
-    		rv = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
+    		Collection<Participant> rvCopy = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
+    		rv.addAll(rvCopy);
+    		
+    		// check with group attendents
+    		if (group != null)
+    		{
+    			// need to remove those inside group already
+	    		for(Participant p:rvCopy)
+	    		{
+	    			if (group.getUserRole(p.getUniqname()) != null)
+	    			{
+	    				rv.remove(p);
+	    			}
+	    		}
+    		}
     	}
     	
     	return rv;
     }
     
-    public Collection<Member> getGroupParticipant()
+    public List<Member> getGroupParticipant()
     {
     	
     	return groupMembers;
@@ -433,18 +562,54 @@ public class SiteManageGroupSectionRoleHandler {
 			}
 
 			// add those seleted members
+			List<String> siteRosters = getSiteRosters(null);
+			List<String> siteRoles = getSiteRoleIds();
+			List<String> selectedRosters = new Vector<String>();
+			List<String> selectedRoles = new Vector<String>();
 			for (int i = 0; i < membersSelected.length; i++) {
 				String memberId = membersSelected[i];
-				if (group.getUserRole(memberId) == null) {
-					Role r = site.getUserRole(memberId);
-					Member m = site.getMember(memberId);
-					// for every member added through the "Manage
-					// Groups" interface, he should be defined as
-					// non-provided
-					group.addMember(memberId, r != null ? r.getId()
-							: "", m != null ? m.isActive() : true,
-							false);
+				
+				if (siteRosters.contains(memberId))
+				{
+					// this is a roster
+					selectedRosters.add(memberId);
 				}
+				else if (siteRoles.contains(memberId))
+				{
+					// this is a role
+					Set roleUsers = site.getUsersHasRole(memberId);
+    				for (Iterator iRoleUsers = roleUsers.iterator(); iRoleUsers.hasNext();)
+    				{
+    					String roleUserId = (String) iRoleUsers.next();
+        				Member member = site.getMember(roleUserId);
+    					group.addMember(roleUserId, memberId, member.isActive(), member.isProvided());
+    				}
+    				selectedRoles.add(memberId);
+				}
+				else
+				{
+					// normal user id
+					if (group.getUserRole(memberId) == null) {
+						Role r = site.getUserRole(memberId);
+						Member m = site.getMember(memberId);
+						// for every member added through the "Manage
+						// Groups" interface, he should be defined as
+						// non-provided
+						group.addMember(memberId, r != null ? r.getId()
+								: "", m != null ? m.isActive() : true,
+								false);
+					}
+				}
+			}
+			if (!selectedRosters.isEmpty())
+			{
+				// set provider id
+				group.setProviderGroupId(getProviderString(selectedRosters));
+			}
+			if (!selectedRoles.isEmpty())
+			{
+				// pack the role provider id and add to property
+    			group.getProperties().addProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID, getProviderString(selectedRoles));
 			}
 	            
     		// save the changes
@@ -570,14 +735,42 @@ public class SiteManageGroupSectionRoleHandler {
         	{
         		Group group = site.addGroup();
         		group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+        		
+        		// roster provider string
+        		String rosterProviderId = "";
+        		// roster based
         		if (!rosterList.isEmpty())
         		{
-        			// pack the provider id
-        			String[] providers = new String[rosterList.size()];
-        			providers = (String[]) rosterList.toArray(providers);
-        			String providerId =  groupProvider.packId(providers);
-        			group.setTitle(providerId);
-        			group.setProviderGroupId(providerId);
+        			// pack the roster provider id
+        			rosterProviderId =  getProviderString(rosterList);
+            		// set provider id
+        			group.setProviderGroupId(rosterProviderId);
+        			
+        			// set title
+        			group.setTitle(rosterProviderId);
+        		}
+        		
+        		// role based
+        		String roleProviderId = "";
+        		if (!roleList.isEmpty())
+        		{
+        			// pack the role provider id
+        			roleProviderId =  getProviderString(roleList);
+        			group.getProperties().addProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID, roleProviderId);
+        			
+        			// add users with role selected into group
+        			for(String roleId:roleList)
+        			{
+        				Set roleUsers = site.getUsersHasRole(roleId);
+        				for (Iterator iRoleUsers = roleUsers.iterator(); iRoleUsers.hasNext();)
+        				{
+        					String roleUserId = (String) iRoleUsers.next();
+            				Member member = site.getMember(roleUserId);
+        					group.addMember(roleUserId, roleId, member.isActive(), member.isProvided());
+        				}
+        			}
+        			
+        			group.setTitle((group.getTitle()==null || group.getTitle().length()==0)?roleProviderId:group.getTitle().concat("+").concat(roleProviderId));
         		}
         		
         		// save the changes
@@ -605,6 +798,17 @@ public class SiteManageGroupSectionRoleHandler {
         	
     	}
         return "done";
+    }
+    
+    /**
+     * Return a single string representing the provider id list
+     * @param idsList
+     */
+    private String getProviderString(List<String> idsList)
+    {
+    	String[] sArray = new String[idsList.size()];
+		sArray = (String[]) idsList.toArray(sArray);
+		return groupProvider.packId(sArray);
     }
     /**
      * Removes a group from the site

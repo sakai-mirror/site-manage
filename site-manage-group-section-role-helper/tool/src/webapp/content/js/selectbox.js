@@ -115,8 +115,23 @@ function sortSelect(obj) {
 	if (o.length==0) { return; }
 	o = o.sort( 
 		function(a,b) { 
-			if ((a.text+"") < (b.text+"")) { return -1; }
-			if ((a.text+"") > (b.text+"")) { return 1; }
+			var aText = a.text + "";
+			var bText = b.text + "";
+			var aIsSpecialString = aText.indexOf("Role:") == 0 || aText.indexOf("Section:") == 0;
+			var bIsSpecialString = bText.indexOf("Role:") == 0 || bText.indexOf("Section:") == 0;
+			if (aIsSpecialString && !bIsSpecialString)
+			{
+				return -1;
+			}
+			else if (!aIsSpecialString && bIsSpecialString)
+			{	
+				return 1;
+			}
+			else if ((aIsSpecialString && bIsSpecialString) || (!aIsSpecialString && !bIsSpecialString))
+			{
+				if ((a.text+"") < (b.text+"")) { return -1; }
+				if ((a.text+"") > (b.text+"")) { return 1; }
+			}
 			return 0;
 			} 
 		);
