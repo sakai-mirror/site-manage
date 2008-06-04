@@ -210,14 +210,22 @@ public class GroupEditProducer implements ViewComponentProducer, DynamicNavigati
 	     List<Member> groupMembersCopy = new Vector<Member>();
 	     groupMembersCopy.addAll(groupMembers);
 	     for (Iterator<Member> gItr=groupMembersCopy.iterator(); gItr.hasNext();i++){
-	        	Member p = (Member) gItr.next();
-	        	
-	        	// exclude those user with provided roles and rosters
-	        	String userId = p.getUserId();
-	        	if (handler.isUserFromProvider(userId, g, groupRosters, groupProviderRoles))
+        	Member p = (Member) gItr.next();
+        	
+        	// exclude those user with provided roles and rosters
+        	String userId = p.getUserId();
+        	try{
+        		// get user
+        		User u = userDirectoryService.getUser(userId);
+        		if (handler.isUserFromProvider(u.getEid(), userId, g, groupRosters, groupProviderRoles))
 	        	{
 	        		groupMembers.remove(p);
 	        	}
+        	}
+        	catch (Exception e)
+        	{
+        		M_log.warn(this + "fillInComponent: cannot find user with id " + userId);
+        	}
 	     }
 	     if (groupMembers != null)
 	     {

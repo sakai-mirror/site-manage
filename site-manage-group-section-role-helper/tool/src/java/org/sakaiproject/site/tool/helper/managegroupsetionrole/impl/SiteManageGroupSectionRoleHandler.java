@@ -227,7 +227,7 @@ public class SiteManageGroupSectionRoleHandler {
             {   
             	
                 // get all provider ids
-            	Set pIds = authzGroupService.getProviderIds(authzGroupService.authzGroupReference(g.getId()));
+            	Set pIds = authzGroupService.getProviderIds(siteService.siteGroupReference(site.getId(), g.getId()));
             	providerIds.addAll(pIds);
             }
         }
@@ -294,7 +294,7 @@ public class SiteManageGroupSectionRoleHandler {
         return rv;
     }
     
-    public boolean isUserFromProvider(String userId, Group g, List<String> rosterIds, List<String> roleIds)
+    public boolean isUserFromProvider(String userEId, String userId, Group g, List<String> rosterIds, List<String> roleIds)
     {
     	boolean rv = false;
     	
@@ -304,7 +304,8 @@ public class SiteManageGroupSectionRoleHandler {
 	    	for (int i = 0; !rv && i < rosterIds.size(); i++)
 	    	{
 	    		String providerId = rosterIds.get(i);
-		    	if (groupProvider.getRole(providerId, userId) != null)
+		    	Map userRole = groupProvider.getUserRolesForGroup(providerId);
+		    	if (userRole.containsKey(userEId))
 		    	{
 		    		rv =  true;
 		    	}
@@ -606,10 +607,20 @@ public class SiteManageGroupSectionRoleHandler {
 				// set provider id
 				group.setProviderGroupId(getProviderString(selectedRosters));
 			}
+			else
+			{
+				// clear the provider id
+				group.setProviderGroupId(null);
+			}
 			if (!selectedRoles.isEmpty())
 			{
 				// pack the role provider id and add to property
     			group.getProperties().addProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID, getProviderString(selectedRoles));
+			}
+			else
+			{
+				// clear the role provider id
+				group.getProperties().removeProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
 			}
 	            
     		// save the changes

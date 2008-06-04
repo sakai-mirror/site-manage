@@ -104,7 +104,7 @@ public class GroupListProducer
 			UIMessage.make(deleteForm, "group-remove-title", "editgroup.remove");
 			  
 			for (Iterator<Group> it=groups.iterator(); it.hasNext(); ) {
-            	java.security.acl.Group group = it.next();
+            	Group group = it.next();
             	String groupId = group.getId();
                 UIBranchContainer grouprow = UIBranchContainer.make(deleteForm, "group-row:", group.getId());
                 
@@ -116,7 +116,7 @@ public class GroupListProducer
                 
                 nameLabel.decorate(new UILabelTargetDecorator(name));
     			UIOutput.make(grouprow,"group-title",group.getTitle());
-    			UIOutput.make(grouprow,"group-size",String.valueOf(((AuthzGroup) group).getMembers().size());
+    			UIOutput.make(grouprow,"group-size",String.valueOf(((AuthzGroup) group).getMembers().size()));
 
     			UIInternalLink editLink = UIInternalLink.make(grouprow,"group-revise",messageLocator.getMessage("editgroup.revise"),  
     						new GroupEditViewParameters(GroupEditProducer.VIEW_ID, groupId));
