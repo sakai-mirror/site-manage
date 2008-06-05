@@ -9,6 +9,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
+import org.sakaiproject.authz.cover.AuthzGroupService;
+import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.tool.helper.managegroupsectionrole.impl.SiteManageGroupSectionRoleHandler;
@@ -116,7 +118,16 @@ public class GroupListProducer
                 
                 nameLabel.decorate(new UILabelTargetDecorator(name));
     			UIOutput.make(grouprow,"group-title",group.getTitle());
-    			UIOutput.make(grouprow,"group-size",String.valueOf(((AuthzGroup) group).getMembers().size()));
+    			int size = 0;
+    			try
+    			{
+    				size=AuthzGroupService.getAuthzGroup(group.getReference()).getMembers().size();
+    			}
+    			catch (GroupNotDefinedException e)
+    			{
+    				M_log.debug(this + "fillComponent: cannot find group " + group.getReference());
+    			}
+    			UIOutput.make(grouprow,"group-size",String.valueOf(size));
 
     			UIInternalLink editLink = UIInternalLink.make(grouprow,"group-revise",messageLocator.getMessage("editgroup.revise"),  
     						new GroupEditViewParameters(GroupEditProducer.VIEW_ID, groupId));

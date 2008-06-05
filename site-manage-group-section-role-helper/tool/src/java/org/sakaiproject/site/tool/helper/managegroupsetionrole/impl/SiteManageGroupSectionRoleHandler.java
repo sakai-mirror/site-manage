@@ -205,7 +205,7 @@ public class SiteManageGroupSectionRoleHandler {
             	providerIds.addAll(pIds);
             	if (group != null)
             	{
-            		Set groupPIds = authzGroupService.getProviderIds(authzGroupService.authzGroupReference(group.getId()));
+            		Set groupPIds = authzGroupService.getProviderIds(siteService.siteGroupReference(site.getId(), group.getId()));
             		providerIds.removeAll(groupPIds);
             	}
             }
