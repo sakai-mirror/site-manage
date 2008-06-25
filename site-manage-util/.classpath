@@ -12,5 +12,7 @@
   <classpathentry combineaccessrules="false" kind="src" path="/util-util"/>
   <classpathentry kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>
   <classpathentry combineaccessrules="false" kind="src" path="/cm-api"/>
+  <classpathentry combineaccessrules="false" kind="src" path="/user-api"/>
+  <classpathentry combineaccessrules="false" kind="src" path="/site-api"/>
   <classpathentry kind="output" path="bin"/>
 </classpath>
