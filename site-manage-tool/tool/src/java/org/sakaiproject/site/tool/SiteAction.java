@@ -121,6 +121,7 @@ import org.sakaiproject.user.api.UserPermissionException;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.ArrayUtil;
 import org.sakaiproject.util.FileItem;
+import org.sakaiproject.util.FormattedText;
 import org.sakaiproject.util.ParameterParser;
 import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SortedIterator;
@@ -6863,7 +6864,8 @@ public class SiteAction extends PagedResourceActionII {
 
 				String description = StringUtil.trimToNull(params
 						.getString("description"));
-				state.setAttribute(FORM_SITEINFO_DESCRIPTION, description);
+				StringBuilder alertMsg = new StringBuilder();
+				state.setAttribute(FORM_SITEINFO_DESCRIPTION, FormattedText.processFormattedText(description, alertMsg));
 
 				String short_description = StringUtil.trimToNull(params
 						.getString("short_description"));
@@ -7806,7 +7808,9 @@ public class SiteAction extends PagedResourceActionII {
 			siteInfo.title = params.getString("title");
 		}
 		if (params.getString("description") != null) {
-			siteInfo.description = params.getString("description");
+			StringBuilder alertMsg = new StringBuilder();
+			String description = params.getString("description");
+			siteInfo.description = FormattedText.processFormattedText(description, alertMsg);
 		}
 		if (params.getString("short_description") != null) {
 			siteInfo.short_description = params.getString("short_description");
