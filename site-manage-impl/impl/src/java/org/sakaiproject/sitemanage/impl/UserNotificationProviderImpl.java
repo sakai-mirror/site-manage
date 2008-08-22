@@ -1,5 +1,7 @@
 package org.sakaiproject.sitemanage.impl;
 
+import java.util.Locale;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
@@ -43,6 +45,7 @@ public class UserNotificationProviderImpl implements UserNotificationProvider {
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
 		rb = new ResourceLoader(user.getId(), "UserNotificationProvider");
+		
 		
 		String from = getSetupRequestEmailAddress();
 		if (from != null) {

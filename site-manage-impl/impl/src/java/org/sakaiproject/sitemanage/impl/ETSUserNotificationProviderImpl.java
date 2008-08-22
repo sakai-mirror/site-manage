@@ -3,12 +3,14 @@ package org.sakaiproject.sitemanage.impl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.email.api.EmailService;
+import org.sakaiproject.emailtemplateservice.model.EmailTemplate;
 import org.sakaiproject.emailtemplateservice.model.RenderedTemplate;
 import org.sakaiproject.emailtemplateservice.service.EmailTemplateService;
 import org.sakaiproject.sitemanage.api.UserNotificationProvider;
@@ -51,6 +53,13 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	public void init() {
 		//nothing realy to do
 		M_log.info("init()");
+		
+		
+		//do we need to load data?
+		EmailTemplate et = notifyAddedParticipantMail();
+		M_log.info("got email template:" + et.getSubject());
+		M_log.info(et.getMessage());
+		emailTemplateService.saveTemplate(et);
 	}
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
@@ -179,6 +188,73 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 					.getServerName());
 		}
 		return from;
+	}
+	
+	
+	
+	
+	private EmailTemplate notifyAddedParticipantMail() {
+		
+		ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
+	
+	
+		String from = getSetupRequestEmailAddress();
+		
+			
+			String message_subject = "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} "+rb.getString("java.sitenoti");
+			String content = "";
+			StringBuilder buf = new StringBuilder();
+			buf.setLength(0);
+
+			// email bnonOfficialAccounteen newly added nonOfficialAccount account
+			// and other users
+			buf.append("${" + EmailTemplateService.CURRENT_USER_DISPLAY_NAME + "}" + ":\n\n");
+			buf.append(rb.getString("java.following") + " "
+					+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + " "
+					+ rb.getString("java.simplesite") + "\n");
+			buf.append("${siteName}\n");
+			buf.append(rb.getString("java.simpleby") + " ");
+			buf.append("${" + EmailTemplateService.CURRENT_USER_DISPLAY_NAME + "}"
+					+ ". \n\n");
+			buf.append("<#if newNonOfficialAccount >");
+				//Is this a string in serverconfig servise?
+				/* this should be replaced by customised text
+				buf.append(serverConfigurationService.getString("nonOfficialAccountInstru", "")
+						+ "\n");
+
+				if (nonOfficialAccountUrl != null) {
+					buf.append(rb.getString("java.togeta1") + "\n"
+							+ nonOfficialAccountUrl + "\n");
+					buf.append(rb.getString("java.togeta2") + "\n\n");
+				}
+				*/
+				buf.append("Insert your institutions specific instrucions for new guest users here \n\n");
+				
+				buf.append(rb.getString("java.once") + " " + "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} "
+						+ ": \n");
+				buf.append(rb.getString("java.loginhow1") + " "
+						+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + ": ${" + EmailTemplateService.LOCAL_SAKAI_URL  + "}\n");
+				buf.append(rb.getString("java.loginhow2") + "\n");
+				buf.append(rb.getString("java.loginhow3") + "\n");
+			buf.append("<#elseif >");
+				buf.append(rb.getString("java.tolog") + "\n");
+				buf.append(rb.getString("java.loginhow1") + " "
+						+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + ": ${" + EmailTemplateService.LOCAL_SAKAI_URL + "}\n");
+				buf.append(rb.getString("java.loginhow2") + "\n");
+				buf.append(rb.getString("java.loginhow3u") + "\n");
+			buf.append("</#if>");
+			buf.append(rb.getString("java.tabscreen"));
+			content = buf.toString();
+		EmailTemplate ret = new EmailTemplate();
+		ret.setMessage(buf.toString());
+		ret.setSubject(message_subject);
+		ret.setKey("sitemange.notifyAddedParticipant");
+		ret.setOwner("admin");
+	
+		
+		return ret;
+
+		
 	}
 	
 	
