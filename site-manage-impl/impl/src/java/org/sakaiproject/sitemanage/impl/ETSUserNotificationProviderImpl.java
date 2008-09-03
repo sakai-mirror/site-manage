@@ -1,10 +1,19 @@
 package org.sakaiproject.sitemanage.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,6 +26,13 @@ import org.sakaiproject.sitemanage.api.UserNotificationProvider;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.util.ResourceLoader;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import org.w3c.dom.Element;
+
+
 
 
 
@@ -56,10 +72,14 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		
 		
 		//do we need to load data?
+		loadNewUserMail();
+		
+		/*
 		EmailTemplate et = notifyAddedParticipantMail();
 		M_log.info("got email template:" + et.getSubject());
 		M_log.info(et.getMessage());
 		emailTemplateService.saveTemplate(et);
+		*/
 	}
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
@@ -192,70 +212,40 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	
 	
 	
-	
-	private EmailTemplate notifyAddedParticipantMail() {
+private void loadNewUserMail() {
+	try {
+		//URL fileUrl = new URL("notifyAddedParticipants.xml");
+		//URL url = ClassLoader.getSystemResource("notifyAddedParticipants.xml");
+		InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
+		Document document = null;
+		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+		document = parser.parse(in);
+		Element root = document.getDocumentElement();
+		//NodeList nl = root.getElementsByTagName("emailTemplates");
+		//M_log.info("got a list of: " + nl.getLength() + " nodes");
+		//for (int i =0; i < nl.getLength(); i++) {
+		root.getElementsByTagName("emailTemplates").item(0).getFirstChild()).getData()
+			Element n = (Element)root.getFirstChild();
+			M_log.info(n.getAttribute("subject"));
+			M_log.info(n.getFirstChild().getNodeValue());
+		//}
 		
-		ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
-	
-	
-		String from = getSetupRequestEmailAddress();
-		
-			
-			String message_subject = "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} "+rb.getString("java.sitenoti");
-			String content = "";
-			StringBuilder buf = new StringBuilder();
-			buf.setLength(0);
-
-			// email bnonOfficialAccounteen newly added nonOfficialAccount account
-			// and other users
-			buf.append("${" + EmailTemplateService.CURRENT_USER_DISPLAY_NAME + "}" + ":\n\n");
-			buf.append(rb.getString("java.following") + " "
-					+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + " "
-					+ rb.getString("java.simplesite") + "\n");
-			buf.append("${siteName}\n");
-			buf.append(rb.getString("java.simpleby") + " ");
-			buf.append("${" + EmailTemplateService.CURRENT_USER_DISPLAY_NAME + "}"
-					+ ". \n\n");
-			buf.append("<#if newNonOfficialAccount >");
-				//Is this a string in serverconfig servise?
-				/* this should be replaced by customised text
-				buf.append(serverConfigurationService.getString("nonOfficialAccountInstru", "")
-						+ "\n");
-
-				if (nonOfficialAccountUrl != null) {
-					buf.append(rb.getString("java.togeta1") + "\n"
-							+ nonOfficialAccountUrl + "\n");
-					buf.append(rb.getString("java.togeta2") + "\n\n");
-				}
-				*/
-				buf.append("Insert your institutions specific instrucions for new guest users here \n\n");
-				
-				buf.append(rb.getString("java.once") + " " + "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} "
-						+ ": \n");
-				buf.append(rb.getString("java.loginhow1") + " "
-						+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + ": ${" + EmailTemplateService.LOCAL_SAKAI_URL  + "}\n");
-				buf.append(rb.getString("java.loginhow2") + "\n");
-				buf.append(rb.getString("java.loginhow3") + "\n");
-			buf.append("<#elseif >");
-				buf.append(rb.getString("java.tolog") + "\n");
-				buf.append(rb.getString("java.loginhow1") + " "
-						+ "${" + EmailTemplateService.LOCAL_SAKAI_NAME + "} " + ": ${" + EmailTemplateService.LOCAL_SAKAI_URL + "}\n");
-				buf.append(rb.getString("java.loginhow2") + "\n");
-				buf.append(rb.getString("java.loginhow3u") + "\n");
-			buf.append("</#if>");
-			buf.append(rb.getString("java.tabscreen"));
-			content = buf.toString();
-		EmailTemplate ret = new EmailTemplate();
-		ret.setMessage(buf.toString());
-		ret.setSubject(message_subject);
-		ret.setKey("sitemange.notifyAddedParticipant");
-		ret.setOwner("admin");
-	
-		
-		return ret;
-
-		
+	} catch (MalformedURLException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (ParserConfigurationException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (SAXException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
 	}
+}
+
 	
 	
 	

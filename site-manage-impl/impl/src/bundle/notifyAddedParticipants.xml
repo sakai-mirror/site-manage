@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<emailTemplates>
+	<emailTemplate>
+		<subject>			${localSakaiName} Site Notification java.newusernoti		</subject>
+		<message>
+			${currentUserDisplayName}:
+
+			${localSakaiName} ${siteName} ${currentUserDisplayName}.
+
+			&lt;#if newNonOfficialAccount &gt;Insert your institutions
+			specific instrucions for new guest users here
+
+			${localSakaiName} : ${localSakaiName} : ${localSakaiURL}
+
+
+			&lt;#elseif &gt; ${localSakaiName} : ${localSakaiURL}
+
+
+			&lt;/#if&gt;
+		</message>
+		<locale></locale>
+	</emailTemplate>
+</emailTemplates>
