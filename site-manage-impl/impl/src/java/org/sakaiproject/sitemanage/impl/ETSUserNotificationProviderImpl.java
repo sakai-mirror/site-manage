@@ -92,8 +92,10 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		
 		
 		//do we need to load data?
-		//if (this.emailTemplateService.getEmailTemplate(this.NEW_USER_KEY, null) != null) 
-			loadNewUserMail();	
+		if (this.emailTemplateService.getEmailTemplate(this.NEW_USER_KEY, null) != null) 
+			loadNewUserMail();
+		else 
+			M_log.info("templates for " + NEW_USER_KEY + " exist");
 		
 		/*
 		EmailTemplate et = notifyAddedParticipantMail();
@@ -282,7 +284,6 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	private String convertToUtf8(String original) {
 		try {
 		    byte[] utf8Bytes = original.getBytes("UTF8");
-		    byte[] defaultBytes = original.getBytes();
 		    String roundTrip = new String(utf8Bytes, "UTF8");
 		    return roundTrip;
 		    
