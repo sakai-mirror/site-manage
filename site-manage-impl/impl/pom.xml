@@ -21,6 +21,10 @@
   </properties>
   <dependencies>
     <dependency>
+      <groupId>org.sakaiproject.kernel</groupId>
+      <artifactId>sakai-kernel-util</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate</artifactId>
     </dependency>
@@ -36,32 +40,32 @@
       <groupId>org.sakaiproject.kernel</groupId>
       <artifactId>sakai-component-manager</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.sakaiproject.kernel.util</groupId>
-      <artifactId>sakai-util</artifactId>
-    </dependency>
+<!--
+      This has been relocated to sakai-kernel-util
+      org.sakaiproject.kernel.utilsakai-util-->
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-site-manage-api</artifactId>
-     
     </dependency>
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-site-manage-hbm</artifactId>
-     
     </dependency>
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-coursemanagement-api</artifactId>
-     
     </dependency>
         <dependency>
     	<groupId>org.sakaiproject.emailtemplateservice</groupId>
     	<artifactId>emailtemplateservice-api</artifactId>
     	<version>0.3-SNAPSHOT</version>
-    	<scope>provided</scope>
+	<scope>provided</scope>
     </dependency>
-    
+            <dependency>
+            <artifactId>jdom</artifactId>
+            <groupId>jdom</groupId>
+            <version>1.0</version>
+        </dependency>
 <!--org.sakaiprojectsakai-component-api${sakai.version}-->
 <!--org.sakaiprojectsakai-component${sakai.version}-->
 <!--org.sakaiprojectsakai-util-api${sakai.version}-->
@@ -70,14 +74,12 @@
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-site-manage-util</artifactId>
-     
     </dependency>
 <!--org.sakaiprojectsakai-user-api${sakai.version}-->
 <!--org.sakaiprojectsakai-entity-api${sakai.version}-->
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-coursemanagement-api</artifactId>
-     
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>

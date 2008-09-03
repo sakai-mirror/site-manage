@@ -3,10 +3,14 @@ package org.sakaiproject.sitemanage.impl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,6 +18,15 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,11 +39,13 @@ import org.sakaiproject.sitemanage.api.UserNotificationProvider;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.util.ResourceLoader;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+//import org.w3c.dom.Document;
+//import org.w3c.dom.Element;
+//import org.w3c.dom.Node;
+//import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import org.w3c.dom.Element;
+
+import com.sun.org.apache.xerces.internal.util.DOMUtil;
 
 
 
@@ -40,7 +55,12 @@ import org.w3c.dom.Element;
 public class ETSUserNotificationProviderImpl implements UserNotificationProvider {
 	
 	private static Log M_log = LogFactory.getLog(ETSUserNotificationProviderImpl.class);
+	
+	private static String NEW_USER_KEY ="sitemange.notifyAddedParticipant";
+	
 	private EmailService emailService; 
+	
+	
 	
 	public void setEmailService(EmailService es) {
 		emailService = es;
@@ -72,7 +92,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		
 		
 		//do we need to load data?
-		loadNewUserMail();
+		//if (this.emailTemplateService.getEmailTemplate(this.NEW_USER_KEY, null) != null) 
+			loadNewUserMail();	
 		
 		/*
 		EmailTemplate et = notifyAddedParticipantMail();
@@ -125,7 +146,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            M_log.debug("getting template: sitemange.notifyAddedParticipant");
 	            RenderedTemplate template = null;
 	           try { 
-				template = emailTemplateService.getRenderedTemplateForUser("sitemange.notifyAddedParticipant", user.getReference(), replacementValues); 
+				template = emailTemplateService.getRenderedTemplateForUser(NEW_USER_KEY, user.getReference(), replacementValues); 
 				if (template == null)
 					return;	
 	           }
@@ -209,44 +230,66 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		}
 		return from;
 	}
-	
-	
-	
-private void loadNewUserMail() {
-	try {
-		//URL fileUrl = new URL("notifyAddedParticipants.xml");
-		//URL url = ClassLoader.getSystemResource("notifyAddedParticipants.xml");
-		InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
-		Document document = null;
-		DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-		document = parser.parse(in);
-		Element root = document.getDocumentElement();
-		//NodeList nl = root.getElementsByTagName("emailTemplates");
-		//M_log.info("got a list of: " + nl.getLength() + " nodes");
-		//for (int i =0; i < nl.getLength(); i++) {
-		root.getElementsByTagName("emailTemplates").item(0).getFirstChild()).getData()
-			Element n = (Element)root.getFirstChild();
-			M_log.info(n.getAttribute("subject"));
-			M_log.info(n.getFirstChild().getNodeValue());
-		//}
-		
-	} catch (MalformedURLException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (ParserConfigurationException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (SAXException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
-}
 
-	
-	
+
+
+	private void loadNewUserMail() {
+		try {
+			//URL fileUrl = new URL("notifyAddedParticipants.xml");
+			//URL url = ClassLoader.getSystemResource("notifyAddedParticipants.xml");
+			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
+			//Document document = null;
+			//DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+			Document document = new SAXBuilder(  ).build(in);
+			
+			//DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
+			//document = (Document) parser.parse(in);
+			//Element emailTemplates = document.getDocumentElement();
+			List it = document.getRootElement().getChildren("emailTemplate");
+			
+			for (int i =0; i < it.size(); i++) {
+				Element xmlTemplate = (Element)it.get(i);
+				String subject = xmlTemplate.getChildText("subject");
+				String body = xmlTemplate.getChildText("message");
+				String locale = xmlTemplate.getChildText("locale");
+				M_log.info("subject: " + subject);
+				
+				EmailTemplate template = new EmailTemplate();
+				template.setSubject(convertToUtf8(subject));
+				template.setMessage(convertToUtf8(body));
+				template.setLocale(locale);
+				template.setKey(NEW_USER_KEY);
+				template.setOwner("admin");
+				template.setLastModified(new Date());
+				
+				this.emailTemplateService.saveTemplate(template);
+			}
+			
+
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JDOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}
+
+
+	private String convertToUtf8(String original) {
+		try {
+		    byte[] utf8Bytes = original.getBytes("UTF8");
+		    byte[] defaultBytes = original.getBytes();
+		    String roundTrip = new String(utf8Bytes, "UTF8");
+		    return roundTrip;
+		    
+		} catch (UnsupportedEncodingException e) {
+		    e.printStackTrace();
+		}
+		return null;
+	}
 	
 }

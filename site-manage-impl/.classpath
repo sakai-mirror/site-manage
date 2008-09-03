@@ -14,5 +14,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/emailtemplateservice"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/entity-broker"/>
 	<classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0RC2-SNAPSHOT/sakai-component-manager-1.0RC2-SNAPSHOT.jar"/>
+	<classpathentry kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
