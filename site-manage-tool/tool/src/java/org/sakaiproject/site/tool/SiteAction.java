@@ -1704,9 +1704,12 @@ public class SiteAction extends PagedResourceActionII {
 				{
 					// show add participant menu
 					if (!isMyWorkspace) {
-						// show the Add Participant menu
-						b.add(new MenuEntry(rb.getString("java.addp"),
-								"doMenu_siteInfo_addParticipant"));
+						// if the add participant helper is available, not
+						// stealthed and not hidden, show the link
+						if (notStealthOrHiddenTool("sakai-site-manage-participant-helper")) {
+							b.add(new MenuEntry(rb.getString("java.addp"),
+									"doParticipantHelper"));
+						}
 						
 						// show the Edit Class Roster menu
 						if (siteType != null && siteType.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -2911,6 +2914,25 @@ public class SiteAction extends PagedResourceActionII {
 
 		// launch the helper
 		startHelper(data.getRequest(), "sakai-site-pageorder-helper");
+	}
+	
+	/**
+	 * Launch the participant Helper Tool -- for adding participant
+	 * 
+	 * @see case 12
+	 * 
+	 */
+	public void doParticipantHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "sakai-site-manage-participant-helper");
 	}
 	
 	/**
