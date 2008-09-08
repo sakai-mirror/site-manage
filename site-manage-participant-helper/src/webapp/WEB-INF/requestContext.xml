@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+   
+  <bean id="AddProducer"
+      class="org.sakaiproject.site.tool.helper.participant.rsf.AddProducer">
+    <property name="handler" ref="SiteAddParticipantHandler" />
+    <property name="messageLocator" ref="messageLocator"/>
+    <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
+  </bean>
+   
+  <bean id="ConfirmProdcuer" 
+      class="org.sakaiproject.site.tool.helper.participant.rsf.ConfirmProducer">
+    <property name="handler" ref="SiteAddParticipantHandler" />
+    <property name="messageLocator" ref="messageLocator"/>
+    <property name="richTextEvolver" ref="richTextEvolver" />
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
+  </bean>
+
+ 	<bean id="SiteAddParticipantHandler" init-method="init"
+      class="org.sakaiproject.site.tool.helper.participant.impl.SiteAddParticipantHandler">
+    <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
+    <property name="toolManager" ref="org.sakaiproject.tool.api.ToolManager" />
+    <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager" />
+    <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
+    <property name="authzGroupService" ref="org.sakaiproject.authz.api.AuthzGroupService" />
+    <property name="messages" ref="targettedMessageList" />
+  </bean>
+</beans>
