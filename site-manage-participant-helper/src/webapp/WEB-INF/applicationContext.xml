@@ -8,7 +8,7 @@
   </bean>
 
   <bean parent="requestAddressibleParent">
-    <property name="value" value="SiteAddParticipantHandler" />
+    <property name="value" value="siteAddParticipantHandler" />
   </bean>
 
   <bean parent="templateContributorParent">
@@ -20,5 +20,10 @@
     class="uk.org.ponder.springutil.BooleanFactory">
     <property name="value" value="true" />
   </bean>
- 
+  
+  <!-- Create a scope to preserve the siteAddParticipantHandler (int the HTTP session for a standalone app -->
+  <bean id = "resultScope" parent="beanScopeParent">
+  	<property name="copyPreservingBeans" value="siteAddParticipantHandler" />
+  	<property name="exclusive" value="true" />
+  </bean>
 </beans>

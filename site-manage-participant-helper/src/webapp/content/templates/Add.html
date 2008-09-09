@@ -12,18 +12,45 @@
 <body rsf:id="scr=sakai-body">
 <div class="portletBody">
 	<h3 rsf:id="page-title">Add Participant</h3>
-	<form rsf:id="participant-form">
-		<div class="instruction">
-			<h4 rsf:id="add.official"></h4>
-		</div>
-		<div class="indnt1">
-			<p class="instruction"> 
-				<h5 rsf:id = "add.official1"></h5>
-			</p>
-			<p class="instruction">
-				<h5 rsf:id = "add.official.instruction"></h5>
-			</p>
-		</div>
+	<!-- instruction for adding participant to course sites  -->
+	<h4 class="instruction" rsf:id="add.official"></h4>
+	<h5 class="indnt1 instruction" rsf:id = "add.official1"></h5>
+	<h5 class="indnt1 instruction" rsf:id = "add.official.instruction"></h5>
+	<!-- form for adding participant -->
+	<form rsf:id="participant-form" >
+		<!-- add official account -->
+		<h4 class="instruction" rsf:id="officialAccountSectionTitle"></h4>
+		<label rsf:id="officialAccountLabel" for ="officialAccountParticipant">
+           Official Account Label
+        </label>
+        <br/>
+        <textarea rsf:id="officialAccountParticipant" name="officialAccountParticipant" cols="35" rows="4" id="officialAccountParticipant"></textarea>
+		<a href="#" onclick="rsf:id='officialAccountPickerAction'"><h5 rsf:id="officialAccountPickerLabel"></h5></a><br />
+		<h5 class="instruction textPanelFooter" rsf:id="official.add.multiple"></h5>
+		
+		<!-- add non-official account -->
+		<h4 class="instruction" rsf:id="nonOfficialAccountSectionTitle"></h4>
+		<label rsf:id="nonOfficialAccountLabel" for ="nonOfficialAccountParticipant">
+           Non-Official Account Label
+        </label>
+        <br/>
+        <textarea rsf:id="nonOfficialAccountParticipant" name="nonOfficialAccountParticipant" cols="35" rows="4" id="nonOfficialAccountParticipant"></textarea>
+		<h5 class="instruction textPanelFooter" rsf:id="nonOfficial.add.multiple"></h5>
+		
+		<!--  choose roles -->
+		<h4 class="instruction" rsf:id="roles.instruction"></h4> 
+		<p class="checkbox indnt1">
+			<input type="radio" rsf:id="role" />
+			<label rsf:id="roles.label.sameroles"></label>
+		</p>
+		<p class="checkbox indnt1">
+			<input type="radio" rsf:id="role" />
+			<label rsf:id="roles.label.diffroles"></label>
+		</p>
+		<p class="act">
+			ghj<input accesskey ="s" rsf:id="save" class="active" value="Save" type="submit"/>
+			<input accesskey ="x" rsf:id="cancel" value="Cancel" type="submit"/>
+		</p>
 	</form>
 </div>
 </body>

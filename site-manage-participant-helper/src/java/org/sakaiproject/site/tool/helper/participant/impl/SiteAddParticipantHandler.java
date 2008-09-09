@@ -62,7 +62,7 @@ public class SiteAddParticipantHandler {
     public SessionManager sessionManager = null;
     public ServerConfigurationService serverConfigurationService;
     private final String HELPER_ID = "sakai.tool.helper.id";
-
+    
     // Tool session attribute name used to schedule a whole page refresh.
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
 	
@@ -122,7 +122,7 @@ public class SiteAddParticipantHandler {
     public boolean isCourseSite()
     {
     	boolean rv = false;
-		String courseSiteType = serverConfigurationService.getString("courseSiteType", "course");
+		String courseSiteType = getServerConfigurationString("courseSiteType", "course");
 		if (site != null && courseSiteType.equals(site.getType()))
 		{
 			rv = true;
@@ -137,7 +137,40 @@ public class SiteAddParticipantHandler {
      */
     public String getServerConfigurationString(String param)
     {
-    	return serverConfigurationService.getString(param);
+    	return getServerConfigurationString(param, null);
+    }
+    
+    /**
+     * get the configuration string value
+     * @param param
+     * @param defaultValue
+     * @return
+     */
+    public String getServerConfigurationString(String param, String defaultValue)
+    {
+    	return defaultValue != null?serverConfigurationService.getString(param, defaultValue):serverConfigurationService.getString(param);
+    }
+    
+    /**
+     * Allows the Cancel button to return control to the tool calling this helper
+     * @return
+     */
+    public String processCancel() {
+        ToolSession session = sessionManager.getCurrentToolSession();
+        session.setAttribute(ATTR_TOP_REFRESH, Boolean.TRUE);
+
+        return "done";
+    }
+    
+    /**
+     * get role choice and go to difference html page based on that
+     * @return
+     */
+    public String processGetParticipant() {
+        ToolSession session = sessionManager.getCurrentToolSession();
+        session.setAttribute(ATTR_TOP_REFRESH, Boolean.TRUE);
+
+        return "sameRole";
     }
 }
 

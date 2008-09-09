@@ -52,14 +52,14 @@ import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
 import uk.org.ponder.stringutil.StringList;
 
 /**
- * 
+ * Assign same role while adding participant
  * @author
  *
  */
-public class AddProducer implements ViewComponentProducer, DynamicNavigationCaseReporter, DefaultView, ViewParamsReporter {
+public class SameRoleProducer implements ViewComponentProducer, DynamicNavigationCaseReporter, DefaultView {
 
 	/** Our log (commons). */
-	private static Log M_log = LogFactory.getLog(AddProducer.class);
+	private static Log M_log = LogFactory.getLog(SameRoleProducer.class);
 	
     public SiteAddParticipantHandler handler;
     public static final String VIEW_ID = "Add";
@@ -133,7 +133,8 @@ public class AddProducer implements ViewComponentProducer, DynamicNavigationCase
     	UIOutput.make(tofill, "roles.label.diffroles", messageLocator.getMessage("add.assign2"));
     	UIBoundBoolean.make(participantForm, "role", "", Boolean.TRUE);
 		
-    	UICommand.make(participantForm, "save", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.getSiteTitle}");
+    	UICommand.make(participantForm, "save", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processGetParticipant}");
+
         UICommand.make(participantForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
         
         frameAdjustingProducer.fillComponents(tofill, "resize", "resetFrame");
