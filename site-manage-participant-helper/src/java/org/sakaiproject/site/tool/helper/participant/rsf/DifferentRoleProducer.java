@@ -41,7 +41,7 @@ import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
-import uk.org.ponder.rsf.flow.jsfnav.DynamicNavigationCaseReporter;
+import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.view.ComponentChecker;
 import uk.org.ponder.rsf.view.DefaultView;
@@ -56,7 +56,7 @@ import uk.org.ponder.stringutil.StringList;
  * @author
  *
  */
-public class DifferentRoleProducer implements ViewComponentProducer, DynamicNavigationCaseReporter, DefaultView {
+public class DifferentRoleProducer implements ViewComponentProducer, NavigationCaseReporter, DefaultView {
 
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(DifferentRoleProducer.class);

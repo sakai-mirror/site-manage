@@ -71,6 +71,26 @@ public class SiteAddParticipantHandler {
 		this.messages = messages;
 	}
     
+	public String officialAccountParticipant = null;
+	public String getOfficialAccountParticipant() {
+		return officialAccountParticipant;
+	}
+
+	public void setOfficialAccountParticipant(String officialAccountParticipant) {
+		this.officialAccountParticipant = officialAccountParticipant;
+	}
+
+	public String nonOfficialAccountParticipant = null;
+	
+	public String getNonOfficialAccountParticipant() {
+		return nonOfficialAccountParticipant;
+	}
+
+	public void setNonOfficialAccountParticipant(
+			String nonOfficialAccountParticipant) {
+		this.nonOfficialAccountParticipant = nonOfficialAccountParticipant;
+	}
+	
     /**
      * Initialization method, just gets the current site in preperation for other calls
      *

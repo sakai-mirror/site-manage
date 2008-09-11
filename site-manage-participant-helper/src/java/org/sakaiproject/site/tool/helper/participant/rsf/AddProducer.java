@@ -41,7 +41,7 @@ import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
-import uk.org.ponder.rsf.flow.jsfnav.DynamicNavigationCaseReporter;
+import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.view.ComponentChecker;
 import uk.org.ponder.rsf.view.DefaultView;
@@ -56,7 +56,7 @@ import uk.org.ponder.stringutil.StringList;
  * @author
  *
  */
-public class AddProducer implements ViewComponentProducer, DynamicNavigationCaseReporter, DefaultView, ViewParamsReporter {
+public class AddProducer implements ViewComponentProducer, NavigationCaseReporter, DefaultView, ViewParamsReporter {
 
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(AddProducer.class);
@@ -90,7 +90,7 @@ public class AddProducer implements ViewComponentProducer, DynamicNavigationCase
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
     	
     	String state="";
-    	UIOutput.make(tofill, "page-title", messageLocator.getMessage("add.addpart") + " " + handler.getSiteTitle());
+    	UIOutput.make(tofill, "title", messageLocator.getMessage("add.addpart") + " " + handler.getSiteTitle());
     	
     	boolean isCourseSite = handler.isCourseSite();
     	if (isCourseSite)
@@ -104,7 +104,7 @@ public class AddProducer implements ViewComponentProducer, DynamicNavigationCase
     	UIForm participantForm = UIForm.make(tofill, "participant-form");
     	
     	// official participant
-    	UIInput.make(participantForm, "officialAccountParticipant", "", "");
+    	UIInput.make(participantForm, "officialAccountParticipant", "#{siteAddParticipantHandler.officialAccountParticipant}", "");
     	UIOutput.make(tofill, "officialAccountSectionTitle", handler.getServerConfigurationString("officialAccountSectionTitle"));
     	UIOutput.make(tofill, "officialAccountName", handler.getServerConfigurationString("officialAccountName"));
     	UIOutput.make(tofill, "officialAccountLabel", handler.getServerConfigurationString("officialAccountLabel"));
@@ -121,17 +121,16 @@ public class AddProducer implements ViewComponentProducer, DynamicNavigationCase
     	String allowAddNonOfficialParticipant = handler.getServerConfigurationString("nonOfficialAccount", "true");
     	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
     	{
-    		UIInput.make(participantForm, "nonOfficialAccountParticipant", "", "");
+    		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", "");
 	    	UIOutput.make(tofill, "nonOfficialAccountSectionTitle", handler.getServerConfigurationString("nonOfficialAccountSectionTitle"));
 	    	UIOutput.make(tofill, "nonOfficialAccountName", handler.getServerConfigurationString("nonOfficialAccountName"));
-	    	UIOutput.make(tofill, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));UIOutput.make(tofill, "official.add.multiple", messageLocator.getMessage("add.multiple"));
+	    	UIOutput.make(tofill, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));
 	    	UIOutput.make(tofill, "nonOfficial.add.multiple", messageLocator.getMessage("add.multiple"));
     	}
     	
     	UIOutput.make(tofill, "roles.instruction", messageLocator.getMessage("add.participants"));
     	UIOutput.make(tofill, "roles.label.sameroles", messageLocator.getMessage("add.assign"));
     	UIOutput.make(tofill, "roles.label.diffroles", messageLocator.getMessage("add.assign2"));
-    	UIBoundBoolean.make(participantForm, "role", "", Boolean.TRUE);
 		
     	UICommand.make(participantForm, "save", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.getSiteTitle}");
         UICommand.make(participantForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");

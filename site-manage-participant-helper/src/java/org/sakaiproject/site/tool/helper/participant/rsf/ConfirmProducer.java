@@ -38,7 +38,7 @@ import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
-import uk.org.ponder.rsf.flow.jsfnav.DynamicNavigationCaseReporter;
+import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.view.ComponentChecker;
 import uk.org.ponder.rsf.view.ViewComponentProducer;
@@ -52,7 +52,7 @@ import uk.org.ponder.stringutil.StringList;
  * @author
  *
  */
-public class ConfirmProducer implements ViewComponentProducer, DynamicNavigationCaseReporter, ViewParamsReporter {
+public class ConfirmProducer implements ViewComponentProducer, NavigationCaseReporter{
 
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(ConfirmProducer.class);
@@ -89,10 +89,6 @@ public class ConfirmProducer implements ViewComponentProducer, DynamicNavigation
     	
     	
          frameAdjustingProducer.fillComponents(arg0, "resize", "resetFrame");
-    }
-    
-    public ViewParameters getViewParameters() {
-       return null;
     }
     
     public List reportNavigationCases() {
