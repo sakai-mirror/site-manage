@@ -90,7 +90,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
     	
     	String state="";
-    	UIOutput.make(tofill, "title", messageLocator.getMessage("add.addpart") + " " + handler.getSiteTitle());
+    	UIOutput.make(tofill, "dddd", messageLocator.getMessage("add.addpart") + " " + handler.getSiteTitle());
     	
     	boolean isCourseSite = handler.isCourseSite();
     	if (isCourseSite)
