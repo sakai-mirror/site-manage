@@ -9,49 +9,58 @@
 	<script type="text/javascript" language="JavaScript" src="/library/js/headscripts.js"></script>
 </head>
 
-<body rsf:id="scr=sakai-body">
-<div class="portletBody">
-	<h3 rsf:id="dddd">Add Participant</h3>
-	<!-- instruction for adding participant to course sites  -->
-	<h4 class="instruction" rsf:id="add.official"></h4>
-	<h5 class="indnt1 instruction" rsf:id = "add.official1"></h5>
-	<h5 class="indnt1 instruction" rsf:id = "add.official.instruction"></h5>
-	<!-- form for adding participant -->
-	<form rsf:id="participant-form" >
-		<!-- add official account -->
-		<h4 class="instruction" rsf:id="officialAccountSectionTitle"></h4>
-		<label rsf:id="officialAccountLabel" for ="officialAccountParticipant">
-           Official Account Label
-        </label>
-        <br/>
-        <textarea rsf:id="officialAccountParticipant" name="officialAccountParticipant" cols="35" rows="4" id="officialAccountParticipant"></textarea>
-		<a href="#" onclick="rsf:id='officialAccountPickerAction'"><h5 rsf:id="officialAccountPickerLabel"></h5></a><br />
-		<h5 class="instruction textPanelFooter" rsf:id="official.add.multiple"></h5>
-		
-		<!-- add non-official account -->
-		<h4 class="instruction" rsf:id="nonOfficialAccountSectionTitle"></h4>
-		<label rsf:id="nonOfficialAccountLabel" for ="nonOfficialAccountParticipant">
-           Non-Official Account Label
-        </label>
-        <br/>
-        <textarea rsf:id="nonOfficialAccountParticipant" name="nonOfficialAccountParticipant" cols="35" rows="4" id="nonOfficialAccountParticipant"></textarea>
-		<h5 class="instruction textPanelFooter" rsf:id="nonOfficial.add.multiple"></h5>
-		
-		<!--  choose roles -->
-		<h4 class="instruction" rsf:id="roles.instruction"></h4> 
-		<p class="checkbox indnt1">
-			<input type="radio" rsf:id="role" />
-			<label rsf:id="roles.label.sameroles"></label>
-		</p>
-		<p class="checkbox indnt1">
-			<input type="radio" rsf:id="role" />
-			<label rsf:id="roles.label.diffroles"></label>
-		</p>
-		<p class="act">
-			ghj<input accesskey ="s" rsf:id="save" class="active" value="Save" type="submit"/>
-			<input accesskey ="x" rsf:id="cancel" value="Cancel" type="submit"/>
-		</p>
-	</form>
+<body>
+<div id="participant-body" class="portletBody">
+	<!-- alert message -->
+	<div rsf:id="error-row:">
+		<div class="alertMessage" rsf:id="error">We Have Errors!</div>
+	</div>
+	<div rsf:id="content:">
+		<!-- instruction for adding participant to course sites  -->
+		<h3 rsf:id="msg=java.addp">Add Participant</h3>
+		<h4 class="instruction" rsf:id="msg=add.official"></h4>
+		<h5 class="indnt1 instruction" rsf:id = "msg=add.official1"></h5>
+		<h5 class="indnt1 instruction" rsf:id = "msg=add.official.instruction"></h5>
+		<!-- form for adding participant -->
+		<form rsf:id="participant-form" >
+			<!-- add official account -->
+			<h4 class="instruction" rsf:id="officialAccountSectionTitle"></h4>
+			<label rsf:id="officialAccountLabel" for ="officialAccountParticipant">
+	           Official Account Label
+	        </label>
+	        <br/>
+	        <textarea rsf:id="officialAccountParticipant" name="officialAccountParticipant" cols="35" rows="4" id="officialAccountParticipant"></textarea>
+			<a href="#" onclick="rsf:id='officialAccountPickerAction'"><h5 rsf:id="officialAccountPickerLabel"></h5></a><br />
+			<h5 class="instruction textPanelFooter" rsf:id="msg=add.multiple"></h5>
+			
+			<!-- add non-official account -->
+			<h4 class="instruction" rsf:id="nonOfficialAccountSectionTitle"></h4>
+			<label rsf:id="nonOfficialAccountLabel" for ="nonOfficialAccountParticipant">
+	           Non-Official Account Label
+	        </label>
+	        <br/>
+	        <textarea rsf:id="nonOfficialAccountParticipant" name="nonOfficialAccountParticipant" cols="35" rows="4" id="nonOfficialAccountParticipant"></textarea>
+			<h5 class="instruction textPanelFooter" rsf:id="msg=add.multiple"></h5>
+			
+			<!--  choose roles -->
+			<h4 class="instruction" rsf:id="msg=add.participants"></h4> 
+			<span rsf:id="select-roles"></span>
+			<table class="listHier lines nolines" style="width:auto" summary="">
+				<tr rsf:id="role-row:">
+					<td>
+					  <input rsf:id="role-select" title="Select role type" type="radio" id="radio" name="roleChoice" value=""/>
+					  <label rsf:id="role-label" for = "role-select">
+					  	label
+					  </label>
+					</td>		
+				</tr>
+			</table>
+			<p class="act">
+				<input accesskey ="s" rsf:id="continue" class="active" value="Save" type="submit"/>
+				<input accesskey ="x" rsf:id="cancel" value="Cancel" type="submit"/>
+			</p>
+		</form>
+	</div>
 </div>
 </body>
 </html>

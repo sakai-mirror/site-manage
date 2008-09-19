@@ -10,7 +10,8 @@
     <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager" />
     <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
     <property name="authzGroupService" ref="org.sakaiproject.authz.api.AuthzGroupService" />
-    <property name="messages" ref="targettedMessageList" />
+    <property name="targettedMessageList" ref="targettedMessageList" />
+    <property name="messageLocator" ref="messageLocator"/>
   </bean>
   
   <bean id="AddProducer"
@@ -26,15 +27,15 @@
       class="org.sakaiproject.site.tool.helper.participant.rsf.ConfirmProducer">
     <property name="handler" ref="siteAddParticipantHandler" />
     <property name="messageLocator" ref="messageLocator"/>
-    <property name="richTextEvolver" ref="richTextEvolver" />
     <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>
     <property name="targettedMessageList" ref="targettedMessageList" />
     <property name="siteService" ref="org.sakaiproject.site.api.SiteService" />
     <property name="userDirectoryService" ref="org.sakaiproject.user.api.UserDirectoryService" />
   </bean>
   
   <bean id="SameRoleProducer"
-      class="org.sakaiproject.site.tool.helper.participant.rsf.AddProducer">
+      class="org.sakaiproject.site.tool.helper.participant.rsf.SameRoleProducer">
     <property name="handler" ref="siteAddParticipantHandler" />
     <property name="messageLocator" ref="messageLocator"/>
     <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>
@@ -43,7 +44,17 @@
   </bean>
   
   <bean id="DifferentRoleProducer"
-      class="org.sakaiproject.site.tool.helper.participant.rsf.AddProducer">
+      class="org.sakaiproject.site.tool.helper.participant.rsf.DifferentRoleProducer">
+    <property name="handler" ref="siteAddParticipantHandler" />
+    <property name="messageLocator" ref="messageLocator"/>
+    <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>
+    <property name="frameAdjustingProducer" ref="frameAdjustingProducer"/>
+    <property name="targettedMessageList" ref="targettedMessageList" />
+  </bean>
+  
+    
+  <bean id="EmailNotiProducer"
+      class="org.sakaiproject.site.tool.helper.participant.rsf.EmailNotiProducer">
     <property name="handler" ref="siteAddParticipantHandler" />
     <property name="messageLocator" ref="messageLocator"/>
     <property name="sessionManager" ref="org.sakaiproject.tool.api.SessionManager"/>

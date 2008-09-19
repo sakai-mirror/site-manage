@@ -10,11 +10,13 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
+import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.site.tool.helper.participant.rsf.AddViewParameters;
 import org.sakaiproject.site.tool.helper.participant.impl.SiteAddParticipantHandler;
 import org.sakaiproject.site.util.Participant;
@@ -26,26 +28,34 @@ import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 
 import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
+import uk.ac.cam.caret.sakai.rsf.util.SakaiURLUtil;
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.messageutil.TargettedMessageList;
 import uk.org.ponder.rsf.components.UIBoundBoolean;
 import uk.org.ponder.rsf.components.UIBranchContainer;
 import uk.org.ponder.rsf.components.UIContainer;
 import uk.org.ponder.rsf.components.UIInput;
+import uk.org.ponder.rsf.components.UIInternalLink;
 import uk.org.ponder.rsf.components.UIMessage;
 import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UISelect;
+import uk.org.ponder.rsf.components.UISelectChoice;
+import uk.org.ponder.rsf.components.decorators.DecoratorList;
 import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
+import uk.org.ponder.rsf.flow.ActionResultInterceptor;
+import uk.org.ponder.rsf.flow.ARIResult;
+import uk.org.ponder.rsf.flow.ActionResultInterceptor;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.view.ComponentChecker;
 import uk.org.ponder.rsf.view.DefaultView;
 import uk.org.ponder.rsf.view.ViewComponentProducer;
+import uk.org.ponder.rsf.viewstate.RawViewParameters;
 import uk.org.ponder.rsf.viewstate.SimpleViewParameters;
 import uk.org.ponder.rsf.viewstate.ViewParameters;
 import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
@@ -56,13 +66,13 @@ import uk.org.ponder.stringutil.StringList;
  * @author
  *
  */
-public class SameRoleProducer implements ViewComponentProducer, NavigationCaseReporter, DefaultView {
+public class SameRoleProducer implements ViewComponentProducer, NavigationCaseReporter, ActionResultInterceptor {
 
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(SameRoleProducer.class);
 	
     public SiteAddParticipantHandler handler;
-    public static final String VIEW_ID = "Add";
+    public static final String VIEW_ID = "SameRole";
     public MessageLocator messageLocator;
     public FrameAdjustingProducer frameAdjustingProducer;
     public SessionManager sessionManager;
@@ -89,55 +99,36 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
 
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
     	
-    	String state="";
-    	UIOutput.make(tofill, "page-title", messageLocator.getMessage("add.addpart") + " " + handler.getSiteTitle());
-    	
-    	boolean isCourseSite = handler.isCourseSite();
-    	if (isCourseSite)
-    	{
-    		// show specific instructions for adding participant into course site
-	    	UIOutput.make(tofill, "add.official", messageLocator.getMessage("add.official"));
-	    	UIOutput.make(tofill, "add.official1", messageLocator.getMessage("add.official1"));
-	    	UIOutput.make(tofill, "add.official.instruction", messageLocator.getMessage("add.official.instruction"));
-	    }
-    	
-    	UIForm participantForm = UIForm.make(tofill, "participant-form");
-    	
-    	// official participant
-    	UIInput.make(participantForm, "officialAccountParticipant", "", "");
-    	UIOutput.make(tofill, "officialAccountSectionTitle", handler.getServerConfigurationString("officialAccountSectionTitle"));
-    	UIOutput.make(tofill, "officialAccountName", handler.getServerConfigurationString("officialAccountName"));
-    	UIOutput.make(tofill, "officialAccountLabel", handler.getServerConfigurationString("officialAccountLabel"));
-    	UIOutput.make(tofill, "official.add.multiple", messageLocator.getMessage("add.multiple"));
-    	
-    	String pickerAction = handler.getServerConfigurationString("officialAccountPickerAction");
-		if (pickerAction != null && !"".equals(pickerAction))
-		{
-			UIOutput.make(tofill, "officialAccountPickerLabel", handler.getServerConfigurationString("officialAccountPickerLabel"));
-			UIOutput.make(tofill, "officialAccountPickerAction", pickerAction);
-		}
-    	
-		// non official participant
-    	String allowAddNonOfficialParticipant = handler.getServerConfigurationString("nonOfficialAccount", "true");
-    	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
-    	{
-    		UIInput.make(participantForm, "nonOfficialAccountParticipant", "", "");
-	    	UIOutput.make(tofill, "nonOfficialAccountSectionTitle", handler.getServerConfigurationString("nonOfficialAccountSectionTitle"));
-	    	UIOutput.make(tofill, "nonOfficialAccountName", handler.getServerConfigurationString("nonOfficialAccountName"));
-	    	UIOutput.make(tofill, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));UIOutput.make(tofill, "official.add.multiple", messageLocator.getMessage("add.multiple"));
-	    	UIOutput.make(tofill, "nonOfficial.add.multiple", messageLocator.getMessage("add.multiple"));
-    	}
-    	
-    	UIOutput.make(tofill, "roles.instruction", messageLocator.getMessage("add.participants"));
-    	UIOutput.make(tofill, "roles.label.sameroles", messageLocator.getMessage("add.assign"));
-    	UIOutput.make(tofill, "roles.label.diffroles", messageLocator.getMessage("add.assign2"));
-    	UIBoundBoolean.make(participantForm, "role", "", Boolean.TRUE);
-		
-    	UICommand.make(participantForm, "save", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processGetParticipant}");
-
-        UICommand.make(participantForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
+    	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
         
-        frameAdjustingProducer.fillComponents(tofill, "resize", "resetFrame");
+    	UIForm sameRoleForm = UIForm.make(content, "sameRole-form");
+    	
+    	// role choice 
+	    StringList roleItems = new StringList();
+	    UISelect roleSelect = UISelect.make(sameRoleForm, "select-roles", null,
+		        "#{siteAddParticipantHandler.sameRoleChoice}", "sameRole");
+	    List<Role> roles = handler.getRoles();
+	    for (int i = 0; i < roles.size(); ++i) {
+	    	Role r = roles.get(i);
+		      UIBranchContainer roleRow = UIBranchContainer.make(sameRoleForm,
+		          "role-row:", Integer.toString(i));
+            UIOutput.make(roleRow, "role-label", r.getId() + " (" + r.getDescription() + ")");
+            UISelectChoice.make(roleRow, "role-select", roleSelect.getFullID(), i);
+            roleItems.add(r.getId());
+        }
+        roleSelect.optionlist.setValue(roleItems.toStringArray()); 
+        
+        // list of users
+        for (Iterator<User> it=handler.getUsers().iterator(); it.hasNext(); ) {
+        	User user = it.next();
+            UIBranchContainer userrow = UIBranchContainer.make(sameRoleForm, "user-row:", user.getId());
+            UIMessage message = UIMessage.make(userrow,"user-label","user_tooltip", new String[] {user.getEid() + "(" + user.getSortName() + ")"});
+        }
+    	
+    	UICommand.make(sameRoleForm, "continue", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processSameRoleContinue}");
+    	UICommand.make(sameRoleForm, "back", messageLocator.getMessage("gen.back"), "#{siteAddParticipantHandler.processSameRoleBack}");
+    	UICommand.make(sameRoleForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
+   
          
     }
     
@@ -150,9 +141,17 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
     
     public List reportNavigationCases() {
         List togo = new ArrayList();
-        togo.add(new NavigationCase("sameRole", new SimpleViewParameters(SameRoleProducer.VIEW_ID)));
-        togo.add(new NavigationCase("differentRole", new SimpleViewParameters(DifferentRoleProducer.VIEW_ID)));
+        togo.add(new NavigationCase("continue", new SimpleViewParameters(EmailNotiProducer.VIEW_ID)));
+        togo.add(new NavigationCase("back", new SimpleViewParameters(AddProducer.VIEW_ID)));
         return togo;
     }
-
+    
+    public void interceptActionResult(ARIResult result, ViewParameters incoming,
+            Object actionReturn) 
+    {
+        if ("done".equals(actionReturn)) {
+          Tool tool = handler.getCurrentTool();
+           result.resultingView = new RawViewParameters(SakaiURLUtil.getHelperDoneURL(tool, sessionManager));
+        }
+    }
 }

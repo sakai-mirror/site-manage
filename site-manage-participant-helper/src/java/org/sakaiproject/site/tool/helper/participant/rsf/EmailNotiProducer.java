@@ -29,6 +29,7 @@ import org.sakaiproject.user.api.UserDirectoryService;
 import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
 import uk.ac.cam.caret.sakai.rsf.util.SakaiURLUtil;
 import uk.org.ponder.messageutil.MessageLocator;
+import uk.org.ponder.messageutil.TargettedMessage;
 import uk.org.ponder.messageutil.TargettedMessageList;
 import uk.org.ponder.rsf.components.UIBoundBoolean;
 import uk.org.ponder.rsf.components.UIBranchContainer;
@@ -39,12 +40,13 @@ import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UISelect;
-import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
+import uk.org.ponder.rsf.components.UISelectChoice;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
 import uk.org.ponder.rsf.flow.ActionResultInterceptor;
 import uk.org.ponder.rsf.flow.ARIResult;
+import uk.org.ponder.rsf.flow.ActionResultInterceptor;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.view.ComponentChecker;
@@ -57,17 +59,17 @@ import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
 import uk.org.ponder.stringutil.StringList;
 
 /**
- * Assign different roles while adding participant
+ * Assign same role while adding participant
  * @author
  *
  */
-public class DifferentRoleProducer implements ViewComponentProducer, NavigationCaseReporter, ActionResultInterceptor{
+public class EmailNotiProducer implements ViewComponentProducer, NavigationCaseReporter, ActionResultInterceptor {
 
 	/** Our log (commons). */
-	private static Log M_log = LogFactory.getLog(DifferentRoleProducer.class);
+	private static Log M_log = LogFactory.getLog(EmailNotiProducer.class);
 	
     public SiteAddParticipantHandler handler;
-    public static final String VIEW_ID = "DifferentRole";
+    public static final String VIEW_ID = "EmailNoti";
     public MessageLocator messageLocator;
     public FrameAdjustingProducer frameAdjustingProducer;
     public SessionManager sessionManager;
@@ -81,9 +83,9 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
         return VIEW_ID;
     }
     
-    private TargettedMessageList tml;
-	public void setTargettedMessageList(TargettedMessageList tml) {
-		this.tml = tml;
+    private TargettedMessageList targettedMessageList;
+	public void setTargettedMessageList(TargettedMessageList targettedMessageList) {
+		this.targettedMessageList = targettedMessageList;
 	}
 	
 	public UserDirectoryService userDirectoryService;
@@ -94,6 +96,49 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
     	
+    	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
+        
+    	UIForm emailNotiForm = UIForm.make(content, "emailNoti-form");
+    	
+    	// role choice
+    	String[] values = new String[] { "true", "false"};
+	    String[] labels = new String[] {
+	    		messageLocator.getMessage("addnoti.sendnow"), 
+	    		messageLocator.getMessage("addnoti.dontsend")
+	    		};	    
+	    StringList notiItems = new StringList();
+	    UISelect notiSelect = UISelect.make(emailNotiForm, "select-noti", null,
+		        "#{siteAddParticipantHandler.emailNotiChoice}", "false");
+  
+	    for (int i = 0; i < values.length; i++) {
+	    	
+		    UIBranchContainer notiRow = UIBranchContainer.make(emailNotiForm, "noti-row:", Integer.toString(i));
+            UIOutput.make(notiRow, "noti-label", labels[i]);
+            UISelectChoice.make(notiRow, "noti-select", notiSelect.getFullID(), i);
+            notiItems.add(values[i]);
+        }
+        notiSelect.optionlist.setValue(notiItems.toStringArray());   
+        
+    	// buttons
+    	UICommand.make(emailNotiForm, "continue", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processEmailNotiContinue}");
+    	UICommand.make(emailNotiForm, "back", messageLocator.getMessage("gen.back"), "#{siteAddParticipantHandler.processEmailNotiBack}");
+    	UICommand.make(emailNotiForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
+   
+    	//process any messages
+        if (targettedMessageList != null && targettedMessageList.size() > 0) {
+			for (int i = 0; i < targettedMessageList.size(); i ++ ) {
+				UIBranchContainer errorRow = UIBranchContainer.make(tofill,"error-row:", new Integer(i).toString());
+				TargettedMessage msg = targettedMessageList.messageAt(i);
+		    	if (msg.args != null ) 
+		    	{
+		    		UIMessage.make(errorRow,"error", msg.acquireMessageCode(), (Object[]) msg.args);
+		    	} 
+		    	else 
+		    	{
+		    		UIMessage.make(errorRow,"error", msg.acquireMessageCode());
+		    	}
+			}
+        }
     }
     
     public ViewParameters getViewParameters() {
@@ -105,8 +150,9 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
     
     public List reportNavigationCases() {
         List togo = new ArrayList();
-        togo.add(new NavigationCase("confirm", new SimpleViewParameters(ConfirmProducer.VIEW_ID)));
-        togo.add(new NavigationCase("back", new SimpleViewParameters(AddProducer.VIEW_ID)));
+        togo.add(new NavigationCase("continue", new SimpleViewParameters(ConfirmProducer.VIEW_ID)));
+        togo.add(new NavigationCase("backSameRole", new SimpleViewParameters(SameRoleProducer.VIEW_ID)));
+        togo.add(new NavigationCase("backDifferentRole", new SimpleViewParameters(DifferentRoleProducer.VIEW_ID)));
         return togo;
     }
     
@@ -118,5 +164,4 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
            result.resultingView = new RawViewParameters(SakaiURLUtil.getHelperDoneURL(tool, sessionManager));
         }
     }
-
 }
