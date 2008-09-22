@@ -148,8 +148,8 @@ public class EmailNotiProducer implements ViewComponentProducer, NavigationCaseR
         return params;
     }
     
-    public List reportNavigationCases() {
-        List togo = new ArrayList();
+    public List<NavigationCase> reportNavigationCases() {
+        List<NavigationCase> togo = new ArrayList<NavigationCase>();
         togo.add(new NavigationCase("continue", new SimpleViewParameters(ConfirmProducer.VIEW_ID)));
         togo.add(new NavigationCase("backSameRole", new SimpleViewParameters(SameRoleProducer.VIEW_ID)));
         togo.add(new NavigationCase("backDifferentRole", new SimpleViewParameters(DifferentRoleProducer.VIEW_ID)));

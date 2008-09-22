@@ -73,12 +73,8 @@ public class SiteAddParticipantHandler {
     // Tool session attribute name used to schedule a whole page refresh.
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
 	
-	private TargettedMessageList targettedMessageList;
-	
-	public TargettedMessageList getTargettedMessageList() {
-		return targettedMessageList;
-	}
-	public void setMessages(TargettedMessageList targettedMessageList) {
+    public TargettedMessageList targettedMessageList;
+	public void setTargettedMessageList(TargettedMessageList targettedMessageList) {
 		this.targettedMessageList = targettedMessageList;
 	}
     
@@ -147,22 +143,22 @@ public class SiteAddParticipantHandler {
 	}
 	
 	/** the user selected */
-	public Hashtable<User, String> userRoleTable = new Hashtable<User, String>();
+	public Hashtable<String, String> userRoleTable = new Hashtable<String, String>();
 
-	public Hashtable<User, String> getUserRoleTable() {
+	public Hashtable<String, String> getUserRoleTable() {
 		return userRoleTable;
 	}
-	public void setUserRoleTable(Hashtable<User, String> userRoleTable) {
+	public void setUserRoleTable(Hashtable<String, String> userRoleTable) {
 		this.userRoleTable = userRoleTable;
 	}
 	
-	public List<User> getUsers()
+	public List<String> getUsers()
 	{
-		List<User> rv = new Vector<User>();
-		Enumeration e = userRoleTable.keys();
+		List<String> rv = new Vector<String>();
+		Enumeration<String> e = userRoleTable.keys();
 		while (e.hasMoreElements())
 		{
-			rv.add((User) e.nextElement());
+			rv.add(e.nextElement());
 		}
 		return rv;
 		
@@ -274,7 +270,8 @@ public class SiteAddParticipantHandler {
      * @return
      */
     public String processGetParticipant() {
-
+    	// reset errors
+    	resetTargettedMessageList();
     	checkAddParticipant();
     	if (targettedMessageList != null && targettedMessageList.size() > 0)
     	{
@@ -288,12 +285,24 @@ public class SiteAddParticipantHandler {
     	}
     }
     
+    private void resetTargettedMessageList()
+    {
+    	targettedMessageList = new TargettedMessageList();
+    }
+    
     /**
      * get the same role choice and continue
      * @return
      */
     public String processSameRoleContinue() {
 
+    	Enumeration<String> userEIds = userRoleTable.keys();
+    	while (userEIds.hasMoreElements())
+    	{
+    		String userEId = userEIds.nextElement();
+    		// update every user with the same role selected.
+    		userRoleTable.put(userEId, sameRoleChoice);
+    	}
         return "continue";
     }
     
@@ -441,10 +450,17 @@ public class SiteAddParticipantHandler {
 						}
 						
 						// update the userRoleTable
-						if (!userRoleTable.contains(u))
+						if (!userRoleTable.contains(officialAccount))
 						{
-							userRoleTable.put(u, null);
+							userRoleTable.put(officialAccount, "");
 						}
+					}
+					else
+					{
+						// not valid user
+						targettedMessageList.addMessage(new TargettedMessage("java.username",
+				                new Object[] { officialAccount }, 
+				                TargettedMessage.SEVERITY_INFO));
 					}
 				}
 			}
@@ -502,12 +518,6 @@ public class SiteAddParticipantHandler {
 								participant.active = true;
 								pList.add(participant);
 							}
-							
-							// update the userRoleTable
-							if (!userRoleTable.contains(u))
-							{
-								userRoleTable.put(u, null);
-							}
 						} catch (UserNotDefinedException e) {
 							// if the nonOfficialAccount user is not in the system
 							// yet
@@ -524,6 +534,12 @@ public class SiteAddParticipantHandler {
 							// -ggolden
 							participant.active = true;
 							pList.add(participant);
+						}
+						
+						// update the userRoleTable
+						if (!userRoleTable.contains(nonOfficialAccount))
+						{
+							userRoleTable.put(nonOfficialAccount, "");
 						}
 					}
 				} // if

@@ -109,7 +109,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	UIForm participantForm = UIForm.make(content, "participant-form");
     	
     	// official participant
-    	UIInput.make(participantForm, "officialAccountParticipant", "#{siteAddParticipantHandler.officialAccountParticipant}", "");
+    	UIInput.make(participantForm, "officialAccountParticipant", "#{siteAddParticipantHandler.officialAccountParticipant}", handler.officialAccountParticipant);
     	UIOutput.make(participantForm, "officialAccountSectionTitle", handler.getServerConfigurationString("officialAccountSectionTitle"));
     	UIOutput.make(participantForm, "officialAccountName", handler.getServerConfigurationString("officialAccountName"));
     	UIOutput.make(participantForm, "officialAccountLabel", handler.getServerConfigurationString("officialAccountLabel"));
@@ -125,7 +125,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	String allowAddNonOfficialParticipant = handler.getServerConfigurationString("nonOfficialAccount", "true");
     	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
     	{
-    		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", "");
+    		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", handler.nonOfficialAccountParticipant);
 	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", handler.getServerConfigurationString("nonOfficialAccountSectionTitle"));
 	    	UIOutput.make(participantForm, "nonOfficialAccountName", handler.getServerConfigurationString("nonOfficialAccountName"));
 	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));
@@ -151,6 +151,7 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
         UICommand.make(participantForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
         
         //process any messages
+        targettedMessageList = handler.targettedMessageList;
         if (targettedMessageList != null && targettedMessageList.size() > 0) {
 			for (int i = 0; i < targettedMessageList.size(); i++ ) {
 				UIBranchContainer errorRow = UIBranchContainer.make(tofill,"error-row:", new Integer(i).toString());

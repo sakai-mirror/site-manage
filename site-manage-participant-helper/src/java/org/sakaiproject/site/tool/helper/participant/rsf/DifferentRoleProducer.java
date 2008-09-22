@@ -10,6 +10,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
+import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.site.api.Group;
@@ -39,6 +40,7 @@ import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UISelect;
+import uk.org.ponder.rsf.components.UISelectChoice;
 import uk.org.ponder.rsf.components.decorators.UILabelTargetDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
@@ -81,9 +83,9 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
         return VIEW_ID;
     }
     
-    private TargettedMessageList tml;
-	public void setTargettedMessageList(TargettedMessageList tml) {
-		this.tml = tml;
+    private TargettedMessageList targettedMessageList;
+	public void setTargettedMessageList(TargettedMessageList targettedMessageList) {
+		this.targettedMessageList = targettedMessageList;
 	}
 	
 	public UserDirectoryService userDirectoryService;
@@ -93,7 +95,64 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 	}
 
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
+    	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
+        
+    	UIForm differentRoleForm = UIForm.make(content, "differentRole-form");
     	
+        // list of users
+        List<Role> roles = handler.getRoles();
+        List<String> roleIds = new Vector<String>();
+        for (int i = 0; i < roles.size(); ++i) {
+	    	Role r = roles.get(i);
+	    	String rId = r.getId();
+            UIBranchContainer roleRow = UIBranchContainer.make(differentRoleForm, "role-row:", rId);
+            UIOutput.make(roleRow, "role-label", rId);
+            // populate the id list
+            roleIds.add(rId);
+        }
+        
+        String[] userRoleArr = new String[roleIds.size()];
+        for (int h = 0; h < roleIds.size(); h++) {
+           userRoleArr[h] = roleIds.get(h);
+        }
+    	
+        String userOTPBinding = null;
+        String userOTP = null;
+        
+        // list of users
+        String curItemNum = null;
+        int i = 0;
+        for (Iterator<String> it=handler.getUsers().iterator(); it.hasNext(); i++) {
+        	curItemNum = Integer.toString(i);
+        	
+        	userOTPBinding = "user." + roleIds.get(i);
+            userOTP = userOTPBinding + ".";
+            
+        	String userEId = it.next();
+        	String userName = userEId;
+        	try
+        	{
+        		User u = userDirectoryService.getUserByEid(userEId);
+        		userName = u.getSortName();
+        	}
+        	catch (Exception e)
+        	{
+        		M_log.info(this + ":fillComponents: cannot find user with eid=" + userEId);
+        	}
+            
+            //String[] roleIdArray = (String[]) roleIds.toArray();
+
+            // SECOND LINE
+            UIBranchContainer userRow = UIBranchContainer.make(differentRoleForm, "user-row:", curItemNum);
+            UIOutput.make(userRow, "user-name", userEId + "(" + userName + ")");
+            UISelect orderPulldown = UISelect.make(userRow, "role-select", userRoleArr, userOTP + "role", null);
+  		}
+        
+    	UICommand.make(differentRoleForm, "continue", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processDifferentRoleContinue}");
+    	UICommand.make(differentRoleForm, "back", messageLocator.getMessage("gen.back"), "#{siteAddParticipantHandler.processDifferentRoleBack}");
+    	UICommand.make(differentRoleForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
+   
+         
     }
     
     public ViewParameters getViewParameters() {
@@ -103,8 +162,8 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
         return params;
     }
     
-    public List reportNavigationCases() {
-        List togo = new ArrayList();
+    public List<NavigationCase> reportNavigationCases() {
+        List<NavigationCase> togo = new ArrayList<NavigationCase>();
         togo.add(new NavigationCase("confirm", new SimpleViewParameters(ConfirmProducer.VIEW_ID)));
         togo.add(new NavigationCase("back", new SimpleViewParameters(AddProducer.VIEW_ID)));
         return togo;

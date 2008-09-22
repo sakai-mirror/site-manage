@@ -86,9 +86,9 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
         return VIEW_ID;
     }
     
-    private TargettedMessageList tml;
-	public void setTargettedMessageList(TargettedMessageList tml) {
-		this.tml = tml;
+    private TargettedMessageList targettedMessageList;
+	public void setTargettedMessageList(TargettedMessageList targettedMessageList) {
+		this.targettedMessageList = targettedMessageList;
 	}
 	
 	public UserDirectoryService userDirectoryService;
@@ -110,8 +110,7 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
 	    List<Role> roles = handler.getRoles();
 	    for (int i = 0; i < roles.size(); ++i) {
 	    	Role r = roles.get(i);
-		      UIBranchContainer roleRow = UIBranchContainer.make(sameRoleForm,
-		          "role-row:", Integer.toString(i));
+		    UIBranchContainer roleRow = UIBranchContainer.make(sameRoleForm,"role-row:", Integer.toString(i));
             UIOutput.make(roleRow, "role-label", r.getId() + " (" + r.getDescription() + ")");
             UISelectChoice.make(roleRow, "role-select", roleSelect.getFullID(), i);
             roleItems.add(r.getId());
@@ -119,10 +118,20 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
         roleSelect.optionlist.setValue(roleItems.toStringArray()); 
         
         // list of users
-        for (Iterator<User> it=handler.getUsers().iterator(); it.hasNext(); ) {
-        	User user = it.next();
-            UIBranchContainer userrow = UIBranchContainer.make(sameRoleForm, "user-row:", user.getId());
-            UIMessage message = UIMessage.make(userrow,"user-label","user_tooltip", new String[] {user.getEid() + "(" + user.getSortName() + ")"});
+        for (Iterator<String> it=handler.getUsers().iterator(); it.hasNext(); ) {
+        	String userEId = it.next();
+        	String userName = userEId;
+        	try
+        	{
+        		User u = userDirectoryService.getUserByEid(userEId);
+        		userName = u.getSortName();
+        	}
+        	catch (Exception e)
+        	{
+        		M_log.info(this + ":fillComponents: cannot find user with eid=" + userEId);
+        	}
+            UIBranchContainer userRow = UIBranchContainer.make(sameRoleForm, "user-row:", userEId);
+            UIOutput.make(userRow, "user-label", userEId + "(" + userName + ")");
         }
     	
     	UICommand.make(sameRoleForm, "continue", messageLocator.getMessage("gen.continue"), "#{siteAddParticipantHandler.processSameRoleContinue}");
@@ -139,8 +148,8 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
         return params;
     }
     
-    public List reportNavigationCases() {
-        List togo = new ArrayList();
+    public List<NavigationCase> reportNavigationCases() {
+        List<NavigationCase> togo = new ArrayList<NavigationCase>();
         togo.add(new NavigationCase("continue", new SimpleViewParameters(EmailNotiProducer.VIEW_ID)));
         togo.add(new NavigationCase("back", new SimpleViewParameters(AddProducer.VIEW_ID)));
         return togo;
