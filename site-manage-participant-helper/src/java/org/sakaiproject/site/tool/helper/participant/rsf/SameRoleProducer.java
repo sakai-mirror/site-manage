@@ -30,6 +30,7 @@ import org.sakaiproject.user.api.UserDirectoryService;
 import uk.ac.cam.caret.sakai.rsf.producers.FrameAdjustingProducer;
 import uk.ac.cam.caret.sakai.rsf.util.SakaiURLUtil;
 import uk.org.ponder.messageutil.MessageLocator;
+import uk.org.ponder.messageutil.TargettedMessage;
 import uk.org.ponder.messageutil.TargettedMessageList;
 import uk.org.ponder.rsf.components.UIBoundBoolean;
 import uk.org.ponder.rsf.components.UIBranchContainer;
@@ -106,12 +107,12 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
     	// role choice 
 	    StringList roleItems = new StringList();
 	    UISelect roleSelect = UISelect.make(sameRoleForm, "select-roles", null,
-		        "#{siteAddParticipantHandler.sameRoleChoice}", "sameRole");
+		        "#{siteAddParticipantHandler.sameRoleChoice}", handler.sameRoleChoice);
 	    List<Role> roles = handler.getRoles();
 	    for (int i = 0; i < roles.size(); ++i) {
 	    	Role r = roles.get(i);
 		    UIBranchContainer roleRow = UIBranchContainer.make(sameRoleForm,"role-row:", Integer.toString(i));
-            UIOutput.make(roleRow, "role-label", r.getId() + " (" + r.getDescription() + ")");
+            UIOutput.make(roleRow, "role-label", r.getId());
             UISelectChoice.make(roleRow, "role-select", roleSelect.getFullID(), i);
             roleItems.add(r.getId());
         }
@@ -138,6 +139,22 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
     	UICommand.make(sameRoleForm, "back", messageLocator.getMessage("gen.back"), "#{siteAddParticipantHandler.processSameRoleBack}");
     	UICommand.make(sameRoleForm, "cancel", messageLocator.getMessage("gen.cancel"), "#{siteAddParticipantHandler.processCancel}");
    
+    	//process any messages
+        targettedMessageList = handler.targettedMessageList;
+        if (targettedMessageList != null && targettedMessageList.size() > 0) {
+			for (int i = 0; i < targettedMessageList.size(); i++ ) {
+				UIBranchContainer errorRow = UIBranchContainer.make(tofill,"error-row:", new Integer(i).toString());
+				TargettedMessage msg = targettedMessageList.messageAt(i);
+		    	if (msg.args != null ) 
+		    	{
+		    		UIMessage.make(errorRow,"error", msg.acquireMessageCode(), (Object[]) msg.args);
+		    	} 
+		    	else 
+		    	{
+		    		UIMessage.make(errorRow,"error", msg.acquireMessageCode());
+		    	}
+			}
+        }
          
     }
     

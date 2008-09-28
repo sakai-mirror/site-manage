@@ -101,14 +101,14 @@ public class EmailNotiProducer implements ViewComponentProducer, NavigationCaseR
     	UIForm emailNotiForm = UIForm.make(content, "emailNoti-form");
     	
     	// role choice
-    	String[] values = new String[] { "true", "false"};
+    	String[] values = new String[] { Boolean.TRUE.toString(), Boolean.FALSE.toString()};
 	    String[] labels = new String[] {
 	    		messageLocator.getMessage("addnoti.sendnow"), 
 	    		messageLocator.getMessage("addnoti.dontsend")
 	    		};	    
 	    StringList notiItems = new StringList();
 	    UISelect notiSelect = UISelect.make(emailNotiForm, "select-noti", null,
-		        "#{siteAddParticipantHandler.emailNotiChoice}", "false");
+		        "#{siteAddParticipantHandler.emailNotiChoice}", handler.emailNotiChoice);
   
 	    for (int i = 0; i < values.length; i++) {
 	    	

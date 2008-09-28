@@ -11,6 +11,10 @@
 
 <body rsf:id="scr=sakai-body">
 <div class="portletBody">
+	<!-- alert message -->
+	<div rsf:id="error-row:">
+		<div class="alertMessage" rsf:id="error">We Have Errors!</div>
+	</div>
 	<div rsf:id="content:">
 		<h3 rsf:id="msg=adddif.choose">Choose a Role for Participants</h3>
 		<h4 class="instruction" rsf:id="msg=adddif.chroles"><span class="reqStarInline">*</span></h4>
@@ -34,13 +38,13 @@
 			  <tbody>
 			    <tr rsf:id="user-row:">
 			      <td rsf:id="user-name"></td>
-			      <td>
-			      	<select rsf:id="role-select" id="user-row::0:item-select-selection" title="Choose a role for this user">
-						<option value="1" selected="selected">1</option>
-						<option value="4">4</option>
-						<option value="3">3</option>
-					</select>
-			      </td>
+			      <td width="10%">
+						<select size="1" rsf:id="role-select" id="role-select" style="valign:top">
+						  <option value="" selected="selected">Please choose a role:</option>
+				          <option value="access" >access</option>
+				          <option value="maintain">maintain</option>
+				        </select>
+				      </td>
 			    </tr>
 			  </tbody>
 			</table>
