@@ -45,6 +45,8 @@ import org.sakaiproject.util.ResourceLoader;
 //import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import sun.util.logging.resources.logging;
+
 import com.sun.org.apache.xerces.internal.util.DOMUtil;
 
 
@@ -56,7 +58,9 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	
 	private static Log M_log = LogFactory.getLog(ETSUserNotificationProviderImpl.class);
 	
-	private static String NEW_USER_KEY ="sitemange.notifyAddedParticipant";
+	private static String NOTIFY_ADDED_PARTICIPANT ="sitemange.notifyAddedParticipant";
+
+	private static String NOTIFY_NEW_USER ="sitemanage.notifyNewUserEmail"; 
 	
 	private EmailService emailService; 
 	
@@ -82,9 +86,6 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	}
 	
 	
-	/** portlet configuration parameter values* */
-	/** Resource bundle using current language locale */
-	private static ResourceLoader rb = new ResourceLoader("UserNotificationProvider");
 
 	public void init() {
 		//nothing realy to do
@@ -92,17 +93,24 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		
 		
 		//do we need to load data?
-		if (this.emailTemplateService.getEmailTemplate(this.NEW_USER_KEY, null) != null) 
-			loadNewUserMail();
+		Map<String, String> replacementValues = new HashMap<String, String>();
+		if (emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_ADDED_PARTICIPANT, "/user/admin", replacementValues) == null) 
+			loadAddedParticipantMail();
 		else 
-			M_log.info("templates for " + NEW_USER_KEY + " exist");
+			M_log.info("templates for " + NOTIFY_ADDED_PARTICIPANT + " exist");
 		
-		/*
-		EmailTemplate et = notifyAddedParticipantMail();
-		M_log.info("got email template:" + et.getSubject());
-		M_log.info(et.getMessage());
-		emailTemplateService.saveTemplate(et);
-		*/
+		if (serverConfigurationService.getBoolean("auto.ddl", false)) {
+			if (emailTemplateService.getRenderedTemplateForUser(NOTIFY_NEW_USER, "/user/admin", replacementValues) == null) 
+				loadNewUserMail();
+			else 
+				M_log.info("templates for " + NOTIFY_NEW_USER + " exist");
+			
+			if (emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_ADDED_PARTICIPANT, "/user/admin", replacementValues) == null) 
+				loadAddedParticipantMail();
+			else 
+				M_log.info("templates for " + NOTIFY_NEW_USER + " exist");
+			
+		}
 	}
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
@@ -148,7 +156,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            M_log.debug("getting template: sitemange.notifyAddedParticipant");
 	            RenderedTemplate template = null;
 	           try { 
-				template = emailTemplateService.getRenderedTemplateForUser(NEW_USER_KEY, user.getReference(), replacementValues); 
+				template = emailTemplateService.getRenderedTemplateForUser(NOTIFY_ADDED_PARTICIPANT, user.getReference(), replacementValues); 
 				if (template == null)
 					return;	
 	           }
@@ -205,7 +213,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("newPassword",newUserPassword);
 	            replacementValues.put("siteName", siteTitle);
 	            replacementValues.put("productionSiteName", productionSiteName);
-	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser("sitemanage.notifyNewUserEmail", user.getReference(), replacementValues);    		
+	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_NEW_USER, user.getReference(), replacementValues);    		
 	    	if (template == null)
 				return;
 	        content = template.getRenderedMessage();
@@ -235,36 +243,15 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 
 
 
-	private void loadNewUserMail() {
+	private void loadAddedParticipantMail() {
 		try {
-			//URL fileUrl = new URL("notifyAddedParticipants.xml");
-			//URL url = ClassLoader.getSystemResource("notifyAddedParticipants.xml");
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
-			//Document document = null;
-			//DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			Document document = new SAXBuilder(  ).build(in);
-			
-			//DocumentBuilder  parser = documentBuilderFactory.newDocumentBuilder();
-			//document = (Document) parser.parse(in);
-			//Element emailTemplates = document.getDocumentElement();
 			List it = document.getRootElement().getChildren("emailTemplate");
 			
 			for (int i =0; i < it.size(); i++) {
 				Element xmlTemplate = (Element)it.get(i);
-				String subject = xmlTemplate.getChildText("subject");
-				String body = xmlTemplate.getChildText("message");
-				String locale = xmlTemplate.getChildText("locale");
-				M_log.info("subject: " + subject);
-				
-				EmailTemplate template = new EmailTemplate();
-				template.setSubject(convertToUtf8(subject));
-				template.setMessage(convertToUtf8(body));
-				template.setLocale(locale);
-				template.setKey(NEW_USER_KEY);
-				template.setOwner("admin");
-				template.setLastModified(new Date());
-				
-				this.emailTemplateService.saveTemplate(template);
+				xmlToTemplate(xmlTemplate, this.NOTIFY_ADDED_PARTICIPANT);
 			}
 			
 
@@ -280,17 +267,48 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		} 
 	}
 
-
-	private String convertToUtf8(String original) {
+	private void loadNewUserMail() {
 		try {
-		    byte[] utf8Bytes = original.getBytes("UTF8");
-		    String roundTrip = new String(utf8Bytes, "UTF8");
-		    return roundTrip;
-		    
-		} catch (UnsupportedEncodingException e) {
-		    e.printStackTrace();
-		}
-		return null;
+			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyNewuser.xml");
+			Document document = new SAXBuilder(  ).build(in);
+			List it = document.getRootElement().getChildren("emailTemplate");
+			
+			for (int i =0; i < it.size(); i++) {
+				Element xmlTemplate = (Element)it.get(i);
+				xmlToTemplate(xmlTemplate, this.NOTIFY_NEW_USER);
+			}
+			
+
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JDOMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 	}
+
+	private void xmlToTemplate(Element xmlTemplate, String key) {
+		String subject = xmlTemplate.getChildText("subject");
+		String body = xmlTemplate.getChildText("message");
+		String locale = xmlTemplate.getChildText("locale");
+		M_log.info("subject: " + subject);
+		
+		EmailTemplate template = new EmailTemplate();
+		template.setSubject(subject);
+		template.setMessage(body);
+		template.setLocale(locale);
+		template.setKey(key);
+		template.setOwner("admin");
+		template.setLastModified(new Date());
+		
+		this.emailTemplateService.saveTemplate(template);
+	}
+
+
+
 	
 }
