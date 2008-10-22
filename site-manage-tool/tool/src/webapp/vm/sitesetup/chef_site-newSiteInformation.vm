@@ -108,7 +108,7 @@
 	#end
 	
 	<p class="instruction">
-		$tlang.getString("sinfo.enter3")#if ($!isProjectSite) $tlang.getString("sinfo.simplea") <span class ="reqStarInline">*</span> $tlang.getString("sinfo.means") #end
+		#if ($!isProjectSite) $tlang.getString("sinfo.simplea") <span class ="reqStarInline">*</span> $tlang.getString("sinfo.means") #end
 	</p>
 		<p class="shorttext required">
 			#if (!$!isCourseSite)
