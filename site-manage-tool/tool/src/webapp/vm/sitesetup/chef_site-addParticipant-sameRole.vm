@@ -41,7 +41,7 @@
 					$participant.getDisplayId()
 					#set($name=$participant.name)
 					#if($!name && $name.length()>0)
-						($name)
+						($validator.escapeHtml($name))
 					#end
 				</li>
 			#end
