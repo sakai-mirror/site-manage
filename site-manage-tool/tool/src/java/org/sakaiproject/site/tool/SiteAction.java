@@ -7179,6 +7179,7 @@ public class SiteAction extends PagedResourceActionII {
 								// import tool content
 								List pageList = site.getPages();
 								if (!((pageList == null) || (pageList.size() == 0))) {
+
 									for (ListIterator i = pageList
 											.listIterator(); i.hasNext();) {
 										SitePage page = (SitePage) i.next();
@@ -7186,6 +7187,7 @@ public class SiteAction extends PagedResourceActionII {
 										List pageToolList = page.getTools();
 										String toolId = ((ToolConfiguration) pageToolList
 												.get(0)).getTool().getId();
+                              // only do resources tool first round
 										if (toolId
 												.equalsIgnoreCase("sakai.resources")) {
 											// handle
@@ -7198,7 +7200,19 @@ public class SiteAction extends PagedResourceActionII {
 															.getSiteCollection(oSiteId),
 													ContentHostingService
 															.getSiteCollection(nSiteId));
-										} else {
+										}
+									}
+                           
+                           // do all other tools now
+                           for (ListIterator i = pageList
+											.listIterator(); i.hasNext();) {
+										SitePage page = (SitePage) i.next();
+
+										List pageToolList = page.getTools();
+										String toolId = ((ToolConfiguration) pageToolList
+												.get(0)).getTool().getId();
+										if (!toolId
+												.equalsIgnoreCase("sakai.resources")) {
 											// other
 											// tools
 											transferCopyEntities(toolId,
