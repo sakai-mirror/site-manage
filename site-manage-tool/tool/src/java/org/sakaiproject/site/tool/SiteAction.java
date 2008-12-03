@@ -2755,27 +2755,29 @@ public class SiteAction extends PagedResourceActionII {
 				if (selections != null)
 				{
 					numSelections = selections.size();
+				}
 
-					// execution will fall through these statements based on number of selections already made
-					if (numSelections == cmLevelSize - 1)
-					{
-						levelOpts[numSelections] = getCMSections((String) selections.get(numSelections-1));
-					}
-					else if (numSelections == cmLevelSize - 2)
-					{
-						levelOpts[numSelections] = getCMCourseOfferings((String) selections.get(numSelections-1), t.getEid());
-					}
-					else if (numSelections < cmLevelSize)
-					{
-						levelOpts[numSelections] = sortCmObject(cms.findCourseSets((String) cmLevels.get(numSelections==0?0:numSelections-1)));
-					}
-					// always set the top level 
-					levelOpts[0] = sortCmObject(cms.findCourseSets((String) cmLevels.get(0)));
-					// clean further element inside the array
-					for (int i = numSelections + 1; i<cmLevelSize; i++)
-					{
-						levelOpts[i] = null;
-					}
+				// execution will fall through these statements based on number of selections already made
+				if (numSelections == cmLevelSize - 1)
+				{
+					levelOpts[numSelections] = getCMSections((String) selections.get(numSelections-1));
+				}
+				else if (numSelections == cmLevelSize - 2)
+				{
+					levelOpts[numSelections] = getCMCourseOfferings((String) selections.get(numSelections-1), t.getEid());
+				}
+				else if (numSelections < cmLevelSize)
+				{
+					levelOpts[numSelections] = sortCmObject(cms.findCourseSets((String) cmLevels.get(numSelections==0?0:numSelections-1)));
+				}
+				// always set the top level 
+				Set<CourseSet> courseSets = filterCourseSetList(cms.getCourseSets());
+				
+				levelOpts[0] = sortCmObject(courseSets);
+				// clean further element inside the array
+				for (int i = numSelections + 1; i<cmLevelSize; i++)
+				{
+					levelOpts[i] = null;
 				}
 
 				context.put("cmLevelOptions", Arrays.asList(levelOpts));
@@ -2842,6 +2844,80 @@ public class SiteAction extends PagedResourceActionII {
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
+	}
+
+	/**
+<<<<<<< .working
+=======
+	 * Depending on institutional setting, all or part of the CourseSet list will be shown in the dropdown list in find course page
+	 * for example, sakai.properties could have following setting:
+	 * sitemanage.cm.courseset.categories.count=1
+	 * sitemanage.cm.courseset.categories.1=Department
+	 * Hence, only CourseSet object with category of "Department" will be shown
+	 * @param courseSets
+	 * @return
+	 */
+	private Set<CourseSet> filterCourseSetList(Set<CourseSet> courseSets) {
+		if (ServerConfigurationService.getStrings("sitemanage.cm.courseset.categories") != null) {
+			List<String> showCourseSetTypes = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("sitemanage.cm.courseset.categories")));
+			Set<CourseSet> rv = new HashSet<CourseSet>();
+			for(CourseSet courseSet:courseSets)
+			{
+				if (showCourseSetTypes.contains(courseSet.getCategory()))
+				{
+					rv.add(courseSet);
+				}
+			}
+			courseSets = rv;
+		}
+		return courseSets;
+	}
+
+	/**
+	 * put all info necessary for importing site into context
+	 * @param context
+	 * @param site
+	 */
+	private void putImportSitesInfoIntoContext(Context context, Site site, SessionState state, boolean ownTypeOnly) {
+		context.put("currentSite", site);
+		context.put("importSiteList", state
+				.getAttribute(STATE_IMPORT_SITES));
+		context.put("sites", SiteService.getSites(
+				org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+				ownTypeOnly?site.getType():null, null, null, SortType.TITLE_ASC, null));
+	}
+
+	/**
+	 * get the titles of list of selected provider courses into context
+	 * @param context
+	 * @param state
+	 */
+	private void putSelectedProviderCourseIntoContext(Context context, SessionState state) {
+		if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
+			
+			List<String> providerSectionList = (List<String>) state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
+			context.put("selectedProviderCourse", providerSectionList);
+
+			List<String> providerSectionListTitles = new Vector<String>();
+			if (providerSectionList != null)
+			{
+				for (String providerSectionId : providerSectionList)
+				{
+					try
+					{
+						Section s = cms.getSection(providerSectionId);
+						providerSectionListTitles.add(s.getTitle()); 
+					}
+					catch (Exception e)
+					{
+						providerSectionListTitles.add(providerSectionId);
+						M_log.warn(this + ".putSelectedProviderCourseIntoContext " + e.getMessage() + " sectionId=" + providerSectionId, e);
+					}
+				}
+			}
+			context.put("selectedProviderCourseTitles", providerSectionListTitles);
+			context.put("size", new Integer(providerSectionList.size() - 1));
+		}
 	}
 
 	/**
@@ -10258,15 +10334,15 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param list
 	 * @return
 	 */
-	private Collection sortCmObject(List list) {
-		if (list != null) {
+	private Collection sortCmObject(Collection collection) {
+		if (collection != null) {
 			List propsList = new ArrayList();
 			propsList.add("eid");
 			propsList.add("title");
 			SortTool sort = new SortTool();
-			return sort.sort(list, propsList);
+			return sort.sort(collection, propsList);
 		} else {
-			return list;
+			return collection;
 		}
 	} // sortCmObject
 
@@ -10607,11 +10683,14 @@ public class SiteAction extends PagedResourceActionII {
 		List<String> rv = new Vector<String>();
 		Set courseSets = cms.getCourseSets();
 		String currentLevel = "";
-		rv = addCategories(rv, courseSets);
 		
-		// course and section exist in the CourseManagementService
-		rv.add(rb.getString("cm.level.course"));
-		rv.add(rb.getString("cm.level.section"));
+		if (courseSets != null)
+		{
+			// CourseSet, CourseOffering and Section are three levels in CourseManagementService
+			rv.add(rb.getString("cm.level.courseSet"));
+			rv.add(rb.getString("cm.level.course"));
+			rv.add(rb.getString("cm.level.section"));
+		}
 		return rv;
 	}
 
