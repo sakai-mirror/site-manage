@@ -2,6 +2,7 @@ package org.sakaiproject.site.tool.helper.managegroup.rsf;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -78,6 +79,8 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
     	
     	String state="";
     	
+    	// group
+    	Group g = null;
     	// id for group
     	String groupId = null;
     	// title for group
@@ -94,7 +97,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
     	 {
     		 try
     		 {
-    			 Group g = siteService.findGroup(id);
+    			 g = siteService.findGroup(id);
     			 groupId = g.getId();
     			 groupTitle = g.getTitle();
     			 groupDescription = g.getDescription();
@@ -128,7 +131,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 		 UIOutput.make(groupForm, "membership_group_label", messageLocator.getMessage("editgroup.grouplist"));
 		 
 		 // for the site members list
-		 Collection siteMembers= handler.getSiteParticipant();
+		 Collection siteMembers= handler.getSiteParticipant(g);
 		 String[] siteMemberLabels = new String[siteMembers.size()];
 		 String[] siteMemberValues = new String[siteMembers.size()];
 		 UISelect siteMember = UISelect.makeMultiple(groupForm,"siteMembers",siteMemberValues,siteMemberLabels,"#{SiteManageGroupHandler.selectedSiteMembers}", new String[] {});
@@ -137,8 +140,12 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 		 Iterator<Participant> sIterator = new SortedIterator(siteMembers.iterator(), new SiteComparator(SiteConstants.SORTED_BY_PARTICIPANT_NAME, Boolean.TRUE.toString()));
 	     for (; sIterator.hasNext();i++){
 	        	Participant p = (Participant) sIterator.next();
-				siteMemberLabels[i] = p.getName();
-				siteMemberValues[i] = p.getUniqname();
+	        	// not in the group yet
+	        	if (g == null || g.getMember(p.getUniqname()) == null)
+	        	{
+					siteMemberLabels[i] = p.getName() + " (" + p.getDisplayId() + ")";
+					siteMemberValues[i] = p.getUniqname();
+	        	}
 	        }
 	     
 	     // for the group members list
@@ -153,7 +160,7 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 	        	try
 	        	{
 	        		User u = userDirectoryService.getUser(userId);
-	        		groupMemberLabels[i] = u.getSortName();
+	        		groupMemberLabels[i] = u.getSortName() + " (" + u.getDisplayId() + ")";
 	        	}
 	        	catch (Exception e)
 	        	{
