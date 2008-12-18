@@ -2010,7 +2010,6 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-siteInfo-editInfoConfirm.vm
 			 * 
 			 */
-			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			siteProperties = site.getProperties();
 			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -2021,23 +2020,28 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("isCourseSite", Boolean.FALSE);
 			}
 			context.put("oTitle", site.getTitle());
-			context.put("title", siteInfo.title);
+			context.put("title", state.getAttribute(FORM_SITEINFO_TITLE));
 
-			context.put("description", siteInfo.description);
+			context.put("description", state
+					.getAttribute(FORM_SITEINFO_DESCRIPTION));
 			context.put("oDescription", site.getDescription());
-			context.put("short_description", siteInfo.short_description);
+			context.put("short_description", state
+					.getAttribute(FORM_SITEINFO_SHORT_DESCRIPTION));
 			context.put("oShort_description", site.getShortDescription());
-			context.put("skin", siteInfo.iconUrl);
+			context.put("skin", state.getAttribute(FORM_SITEINFO_SKIN));
 			context.put("oSkin", site.getIconUrl());
 			context.put("skins", state.getAttribute(STATE_ICONS));
 			context.put("oIcon", site.getIconUrl());
-			context.put("icon", siteInfo.iconUrl);
-			context.put("include", siteInfo.include);
+			context.put("icon", state.getAttribute(FORM_SITEINFO_ICON_URL));
+			context.put("include", state.getAttribute(FORM_SITEINFO_INCLUDE));
 			context.put("oInclude", Boolean.valueOf(site.isPubView()));
-			context.put("name", siteInfo.site_contact_name);
-			context.put("oName", siteProperties.getProperty(PROP_SITE_CONTACT_NAME));
-			context.put("email", siteInfo.site_contact_email);
-			context.put("oEmail", siteProperties.getProperty(PROP_SITE_CONTACT_EMAIL));
+			context.put("name", state.getAttribute(FORM_SITEINFO_CONTACT_NAME));
+			context.put("oName", siteProperties
+					.getProperty(PROP_SITE_CONTACT_NAME));
+			context.put("email", state
+					.getAttribute(FORM_SITEINFO_CONTACT_EMAIL));
+			context.put("oEmail", siteProperties
+					.getProperty(PROP_SITE_CONTACT_EMAIL));
 
 			return (String) getContext(data).get("template") + TEMPLATE[14];
 		case 15:
@@ -6057,34 +6061,40 @@ public class SiteAction extends PagedResourceActionII {
 		Site Site = getStateSite(state);
 		ResourcePropertiesEdit siteProperties = Site.getPropertiesEdit();
 		String site_type = (String) state.getAttribute(STATE_SITE_TYPE);
-		SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 
 		if (siteTitleEditable(state, site_type)) 
 		{
-			Site.setTitle(siteInfo.title);
+			Site.setTitle((String) state.getAttribute(FORM_SITEINFO_TITLE));
 		}
 
-		Site.setDescription(siteInfo.description);
-		Site.setShortDescription(siteInfo.short_description);
+		Site.setDescription((String) state
+				.getAttribute(FORM_SITEINFO_DESCRIPTION));
+		Site.setShortDescription((String) state
+				.getAttribute(FORM_SITEINFO_SHORT_DESCRIPTION));
 
 		if (site_type != null) {
 			if (site_type.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				// set icon url for course
-				setAppearance(state, Site, siteInfo.iconUrl);
+				String skin = (String) state.getAttribute(FORM_SITEINFO_SKIN);
+				setAppearance(state, Site, skin);
 			} else {
 				// set icon url for others
-				Site.setIconUrl(siteInfo.iconUrl);
+				String iconUrl = (String) state
+						.getAttribute(FORM_SITEINFO_ICON_URL);
+				Site.setIconUrl(iconUrl);
 			}
 
 		}
 
 		// site contact information
-		String contactName = siteInfo.site_contact_name;
+		String contactName = (String) state
+				.getAttribute(FORM_SITEINFO_CONTACT_NAME);
 		if (contactName != null) {
 			siteProperties.addProperty(PROP_SITE_CONTACT_NAME, contactName);
 		}
 
-		String contactEmail = siteInfo.site_contact_email;
+		String contactEmail = (String) state
+				.getAttribute(FORM_SITEINFO_CONTACT_EMAIL);
 		if (contactEmail != null) {
 			siteProperties.addProperty(PROP_SITE_CONTACT_EMAIL, contactEmail);
 		}
@@ -6633,10 +6643,16 @@ public class SiteAction extends PagedResourceActionII {
 			 * actionForTemplate chef_site-newSiteInformation.vm
 			 * 
 			 */
+			if (state.getAttribute(STATE_SITE_INFO) != null) {
+				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
+			}
+
+			// defaults to be true
+			siteInfo.include = true;
+
+			state.setAttribute(STATE_SITE_INFO, siteInfo);
 			updateSiteInfo(params, state);
 
-			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
-			
 			// alerts after clicking Continue but not Back
 			if (forward) {
 				if (StringUtil.trimToNull(siteInfo.title) == null) {
@@ -6712,7 +6728,6 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			if (forward) {
-
 				Site Site = getStateSite(state);
 				if (siteTitleEditable(state, Site.getType())) 
 				{
@@ -6725,6 +6740,52 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				}
 
+				String description = StringUtil.trimToNull(params
+						.getString("description"));
+				StringBuilder alertMsg = new StringBuilder();
+				state.setAttribute(FORM_SITEINFO_DESCRIPTION, FormattedText.processFormattedText(description, alertMsg));
+
+				String short_description = StringUtil.trimToNull(params
+						.getString("short_description"));
+				state.setAttribute(FORM_SITEINFO_SHORT_DESCRIPTION,
+						short_description);
+
+				String skin = params.getString("skin");
+				if (skin != null) {
+					// if there is a skin input for course site
+					skin = StringUtil.trimToNull(skin);
+					state.setAttribute(FORM_SITEINFO_SKIN, skin);
+				} else {
+					// if ther is a icon input for non-course site
+					String icon = StringUtil.trimToNull(params
+							.getString("icon"));
+					if (icon != null) {
+						if (icon.endsWith(PROTOCOL_STRING)) {
+							addAlert(state, rb.getString("alert.protocol"));
+						}
+						state.setAttribute(FORM_SITEINFO_ICON_URL, icon);
+					} else {
+						state.removeAttribute(FORM_SITEINFO_ICON_URL);
+					}
+				}
+
+				// site contact information
+				String contactName = StringUtil.trimToZero(params
+						.getString("siteContactName"));
+				state.setAttribute(FORM_SITEINFO_CONTACT_NAME, contactName);
+
+				String email = StringUtil.trimToZero(params
+						.getString("siteContactEmail"));
+				String[] parts = email.split("@");
+				if (email.length() > 0
+						&& (email.indexOf("@") == -1 || parts.length != 2
+								|| parts[0].length() == 0 || !Validator
+								.checkEmailLocal(parts[0]))) {
+					// invalid email
+					addAlert(state, email + " " + rb.getString("java.invalid")
+							+ rb.getString("java.theemail"));
+				}
+				state.setAttribute(FORM_SITEINFO_CONTACT_EMAIL, email);
 
 				if (state.getAttribute(STATE_MESSAGE) == null) {
 					state.setAttribute(STATE_TEMPLATE_INDEX, "14");
@@ -7790,7 +7851,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteInfo.additional = params.getString("additional");
 		}
 		if (params.getString("iconUrl") != null) {
-			siteInfo.iconUrl = Validator.escapeHtml(params.getString("iconUrl"));
+			siteInfo.iconUrl = params.getString("iconUrl");
 		} else if (params.getString("skin") != null) {
 			siteInfo.iconUrl = params.getString("skin");
 		}
