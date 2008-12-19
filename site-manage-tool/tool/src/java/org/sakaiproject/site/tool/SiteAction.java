@@ -9044,7 +9044,8 @@ public class SiteAction extends PagedResourceActionII {
 		for (Iterator iPageToolList = pageToolList.iterator(); iPageToolList.hasNext();)
 		{
 			ToolConfiguration toolConfiguration = (ToolConfiguration) iPageToolList.next();
-			if (toolId.equals(toolConfiguration.getTool().getId()))
+			Tool t = toolConfiguration.getTool();
+			if (t != null && toolId.equals(toolConfiguration.getTool().getId()))
 			{
 				return true;
 			}
