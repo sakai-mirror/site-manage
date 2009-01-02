@@ -237,7 +237,8 @@ public class MembershipAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		state.setAttribute(STATE_CONFIRM_VIEW_MODE, "unjoinconfirm");
-		String id = data.getParameters().getString("itemReference");
+		String[] id = data.getParameters().getStrings("itemReference");
+		
 		state.setAttribute(UNJOIN_SITE, id);
 	}
 
@@ -256,14 +257,21 @@ public class MembershipAction extends PagedResourceActionII
 		context.put("tlang", rb);
 		if (state.getAttribute(UNJOIN_SITE) != null)
 		{
-			try
-			{
-				context.put("unjoinSite", SiteService.getSite(((String) state.getAttribute(UNJOIN_SITE))).getTitle());
+			String[] items=(String[])state.getAttribute(UNJOIN_SITE);
+			List unjoinSite=new Vector();
+
+			for (int i=0; i<items.length;i++){
+				try
+				{
+					unjoinSite.add(SiteService.getSite(items[i]).getTitle());
+				}
+				catch (IdUnusedException e)
+				{
+					Log.warn("chef", this + ".buildUnjoinconfirmContext(): " + e);
+				}
 			}
-			catch (IdUnusedException e)
-			{
-				Log.warn("chef", this + ".buildUnjoinconfirmContext(): " + e);
-			}
+			context.put("unjoinSite", unjoinSite);
+			
 		}
 
 		String template = (String) getContext(runData).get("template");
@@ -392,29 +400,34 @@ public class MembershipAction extends PagedResourceActionII
 
 		// read the form / state to figure out which attachment(s) to add.
 		// String id = data.getParameters().getString("itemReference");
-		String id = (String) state.getAttribute(UNJOIN_SITE);
+		String[] id = (String[]) state.getAttribute(UNJOIN_SITE);
 		if (id != null)
 		{
-			try
-			{
-				SiteService.unjoin(id);
-				String msg = rb.getString("mb.youhave") + " " + SiteService.getSite(id).getTitle();
-				addAlert(state, msg);
+			String msg = rb.getString("mb.youhave") + " "; 
+			for(int i=0; i< id.length; i++){
+
+				try
+				{
+					SiteService.unjoin(id[i]);
+					if (i>0) msg=msg+" ,";
+					msg = msg+SiteService.getSite(id[i]).getTitle();
+				}
+				catch (IdUnusedException ignore)
+				{
+				}
+				catch (PermissionException e)
+				{
+					// This could occur if the user's role is the maintain role for the site, and we don't let the user
+					// unjoin sites they are maintainers of
+					Log.warn("chef", this + ".doUnjoin(): " + e);
+				}
+				catch (InUseException e)
+				{
+					Log.warn("chef", this + ".doJoin(): " + e);
+					addAlert(state, rb.getString("mb.sitebeing"));
+				}
 			}
-			catch (IdUnusedException ignore)
-			{
-			}
-			catch (PermissionException e)
-			{
-				// This could occur if the user's role is the maintain role for the site, and we don't let the user
-				// unjoin sites they are maintainers of
-				Log.warn("chef", this + ".doUnjoin(): " + e);
-			}
-			catch (InUseException e)
-			{
-				Log.warn("chef", this + ".doJoin(): " + e);
-				addAlert(state, rb.getString("mb.sitebeing"));
-			}
+			addAlert(state, msg);
 		}
 
 		// TODO: hard coding this frame id is fragile, portal dependent, and needs to be fixed -ggolden
