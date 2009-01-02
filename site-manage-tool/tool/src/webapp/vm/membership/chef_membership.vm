@@ -109,14 +109,14 @@
 						## don't show unjoin link if (1) unjoin is disabled for all sites; (2) unjoin is disabled for current site type
 						#if($disableUnjoinSelection || ($!siteType && $!disableUnjoinSiteTypes.contains($!siteType)))
 							<td headers="checkbox" class="screenOnly">
-							<label for ="check-$rowCount" class="skip">selectUnjoin</label>
-							<input title=selectUnjoin type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" disabled="disabled" />
+							<label for ="check-$rowCount" class="skip">"$tlang.getString('mb.select.unjoin')"</label>
+							<input title="$tlang.getString('mb.select.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" disabled="disabled" />
 							</td>	
 						#else	
 							#if ($SiteService.allowUnjoinSite($site.Id))
 								<td headers="checkbox" class="screenOnly">
-									<label for ="check-$rowCount" class="skip">selectUnjoin</label>
-									<input title=selectUnjoin type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" />
+									<label for ="check-$rowCount" class="skip">"$tlang.getString('mb.select.unjoin')"</label>
+									<input title="$tlang.getString('mb.select.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" />
 								</td>
 							#end
 						#end						
@@ -125,8 +125,8 @@
 			</table>
 		
 		<p class="act">
-    		<input type="submit" class="active" name="eventSubmit_doGoto_unjoinconfirm" value="Update"  accesskey="s" />
-    		<input type="reset" name="reset" id="reset" value="Cancel"  accesskey="x" />
+    		<input type="submit" class="active" name="eventSubmit_doGoto_unjoinconfirm" value="$tlang.getString('mb.update')" accesskey="s" />
+    		<input type="reset" name="reset" id="reset" value="$tlang.getString('mb.cancel')"  accesskey="x" />
 		</p>
 	   </div>	
 	  </form>
