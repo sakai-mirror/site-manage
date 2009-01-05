@@ -116,12 +116,12 @@ public class MembershipAction extends PagedResourceActionII
 		{
 			if (((Boolean) state.getAttribute(SORT_ASC)).booleanValue())
 			{
-				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, search,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, page);
 			}
 			else
 			{
-				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, search,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, page);
 			}
 		}
@@ -339,6 +339,7 @@ public class MembershipAction extends PagedResourceActionII
 		state.removeAttribute(STATE_VIEW_MODE);
 		state.removeAttribute(STATE_PAGESIZE);
 		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
+		state.removeAttribute(SEARCH_TERM);		
 	}
 
 	/**
@@ -350,6 +351,7 @@ public class MembershipAction extends PagedResourceActionII
 		state.setAttribute(STATE_VIEW_MODE, "joinable");
 		state.removeAttribute(STATE_PAGESIZE);
 		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
+		state.removeAttribute(SEARCH_TERM);
 	}
 
 	/**

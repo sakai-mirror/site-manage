@@ -11,6 +11,19 @@
 
 	#if ($alertMessage)<p class="information">$validator.escapeHtml($alertMessage)</p>#end
 	
+	#if ($unjoinableSites.size() > 0 || $search.length() > 0)
+	<div class="navPanel">
+		<div class="searchNav">
+			<form name="searchform" method="post" class="inlineForm" action="#toolForm("$action")">
+			<label for="search" class="skip">$tlang.getString("mb.list.search")</label>
+			<input type="text" size="15" id="search" name="search" value="$validator.escapeHtml($search)" /> 
+			<input type="submit" name="eventSubmit_doSearch" value="$tlang.getString("mb.list.search")" />
+			<input type="submit" name="eventSubmit_doSearch_clear" value="$tlang.getString("mb.list.clear")" />
+			</form> 
+		</div>
+	</div>	
+	#end
+	
 	#if ($unjoinableSites.size()>0)
 		
 		<p class="instruction">
