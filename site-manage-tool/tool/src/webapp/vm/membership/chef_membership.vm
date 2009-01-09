@@ -143,6 +143,8 @@
 		</p>
 	   </div>	
 	  </form>
+	#elseif ($search.length() > 0)
+		<p class="instruction">$tlang.getString('mb.list.nosearchsites')${validator.escapeHtml($search)}$tlang.getString('mb.list.nosearchsites2')</p>
 	#else
 		<p class="instruction">$tlang.getString('mb.list.nomembs')</p>
 	#end	
