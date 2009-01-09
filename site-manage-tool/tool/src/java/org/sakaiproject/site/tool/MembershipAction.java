@@ -236,8 +236,17 @@ public class MembershipAction extends PagedResourceActionII
 	public void doGoto_unjoinconfirm(RunData data)
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		state.setAttribute(STATE_CONFIRM_VIEW_MODE, "unjoinconfirm");
 		String[] id = data.getParameters().getStrings("itemReference");
+				
+		if (id==null){
+			state.setAttribute(STATE_CONFIRM_VIEW_MODE, "noSelectionUnjoin");
+			addAlert(state, rb.getString("gen.alert")+ rb.getString("mb.noselection.unjoin"));
+		}
+		else
+		{
+			state.setAttribute(STATE_CONFIRM_VIEW_MODE, "unjoinconfirm");
+			
+		}
 		
 		state.setAttribute(UNJOIN_SITE, id);
 	}
