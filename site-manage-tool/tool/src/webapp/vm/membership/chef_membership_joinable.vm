@@ -5,30 +5,34 @@
 		<li role="menuitem" aria-disabled="true"><span class="current">$tlang.getString("mb.joisit")</span></li>		
 	</ul>
 	
-	<h3>
-		$tlang.getString("mb.joinable")
-	</h3>
 	## join/unjoin action info normally is the only value of "alertMessage"
 	#if ($alertMessage)<p class="information">$validator.escapeHtml($alertMessage)</p>#end
 	
 
-	#if ($openSites.size() > 0 || $search.length() > 0)
 	<div class="navPanel">
+		<div class="viewNav">
+			<h3 style="margin:0;padding:0">
+				$tlang.getString("mb.joinable")
+			</h3>
+		</div>
 		<div class="searchNav">
+	#if ($openSites.size() > 0 || $search.length() > 0)
 			<form name="searchform" method="post" class="inlineForm" action="#toolForm("$action")">
 			<label for="search" class="skip">$tlang.getString("mb.list.search")</label>
 			<input type="text" size="15" id="search" name="search" value="$validator.escapeHtml($search)" /> 
 			<input type="submit" name="eventSubmit_doSearch" value="$tlang.getString("mb.list.search")" />
 			<input type="submit" name="eventSubmit_doSearch_clear" value="$tlang.getString("mb.list.clear")" />
 			</form> 
+	#end
 		</div>
 	</div>	
-	#end
+
 
 	#if ($openSites.size() > 0)
 		<div class="navPanel">
 			<div class="viewNav">
 				<div class="instruction">
+					<br />
 				#if ($search.length() > 0)
 					$tlang.getString("mb.listsearchjoin")${search}$tlang.getString("mb.listsearchjoin2")
 				#else
@@ -129,7 +133,7 @@
 			</table>
 		</form>
 	#elseif ($search.length() > 0)
-		<p class="instruction">$tlang.getString('mb.list.nosearchsites')${validator.escapeHtml($search)}$tlang.getString('mb.list.nosearchsites2')</p>
+		aaa<p class="instruction">$tlang.getString('mb.list.nosearchsites')${validator.escapeHtml($search)}$tlang.getString('mb.list.nosearchsites2')</p>
 	#else
 		<p class="instruction">$tlang.getString('mb.list.nosites')</p>
 	#end

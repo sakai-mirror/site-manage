@@ -7,18 +7,62 @@
 <script type="text/javascript" src="/library/js/jquery.js"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-		$(".listHier :checkbox").click(function(){
+	function setupMessageListener(messageHolder, messageMode){
+    //test to see if there is an actual message (trim whitespace first)
+    var str = $("#" + messageHolder).text();
+    str = jQuery.trim(str);
+    // show if message is there, then hide it
+    if (str != '') {
+        $("#" + messageHolder).fadeIn('slow')
+        $("#" + messageHolder).addClass(messageMode);
+        $("#" + messageHolder).animate({
+            opacity: 1.0
+        }, 5000)
+        $("#" + messageHolder).fadeOut('slow', function(){
+            $("#" + messageHolder).remove();
+        });
+    }
+}
+	    setupMessageListener("messageHolder", "information messageInformation");
+		
+		$('#selunselallid').click(function(){
             if (this.checked) {
-				$(this).parent("td").parent('tr').addClass("selectedSelected");
+				$(".listHier td :checkbox").attr('checked','checked')
+				$(".listHier td :checkbox").parent('td').parent('tr').addClass("selectedSelected");
+
             }
 			else{
-				$(this).parent("td").parent('tr').removeClass("selectedSelected");
+				$(".listHier td :checkbox").attr('checked','')
+				$(".listHier tbody tr").removeClass("selectedSelected");
 			}
+
+			});
+		$(".listHier td :checkbox").click(function(){
+		     someChecked = false			
+	            if (this.checked) {
+					$(this).parent("td").parent('tr').addClass("selectedSelected");
+	            }
+				else{
+					$(this).parent("td").parent('tr').removeClass("selectedSelected");
+				}
+		        $('.listHier td :checkbox').each(function(){
+		            if (this.checked) {
+		                someChecked= true
+		            }
+		        });
+  				  if (!someChecked) {
+			            $('#selunselallid').attr('checked','');
+
+			        }
         });
 	});
 </script>	
 	
-	#if ($alertMessage)<p class="information">$validator.escapeHtml($alertMessage)</p>#end
+	#if ($alertMessage)
+		<p class="information messageInformation" id="messageHolder">
+			$validator.escapeHtml($alertMessage)
+		</p>
+	#end
 	
 	#if ($unjoinableSites.size() > 0 || $search.length() > 0)
 	<div class="navPanel">
@@ -110,6 +154,9 @@ $(document).ready(function() {
 		<form action="#toolForm("$action")" method="post">
 			<table class = "listHier lines" cellspacing="0" summary ="$tlang.getString('joinable.list.summary')">
 				<tr>
+					<th id="checkbox" class="screenOnly attach">
+						<input title="$tlang.getString("mb.selectalltitle")" type="checkbox" name="selunselall" id="selunselallid"/>
+					</th>
 					<th id="worksite">
 						<a href="#toolLink("$action" "doToggle_sort")" title ="$tlang.getString('list.sortbytitle')"> 
 							$tlang.getString("gen.worksite")
@@ -121,34 +168,35 @@ $(document).ready(function() {
 						</a>
 					</th>
 					<th id="description">$tlang.getString("gen.description")</th>
-					<th id="unjoin">Unjoin</th>
 				</tr>
-				#set ($rowCount =0)
-				#foreach ($site in $unjoinableSites)
-				#set ($rowCount =$rowCount + 1)
-					<tr>
-						<td headers="worksite" style="white-space:nowrap">
-							<h4><a href="$site.Url" target="_top" title="$tlang.getString('mb.gotosite') $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a></h4>
-							#set($siteType=$site.Type)
-						</td>
-						<td headers="description">
-##							$!site.Description
-						</td>
-						<td headers="checkbox" class="screenOnly">
-							## don't show unjoin link if (1) unjoin is disabled for all sites; (2) unjoin is disabled for current site type
-							#if($disableUnjoinSelection || ($!siteType && $!disableUnjoinSiteTypes.contains($!siteType)))
-								<input title="$tlang.getString('mb.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" disabled="disabled" />
-								<label for ="check-$rowCount">$tlang.getString('mb.unjoin')</label>
-							#else	
-								#if ($SiteService.allowUnjoinSite($site.Id))
-								<input title="$tlang.getString('mb.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" class="joinable"/>
-								<label for ="check-$rowCount">$tlang.getString('mb.unjoin')</label>
-								#end
-							#end						
-						</td>	
-
-					</tr>
-				#end
+				<tbody>
+					#set ($rowCount =0)
+					#foreach ($site in $unjoinableSites)
+					#set ($rowCount =$rowCount + 1)
+						<tr>
+							<td headers="checkbox" class="screenOnly attach">
+								## don't show unjoin link if (1) unjoin is disabled for all sites; (2) unjoin is disabled for current site type
+								#if($disableUnjoinSelection || ($!siteType && $!disableUnjoinSiteTypes.contains($!siteType)))
+									<input title="$tlang.getString('mb.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" disabled="disabled" />
+									<label for ="check-$rowCount" class="skip">$tlang.getString('mb.unjoin')</label>
+								#else	
+									#if ($SiteService.allowUnjoinSite($site.Id))
+									<input title="$tlang.getString('mb.unjointitle')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)")" class="joinable"/>
+									<label for ="check-$rowCount" class="skip">$tlang.getString('mb.unjoin')</label>
+									#end
+								#end						
+							</td>	
+	
+							<td headers="worksite" style="white-space:nowrap">
+								<h4><a href="$site.Url" target="_top" title="$tlang.getString('mb.gotosite') $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a></h4>
+								#set($siteType=$site.Type)
+							</td>
+							<td headers="description">
+								$!site.Description
+							</td>
+						</tr>
+					#end
+				</tbody>	
 			</table>
 		
 		<p class="act">
