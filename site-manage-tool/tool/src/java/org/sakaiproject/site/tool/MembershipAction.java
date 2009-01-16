@@ -60,6 +60,8 @@ public class MembershipAction extends PagedResourceActionII
 	private static String UNJOIN_SITE = "unjoin_site";
 
 	private static String SEARCH_TERM = "search";
+	
+	private static final String STATE_TOP_PAGE_MESSAGE = "msg-top";
 
 	/*
 	 * (non-Javadoc)
@@ -296,6 +298,7 @@ public class MembershipAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		state.removeAttribute(STATE_CONFIRM_VIEW_MODE);
+		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
 		doUnjoin(data);
 	}
 
