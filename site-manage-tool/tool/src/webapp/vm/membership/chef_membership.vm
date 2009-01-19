@@ -192,8 +192,8 @@ $(document).ready(function() {
 								#set($siteType=$site.Type)
 							</td>
 							<td headers="description">
-								$!site.Description
-							</td>
+								$!membershipFormattedText.doPlainTextAndLimit($site.Description,75,"....")
+						    </td>
 						</tr>
 					#end
 				</tbody>	

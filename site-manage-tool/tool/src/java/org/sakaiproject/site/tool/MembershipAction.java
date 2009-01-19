@@ -38,6 +38,7 @@ import org.sakaiproject.exception.InUseException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.util.FormattedText;
 import org.sakaiproject.util.ResourceLoader;
 
 /**
@@ -227,11 +228,53 @@ public class MembershipAction extends PagedResourceActionII
 		}
 		context.put("tlang", rb);
 		context.put("alertMessage", state.getAttribute(STATE_MESSAGE));
+		context.put("membershipFormattedText", new MembershipFormattedText());
 
 		return template;
 
 	} // buildMainPanelContext
+	
+	
 
+	/**
+	 * An inner class that can be initiated to perform text formatting
+	 */
+	public class MembershipFormattedText
+	{
+		// constructor
+		public MembershipFormattedText()
+		{
+
+		}
+
+		/**
+		 * Two of FormattedText object's functions --> convertFormattedTextToPlaintext and trimFormattedText are used.
+		 * @param formattedText The formatted text to convert to plain text and then to trim
+		 * @param maxNumOfChars The maximum number of displayed characters in the returned trimmed text.
+		 * @return Ellipse A String which represents the ending pattern of the trimmed text
+		 */
+		public String doPlainTextAndLimit(String formattedText, int maxNumOfChars, String ellipse)
+		{
+			if(!formattedText.equalsIgnoreCase("<br/>")){
+
+				StringBuilder sb = new StringBuilder();
+
+				String text = FormattedText.convertFormattedTextToPlaintext(formattedText);
+				
+				if(maxNumOfChars>text.length()){
+					maxNumOfChars=text.length();
+				}
+				String trimmedText=text.substring(0, maxNumOfChars);
+				sb.setLength(0);
+				sb.append(trimmedText).append(ellipse);
+				return sb.toString();	
+			}
+			else{
+				return formattedText;
+			}
+		}
+	}
+	
 	/**
 	 * Navigate to confirmation screen
 	 */
