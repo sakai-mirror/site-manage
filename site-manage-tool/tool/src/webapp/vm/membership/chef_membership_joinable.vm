@@ -104,7 +104,7 @@
 		<form action="#toolForm("$action")" method="post">
 			<table class = "listHier lines" cellspacing="0" border="0"  summary ="$tlang.getString("mb.list.joinable.summary")">
 				<tr>
-					<th id="worksite">
+					<th id="worksite" class="attach">
 						<a href="#toolLink("$action" "doToggle_joinable_sort")" title ="$tlang.getString('list.sortbytitle')"> 
 							$tlang.getString("gen.worksite")
 							#if ($currentSortAsc) 
@@ -119,7 +119,7 @@
 				#foreach ($site in $openSites)
 					<tr>
 
-					<td headers="worksite" style="white-space:nowrap">
+					<td headers="worksite" style="white-space:nowrap" class="attach">
 					## Note: joinable site shouldn't be clickable because of the permission issues
 					## <a href="$site.Url" target="_top" title="Go to site $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a>
 					<h4>$validator.escapeHtml($site.Title)</h4>
@@ -127,7 +127,11 @@
 							<a href="#toolLinkParam("$action" "doJoin" "itemReference=$validator.escapeUrl($site.Id)")" title="$tlang.getString('mb.joinsite') $!validator.escapeHtml($!site.Title)">$tlang.getString('mb.join')</a>
 						</div>	
 						</td>
-						<td headers="description">$!site.Description</td>
+						<td headers="description">
+							#if ($validator.escapeHtml($site.Description) != '')
+								$!membershipFormattedText.doPlainTextAndLimit($site.Description,65,"....")
+							#end
+						</td>
 					</tr>
 				#end	
 			</table>

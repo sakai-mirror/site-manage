@@ -157,7 +157,7 @@ $(document).ready(function() {
 					<th id="checkbox" class="screenOnly attach">
 						<input title="$tlang.getString("mb.selectalltitle")" type="checkbox" name="selunselall" id="selunselallid"/>
 					</th>
-					<th id="worksite">
+					<th id="worksite" class="attach">
 						<a href="#toolLink("$action" "doToggle_sort")" title ="$tlang.getString('list.sortbytitle')"> 
 							$tlang.getString("gen.worksite")
 							#if ($currentSortAsc) 
@@ -187,13 +187,15 @@ $(document).ready(function() {
 								#end						
 							</td>	
 	
-							<td headers="worksite" style="white-space:nowrap">
+							<td headers="worksite" style="white-space:nowrap" class="attach">
 								<h4><a href="$site.Url" target="_top" title="$tlang.getString('mb.gotosite') $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a></h4>
 								#set($siteType=$site.Type)
 							</td>
 							<td headers="description">
-								$!membershipFormattedText.doPlainTextAndLimit($site.Description,75,"....")
-						    </td>
+								#if ($validator.escapeHtml($site.Description) != '')
+									$!membershipFormattedText.doPlainTextAndLimit($site.Description,65,"....")
+								#end
+					    </td>
 						</tr>
 					#end
 				</tbody>	
