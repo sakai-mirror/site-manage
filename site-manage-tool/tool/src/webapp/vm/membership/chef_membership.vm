@@ -202,7 +202,7 @@ $(document).ready(function() {
 			</table>
 		
 		<p class="act">
-    		<input type="submit" class="active" name="eventSubmit_doGoto_unjoinconfirm" value="$tlang.getString('mb.update')" accesskey="s" />
+    		<input type="submit" class="active" name="eventSubmit_doGoto_unjoinconfirm" value="$tlang.getString('mb.unjoin')" accesskey="s" />
     		<input type="reset" name="reset" id="reset" value="$tlang.getString('mb.cancel')"  accesskey="x" />
 		</p>
 
