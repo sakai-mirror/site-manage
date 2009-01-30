@@ -29,11 +29,9 @@
 	#if ($isCourseSite)
 		<p class="instruction">$tlang.getString("newsc.youare")</p>
 		<ul class="indnt2 attachList">
-			#foreach ($item in $!selectedProviderCourse)
+			#foreach ($item in $!selectedProviderCourseTitles)
 				<li>
-					#set($pSection = false)
-					#set($pSection = $!cms.getSection($item))
-					#if ($!pSection)$pSection.getTitle()#end
+					$item
 				</li>
 			#end
 		#if ($!manualAddNumber)
@@ -209,6 +207,15 @@
 
 				</td>
 			</tr>
+			<tr>
+ 				<th>
+ 					$tlang.getString("newsc.url_alias")
+ 				</th>
+ 				<td>
+ 					$validator.escapeHtml($!form_url_alias_full)
+ 				</td>
+ 			</tr>
+ 			<tr>
 			<tr>
 					<th colspan="2">
 						<h4>

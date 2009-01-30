@@ -76,10 +76,20 @@ public class MembershipAction extends PagedResourceActionII
 			search = null;
 		}
 
+		boolean defaultMode = state.getAttribute(STATE_VIEW_MODE) == null;
+		if (defaultMode)
+		{
+			List unjoinableSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+					null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, null);
+			size=unjoinableSites.size();
+		}
+		else
+		{
 		List openSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.JOINABLE,
 		// null, null, null, org.sakaiproject.service.legacy.site.SiteService.SortType.TITLE_ASC, null);
 				null, search, null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, null);
 		size = openSites.size();
+		}
 
 		return size;
 	}
@@ -98,23 +108,43 @@ public class MembershipAction extends PagedResourceActionII
 		{
 			search = null;
 		}
-
-		if (((Boolean) state.getAttribute(SORT_ASC)).booleanValue())
+		
+		boolean defaultMode = state.getAttribute(STATE_VIEW_MODE) == null;
+		PagingPosition page = new PagingPosition(first, last);
+		
+		if (defaultMode)
 		{
-			rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.JOINABLE,
-			// null, null, null, org.sakaiproject.service.legacy.site.SiteService.SortType.TITLE_ASC, null);
-					null, search, null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, null);
+			if (((Boolean) state.getAttribute(SORT_ASC)).booleanValue())
+			{
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, page);
+			}
+			else
+			{
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, page);
+			}
 		}
 		else
 		{
-			rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.JOINABLE,
-			// null, null, null, org.sakaiproject.service.legacy.site.SiteService.SortType.TITLE_DESC, null);
-					null, search, null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, null);
+
+			if (((Boolean) state.getAttribute(SORT_ASC)).booleanValue())
+			{
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.JOINABLE,
+						// null, null, null, org.sakaiproject.service.legacy.site.SiteService.SortType.TITLE_ASC, null);
+						null, search, null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, page);
+			}
+			else
+			{
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.JOINABLE,
+						// null, null, null, org.sakaiproject.service.legacy.site.SiteService.SortType.TITLE_DESC, null);
+						null, search, null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, page);
+			}
 		}
 
-		PagingPosition page = new PagingPosition(first, last);
-		page.validate(rv.size());
-		rv = rv.subList(page.getFirst() - 1, page.getLast());
+		//PagingPosition page = new PagingPosition(first, last);
+		//page.validate(rv.size());
+		//rv = rv.subList(page.getFirst() - 1, page.getLast());
 
 		return rv;
 	}
@@ -148,8 +178,12 @@ public class MembershipAction extends PagedResourceActionII
 		if (defaultMode)
 		{
 			// process all the sites the user has access to so can unjoin
-			List unjoinableSites = new Vector();
-			if (sortAsc.booleanValue())
+			//List unjoinableSites = new Vector();
+			List unjoinableSites = prepPage(state);
+			pagingInfoToContext(state, context);
+			
+			/*
+			 if (sortAsc.booleanValue())
 			{
 				unjoinableSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, null);
@@ -159,7 +193,9 @@ public class MembershipAction extends PagedResourceActionII
 				unjoinableSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, null);
 			}
+			*/
 			context.put("unjoinableSites", unjoinableSites);
+			context.put("tlang", rb);
 
 			context.put("SiteService", SiteService.getInstance());
 
@@ -174,6 +210,7 @@ public class MembershipAction extends PagedResourceActionII
 				context.put("disableUnjoinSiteTypes", new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.disable.unjoin"))));
 			}
 		}
+		
 		else
 		{
 			template = buildJoinableContext(portlet, context, rundata, state);
@@ -292,6 +329,8 @@ public class MembershipAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		state.removeAttribute(STATE_VIEW_MODE);
+		state.removeAttribute(STATE_PAGESIZE);
+		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
 	}
 
 	/**
@@ -301,6 +340,8 @@ public class MembershipAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		state.setAttribute(STATE_VIEW_MODE, "joinable");
+		state.removeAttribute(STATE_PAGESIZE);
+		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
 	}
 
 	/**

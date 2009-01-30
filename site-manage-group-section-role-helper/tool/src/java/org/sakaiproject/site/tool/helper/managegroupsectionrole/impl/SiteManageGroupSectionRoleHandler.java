@@ -19,8 +19,8 @@ import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
-import org.sakaiproject.authz.api.GroupProvider;
 import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.event.cover.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
@@ -98,16 +98,17 @@ public class SiteManageGroupSectionRoleHandler {
     // Tool session attribute name used to schedule a whole page refresh.
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
 	
-	private TargettedMessageList messages;
+	public TargettedMessageList messages;
 	public void setMessages(TargettedMessageList messages) {
 		this.messages = messages;
 	}
 	
-	private GroupProvider groupProvider;
-	public void setGroupProvider(GroupProvider groupProvider)
-	{
-		this.groupProvider = groupProvider;
-	}
+    private void resetTargettedMessageList()
+    {
+    	this.messages = new TargettedMessageList();
+    }
+	
+	private org.sakaiproject.authz.api.GroupProvider groupProvider = (org.sakaiproject.authz.api.GroupProvider) ComponentManager.get(org.sakaiproject.authz.api.GroupProvider.class);
 	
 	// the group title
 	private String id;
@@ -267,10 +268,13 @@ public class SiteManageGroupSectionRoleHandler {
             		String roleProviderId = group.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
             		if (roleProviderId != null)
             		{
-            			String[] groupProvidedRoles = groupProvider.unpackId(roleProviderId);
-            			for(int i=0; i<groupProvidedRoles.length;i++)
+            			if (groupProvider != null)
             			{
-            				roles.remove(group.getRole(groupProvidedRoles[i]));
+	            			String[] groupProvidedRoles = groupProvider.unpackId(roleProviderId);
+	            			for(int i=0; i<groupProvidedRoles.length;i++)
+	            			{
+	            				roles.remove(group.getRole(groupProvidedRoles[i]));
+	            			}
             			}
             		}
             	}
@@ -305,12 +309,15 @@ public class SiteManageGroupSectionRoleHandler {
     	{
 	    	for (int i = 0; !rv && i < rosterIds.size(); i++)
 	    	{
-	    		String providerId = rosterIds.get(i);
-		    	Map userRole = groupProvider.getUserRolesForGroup(providerId);
-		    	if (userRole.containsKey(userEId))
-		    	{
-		    		rv =  true;
-		    	}
+	    		if (groupProvider != null)
+	    		{
+		    		String providerId = rosterIds.get(i);
+			    	Map userRole = groupProvider.getUserRolesForGroup(providerId);
+			    	if (userRole.containsKey(userEId))
+			    	{
+			    		rv =  true;
+			    	}
+	    		}
 	    	}
     	}
     	
@@ -345,10 +352,13 @@ public class SiteManageGroupSectionRoleHandler {
             	String roleProviderId = g.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
             	if (roleProviderId != null)
             	{
-            		String[] roleStrings = groupProvider.unpackId(roleProviderId);
-            		for(String roleString:roleStrings)
+            		if (groupProvider != null)
             		{
-            			rv.add(roleString);
+	            		String[] roleStrings = groupProvider.unpackId(roleProviderId);
+	            		for(String roleString:roleStrings)
+	            		{
+	            			rv.add(roleString);
+	            		}
             		}
             	}
             }
@@ -451,6 +461,9 @@ public class SiteManageGroupSectionRoleHandler {
      *
      */
     public String processCancel() {
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
         ToolSession session = sessionManager.getCurrentToolSession();
         session.setAttribute(ATTR_TOP_REFRESH, Boolean.TRUE);
 
@@ -462,7 +475,10 @@ public class SiteManageGroupSectionRoleHandler {
      * 
      */
     public String processBack() {
-      return "cancel";
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
+    	return "cancel";
     }
     
     public String reset() {
@@ -492,6 +508,9 @@ public class SiteManageGroupSectionRoleHandler {
      */
     public String processAddGroup () {
 
+    	// reset the warning message
+    	resetTargettedMessageList();
+    	
         Group group = null;
         
         id = StringUtil.trimToNull(id);
@@ -501,7 +520,7 @@ public class SiteManageGroupSectionRoleHandler {
     	if (title == null || title.length() == 0)
     	{
     		M_log.debug(this + ".processAddGroup: no title specified");
-    		messages.addMessage(new TargettedMessage("editgroup.titlemissing",new Object[] { }, TargettedMessage.SEVERITY_ERROR));
+    		messages.addMessage(new TargettedMessage("editgroup.titlemissing", null, TargettedMessage.SEVERITY_ERROR));
     		return null;
     	}
     	else if (title.length() > SiteConstants.SITE_GROUP_TITLE_LIMIT)
@@ -526,7 +545,7 @@ public class SiteManageGroupSectionRoleHandler {
 					}
 				}
 				if (titleExist) {
-					messages.addMessage(new TargettedMessage("group.title.same","group with same existing title"));
+					messages.addMessage(new TargettedMessage("group.title.same", null, TargettedMessage.SEVERITY_ERROR));
 					return null;
 				}
     		}
@@ -652,6 +671,10 @@ public class SiteManageGroupSectionRoleHandler {
     
     public String processConfirmGroupDelete()
     {
+
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
     	if (deleteGroupIds == null || deleteGroupIds.length == 0)
     	{
     		// no group chosen to be deleted
@@ -682,6 +705,9 @@ public class SiteManageGroupSectionRoleHandler {
     
     public String processDeleteGroups()
     {
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
     	if (site != null)
     	{
 	    	for (int i = 0; i < deleteGroupIds.length; i ++) {
@@ -705,8 +731,11 @@ public class SiteManageGroupSectionRoleHandler {
     	return "success";
     }
     
-    public String processCancelelete()
+    public String processCancelDelete()
     {
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
     	return "cancel";
     }
     
@@ -715,6 +744,9 @@ public class SiteManageGroupSectionRoleHandler {
      *
      */
     public String processAutoCreateGroup() {
+    	// reset the warning messages
+    	resetTargettedMessageList();
+    	
     	List<String> rosterList = new Vector<String>();
     	if (!selectedRosters.isEmpty())
     	{
@@ -749,70 +781,58 @@ public class SiteManageGroupSectionRoleHandler {
     	else
     	{
     		// go and create the new group
-        	try
+    		if (!rosterList.isEmpty())
+    		{
+	    		for (String roster:rosterList)
+	    		{
+	    			Group group = site.addGroup();
+        			group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+		        		
+		        	// roster provider string
+		        	group.setProviderGroupId(roster);
+		        		
+		        	// set title
+		        	group.setTitle(roster);
+	    		}
+    		}
+	        	
+        	// role based
+        	if (!roleList.isEmpty())
         	{
-        		Group group = site.addGroup();
-        		group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
-        		
-        		// roster provider string
-        		String rosterProviderId = "";
-        		// roster based
-        		if (!rosterList.isEmpty())
+        		for(String role:roleList)
         		{
-        			// pack the roster provider id
-        			rosterProviderId =  getProviderString(rosterList);
-            		// set provider id
-        			group.setProviderGroupId(rosterProviderId);
-        			
-        			// set title
-        			group.setTitle(rosterProviderId);
-        		}
-        		
-        		// role based
-        		String roleProviderId = "";
-        		if (!roleList.isEmpty())
-        		{
-        			// pack the role provider id
-        			roleProviderId =  getProviderString(roleList);
-        			group.getProperties().addProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID, roleProviderId);
+        			Group group = site.addGroup();
+        			group.getProperties().addProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
+        			group.getProperties().addProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID, role);
         			
         			// add users with role selected into group
-        			for(String roleId:roleList)
-        			{
-        				Set roleUsers = site.getUsersHasRole(roleId);
-        				for (Iterator iRoleUsers = roleUsers.iterator(); iRoleUsers.hasNext();)
-        				{
-        					String roleUserId = (String) iRoleUsers.next();
-            				Member member = site.getMember(roleUserId);
-        					group.addMember(roleUserId, roleId, member.isActive(), false);
-        				}
-        			}
+        			Set roleUsers = site.getUsersHasRole(role);
+    				for (Iterator iRoleUsers = roleUsers.iterator(); iRoleUsers.hasNext();)
+    				{
+    					String roleUserId = (String) iRoleUsers.next();
+        				Member member = site.getMember(roleUserId);
+    					group.addMember(roleUserId, role, member.isActive(), false);
+    				}
         			
-        			group.setTitle((group.getTitle()==null || group.getTitle().length()==0)?roleProviderId:group.getTitle().concat("+").concat(roleProviderId));
+        			group.setTitle(role);
         		}
+        	}
         		
-        		// save the changes
-        		try
-        		{
-        			siteService.save(site);
-        			// reset the form params
-        			resetParams();
-    	        } 
-    	        catch (IdUnusedException e) {
-    	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
-    	            return null;
-    	        } 
-    	        catch (PermissionException e) {
-    	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
-    	            return null;
-    	        }
-        	}
-        	catch (Exception ee)
-        	{
-        		M_log.warn(this + ".processAutoCreateGroup: cannot create group in site " + site.getId() + ee.toString());
-        	}
-        	
-        	
+    		// save the changes
+    		try
+    		{
+    			siteService.save(site);
+    			// reset the form params
+    			resetParams();
+	        } 
+	        catch (IdUnusedException e) {
+	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
+	            return null;
+	        } 
+	        catch (PermissionException e) {
+	        	M_log.warn(this + ".processAutoCreateGroup: cannot find site " + site.getId(), e);
+	            return null;
+	        }
         	
     	}
         return "done";
@@ -826,7 +846,20 @@ public class SiteManageGroupSectionRoleHandler {
     {
     	String[] sArray = new String[idsList.size()];
 		sArray = (String[]) idsList.toArray(sArray);
-		return groupProvider.packId(sArray);
+		if (groupProvider != null)
+		{
+			return groupProvider.packId(sArray);
+		}
+		else
+		{
+			// simply concat strings
+			String rv = "";
+			for(String sArrayString:sArray)
+			{
+				rv = rv + " " + sArrayString;
+			}
+			return rv;
+		}
     }
     /**
      * Removes a group from the site
@@ -885,6 +918,63 @@ public class SiteManageGroupSectionRoleHandler {
      */
     public Tool getCurrentTool() {
         return toolManager.getCurrentTool();
+    }
+    
+    /**
+     * check whether there is already a group within the site containing the roster id
+     * @param rosterId
+     * @return
+     */
+    public boolean existRosterGroup(String rosterId)
+    {
+    	boolean rv = false;
+    	
+    	Collection<Group> groups = site.getGroups();
+    	
+    	for(Group group:groups)
+    	{
+    		// check if there is one group with this roster id already
+    		String groupWSetupCreated = group.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
+			if (groupWSetupCreated != null && groupWSetupCreated.equalsIgnoreCase(Boolean.TRUE.toString()))
+			{
+				if (group.getProviderGroupId() != null && group.getProviderGroupId().equals(rosterId))
+				{
+					rv = true;
+					break;
+				}
+			}
+    	}
+		
+    	return rv;
+    }
+    
+    /**
+     * check whether there is already a group within the site containing the role id
+     * @param roleId
+     * @return
+     */
+    public boolean existRoleGroup(String roleId)
+    {
+    	boolean rv = false;
+    	
+    	Collection<Group> groups = site.getGroups();
+    	
+    	for(Group group:groups)
+    	{
+    		// check if there is one group with this roster id already
+    		String groupWSetupCreated = group.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
+			if (groupWSetupCreated != null && groupWSetupCreated.equalsIgnoreCase(Boolean.TRUE.toString()))
+			{
+				String groupRole = group.getProperties().getProperty(SiteConstants.GROUP_PROP_ROLE_PROVIDERID);
+				if (groupRole != null && groupRole.equals(roleId))
+				{
+					rv = true;
+					break;
+				}
+			}
+    	}
+		
+    	return rv;
     }
    
 }

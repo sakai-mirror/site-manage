@@ -36,6 +36,8 @@ import org.sakaiproject.emailtemplateservice.model.EmailTemplate;
 import org.sakaiproject.emailtemplateservice.model.RenderedTemplate;
 import org.sakaiproject.emailtemplateservice.service.EmailTemplateService;
 import org.sakaiproject.sitemanage.api.UserNotificationProvider;
+import org.sakaiproject.tool.api.Session;
+import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.util.ResourceLoader;
@@ -45,9 +47,7 @@ import org.sakaiproject.util.ResourceLoader;
 //import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import sun.util.logging.resources.logging;
-
-import com.sun.org.apache.xerces.internal.util.DOMUtil;
+import org.apache.xerces.util.DOMUtil;
 
 
 
@@ -61,6 +61,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	private static String NOTIFY_ADDED_PARTICIPANT ="sitemange.notifyAddedParticipant";
 
 	private static String NOTIFY_NEW_USER ="sitemanage.notifyNewUserEmail"; 
+	
+	private static final String ADMIN = "admin";
 	
 	private EmailService emailService; 
 	
@@ -85,7 +87,10 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		emailTemplateService = ets;
 	}
 	
-	
+	private SessionManager sessionManager;
+	public void setSessionManager(SessionManager s) {
+		this.sessionManager = s;
+	}
 
 	public void init() {
 		//nothing realy to do
@@ -152,6 +157,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 	            replacementValues.put("siteName", siteTitle);
 	            replacementValues.put("productionSiteName", productionSiteName);
+	            replacementValues.put("newNonOfficialAccount", new Boolean(newNonOfficialAccount).toString());
 	         
 	            M_log.debug("getting template: sitemange.notifyAddedParticipant");
 	            RenderedTemplate template = null;
@@ -245,6 +251,10 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 
 	private void loadAddedParticipantMail() {
 		try {
+			//we need a user session to avoind potential NPE's
+			Session sakaiSession = sessionManager.getCurrentSession();
+			sakaiSession.setUserId(ADMIN);
+		    sakaiSession.setUserEid(ADMIN);
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
 			Document document = new SAXBuilder(  ).build(in);
 			List it = document.getRootElement().getChildren("emailTemplate");
@@ -253,7 +263,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 				Element xmlTemplate = (Element)it.get(i);
 				xmlToTemplate(xmlTemplate, this.NOTIFY_ADDED_PARTICIPANT);
 			}
-			
+			sakaiSession.setUserId(null);
+		    sakaiSession.setUserEid(null);
 
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -269,6 +280,10 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 
 	private void loadNewUserMail() {
 		try {
+			//we need a user session to avoind potential NPE's
+			Session sakaiSession = sessionManager.getCurrentSession();
+			sakaiSession.setUserId(ADMIN);
+		    sakaiSession.setUserEid(ADMIN);
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyNewuser.xml");
 			Document document = new SAXBuilder(  ).build(in);
 			List it = document.getRootElement().getChildren("emailTemplate");
@@ -277,7 +292,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 				Element xmlTemplate = (Element)it.get(i);
 				xmlToTemplate(xmlTemplate, this.NOTIFY_NEW_USER);
 			}
-			
+			sakaiSession.setUserId(null);
+		    sakaiSession.setUserEid(null);
 
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
