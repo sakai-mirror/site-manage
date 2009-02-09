@@ -655,10 +655,14 @@ public class SiteAction extends PagedResourceActionII {
 	private DocumentBuilder docBuilder = null;
 	// XML Node/Attribute Names
 	protected static final String PARTICIPANTS_NODE_NAME = "PARTICIPANTS";
-
-	protected static final String SITE_ID_NODE_NAME = "SITE_ID";
-
+	protected static final String SITE_TITLE_NODE_NAME = "SITE_TITLE";
 	protected static final String PARTICIPANT_NODE_NAME = "PARTICIPANT";
+	protected static final String PARTICIPANT_NAME_NODE_NAME = "NAME";
+	protected static final String PARTICIPANT_SECTION_NODE_NAME = "SECTION";
+	protected static final String PARTICIPANT_ID_NODE_NAME = "ID";
+	protected static final String PARTICIPANT_CREDIT_NODE_NAME = "CREDIT";
+	protected static final String PARTICIPANT_ROLE_NODE_NAME = "ROLE";
+	protected static final String PARTICIPANT_STATUS_NODE_NAME = "STATUS";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -11322,7 +11326,8 @@ public class SiteAction extends PagedResourceActionII {
 		
 		Document document = docBuilder.newDocument();
 		
-		generateXMLDocument(document, siteId, state);
+		// get the participant xml document
+		generateParticipantXMLDocument(document, siteId, state);
 
 		generatePDF(document, outByteStream);
 		res.setContentLength(outByteStream.size());
@@ -11340,6 +11345,8 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				outByteStream.writeTo(out);
 			}
+			res.setHeader("Refresh", "0");
+
 			out.flush();
 			out.close();
 		}
@@ -11358,6 +11365,8 @@ public class SiteAction extends PagedResourceActionII {
 				{
 				}
 			}
+		
+			scheduleTopRefresh();
 		}
 	}
 	
@@ -11367,16 +11376,29 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param siteId
 	 * @param state
 	 */
-	protected void generateXMLDocument(Document doc, String siteId, SessionState state)
+	protected void generateParticipantXMLDocument(Document doc, String siteId, SessionState state)
 	{
 		Collection<Participant> participants = (Collection<Participant>) state.getAttribute(STATE_PARTICIPANT_LIST);
 		
 		// Create Root Element
 		Element root = doc.createElement(PARTICIPANTS_NODE_NAME);
 
+		String siteTitle = "";
+		
 		if (siteId != null)
 		{
-			writeStringNodeToDom(doc, root, SITE_ID_NODE_NAME, siteId);
+			try
+			{
+				Site site = SiteService.getSite(siteId);
+				siteTitle = site.getTitle();
+
+				// site title
+				writeStringNodeToDom(doc, root, SITE_TITLE_NODE_NAME, rb.getFormattedMessage("participant_pdf_title", new String[] {siteTitle}));
+			}
+			catch (Exception e)
+			{
+				M_log.warn(this + ":generateParticipantXMLDocument: Cannot find site with id =" + siteId);
+			}
 		}
 
 		// Add the Root Element to Document
@@ -11390,7 +11412,29 @@ public class SiteAction extends PagedResourceActionII {
 			for (Iterator<Participant> iParticipants = participants.iterator(); iParticipants.hasNext();)
 			{
 				Participant participant = iParticipants.next();
+				// Create Participant Element
+				Element participantNode = doc.createElement(PARTICIPANT_NODE_NAME);
+				
+				// participant name
+				String participantName= participant.getName();
+				if (participant.getDisplayId() != null)
+				{
+					participantName +="( " +  participant.getDisplayId() + " )";
+				}
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_NAME_NODE_NAME, StringUtil.trimToZero(participantName));
 
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_SECTION_NODE_NAME, StringUtil.trimToZero(participant.getSection()));
+
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ID_NODE_NAME, StringUtil.trimToZero(participant.getRegId()));
+				
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_CREDIT_NODE_NAME, StringUtil.trimToZero(participant.getCredits()));
+
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ROLE_NODE_NAME, StringUtil.trimToZero(participant.getRole()));
+				
+				writeStringNodeToDom(doc, participantNode, PARTICIPANT_STATUS_NODE_NAME, StringUtil.trimToZero(participant.active?rb.getString("sitegen.siteinfolist.active"):rb.getString("sitegen.siteinfolist.inactive")));
+			
+				// add participant node to participants node
+				root.appendChild(participantNode);
 			}
 		}
 	}
