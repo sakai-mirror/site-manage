@@ -2,7 +2,6 @@
   <name>sakai-site-manage-impl</name>
   <comment/>
   <projects>
-    <project>sakai-coursemanagement-api</project>
     <project>sakai-site-manage-api</project>
     <project>sakai-site-manage-hbm</project>
     <project>sakai-site-manage-util</project>

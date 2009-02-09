@@ -21,6 +21,9 @@
 package org.sakaiproject.site.tool;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -48,7 +51,17 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.stream.StreamSource;
 
+import org.apache.avalon.framework.logger.ConsoleLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.velocity.tools.generic.SortTool;
@@ -152,6 +165,18 @@ import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
+import org.sakaiproject.util.RequestFilter;
+import org.sakaiproject.thread_local.cover.ThreadLocalManager;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+//get pdf
+import org.apache.fop.apps.Driver;
+import org.apache.fop.apps.FOPException;
+import org.apache.fop.apps.Options;
+import org.apache.fop.configuration.Configuration;
+import org.apache.fop.messaging.MessageHandler;
 
 /**
  * <p>
@@ -624,6 +649,16 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, rb.getString("java.recent"));
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
 	}
+	
+	// FOP for PDF file generation
+	private TransformerFactory transformerFactory = null;
+	private DocumentBuilder docBuilder = null;
+	// XML Node/Attribute Names
+	protected static final String PARTICIPANTS_NODE_NAME = "PARTICIPANTS";
+
+	protected static final String SITE_ID_NODE_NAME = "SITE_ID";
+
+	protected static final String PARTICIPANT_NODE_NAME = "PARTICIPANT";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -6292,6 +6327,19 @@ public class SiteAction extends PagedResourceActionII {
 			int siteTitleMaxLength = ServerConfigurationService.getInt("site.title.maxlength", 20);
 			state.setAttribute(STATE_SITE_TITLE_MAX, siteTitleMaxLength);
 		}
+		
+        // create transformerFactory object needed by generatePDF
+        transformerFactory = TransformerFactory.newInstance();
+
+        try
+        {
+			// create DocumentBuilder object needed by print PDF
+			docBuilder =  DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        }
+        catch (Exception e)
+        {
+        	M_log.warn(this + ":init problem with getting docBuilder.");
+        }
 	} // init
 
 	public void doNavigate_to_site(RunData data) {
@@ -11255,4 +11303,165 @@ public class SiteAction extends PagedResourceActionII {
 		return true;
 	}
 	
+	/**
+	 * generate PDF file containing all site participant
+	 * @param data
+	 */
+	public void doPrint_participant(RunData data)
+	{
+		final SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		
+		String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
+		
+		HttpServletResponse res = (HttpServletResponse) ThreadLocalManager.get(RequestFilter.CURRENT_HTTP_RESPONSE);
+		
+		ByteArrayOutputStream outByteStream = new ByteArrayOutputStream();
+
+		res.addHeader("Content-Disposition", "inline; filename=\"participants.pdf\"");
+		res.setContentType("application/pdf");
+		
+		Document document = docBuilder.newDocument();
+		
+		generateXMLDocument(document, siteId, state);
+
+		generatePDF(document, outByteStream);
+		res.setContentLength(outByteStream.size());
+		if (outByteStream.size() > 0)
+		{
+			// Increase the buffer size for more speed.
+			res.setBufferSize(outByteStream.size());
+		}
+
+		OutputStream out = null;
+		try
+		{
+			out = res.getOutputStream();
+			if (outByteStream.size() > 0)
+			{
+				outByteStream.writeTo(out);
+			}
+			out.flush();
+			out.close();
+		}
+		catch (Throwable ignore)
+		{
+		}
+		finally
+		{
+			if (out != null)
+			{
+				try
+				{
+					out.close();
+				}
+				catch (Throwable ignore)
+				{
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Generate participant document
+	 * @param doc
+	 * @param siteId
+	 * @param state
+	 */
+	protected void generateXMLDocument(Document doc, String siteId, SessionState state)
+	{
+		Collection<Participant> participants = (Collection<Participant>) state.getAttribute(STATE_PARTICIPANT_LIST);
+		
+		// Create Root Element
+		Element root = doc.createElement(PARTICIPANTS_NODE_NAME);
+
+		if (siteId != null)
+		{
+			writeStringNodeToDom(doc, root, SITE_ID_NODE_NAME, siteId);
+		}
+
+		// Add the Root Element to Document
+		doc.appendChild(root);
+
+
+		if (participants != null)
+		{
+		
+			// Go through all the time ranges (days)
+			for (Iterator<Participant> iParticipants = participants.iterator(); iParticipants.hasNext();)
+			{
+				Participant participant = iParticipants.next();
+
+			}
+		}
+	}
+	
+	/**
+	 * Utility routine to write a string node to the DOM.
+	 */
+	protected Element writeStringNodeToDom(Document doc, Element parent, String nodeName, String nodeValue)
+	{
+		if (nodeValue != null && nodeValue.length() != 0)
+		{
+			Element name = doc.createElement(nodeName);
+			name.appendChild(doc.createTextNode(nodeValue));
+			parent.appendChild(name);
+			return name;
+		}
+
+		return null;
+	}
+	/**
+	 * Takes a DOM structure and renders a PDF
+	 * 
+	 * @param doc
+	 *        DOM structure
+	 * @param xslFileName
+	 *        XSL file to use to translate the DOM document to FOP
+	 */
+	protected void generatePDF(Document doc, OutputStream streamOut)
+	{
+		String xslFileName = "participants.xsl";
+		Driver driver = new Driver();
+
+		org.apache.avalon.framework.logger.Logger logger = new ConsoleLogger(ConsoleLogger.LEVEL_ERROR);
+		MessageHandler.setScreenLogger(logger);
+		driver.setLogger(logger);
+
+		/*try {
+			String baseDir = getClass().getClassLoader().getResource(FOP_FONTBASEDIR).toString();
+			Configuration.put("fontBaseDir", baseDir);
+			InputStream userConfig = getClass().getClassLoader().getResourceAsStream(FOP_USERCONFIG);
+			Options options = new Options(userConfig);
+		}
+      catch (FOPException fe){
+			M_log.warn(this+".generatePDF: ", fe);
+		}
+      catch(Exception e){
+			M_log.warn(this+".generatePDF: ", e);
+		}*/
+
+		driver.setOutputStream(streamOut);
+		driver.setRenderer(Driver.RENDER_PDF);
+
+		try
+		{
+			InputStream in = getClass().getClassLoader().getResourceAsStream(xslFileName);
+			Transformer transformer = transformerFactory.newTransformer(new StreamSource(in));
+
+			Source src = new DOMSource(doc);
+         
+			// Kludge: Xalan in JDK 1.4/1.5 does not properly resolve java classes 
+			// (http://xml.apache.org/xalan-j/faq.html#jdk14)
+			// Clean this up in JDK 1.6 and pass ResourceBundle/ArrayList parms
+			//transformer.setParameter("dayNames0", dayNames[0]);
+			transformer.transform(src, new SAXResult(driver.getContentHandler()));
+		}
+
+		catch (TransformerException e)
+		{
+			e.printStackTrace();
+			M_log.warn(this+".generatePDF(): " + e);
+			return;
+		}
+	}
  }
