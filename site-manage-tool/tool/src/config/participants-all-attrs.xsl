@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:java="http://xml.apache.org/xalan/java" exclude-result-prefixes="java">
 	<xsl:template match="/">
 		<fo:root xmlns:fo="http://www.w3.org/1999/XSL/Format">
 			<fo:layout-master-set>
@@ -21,6 +21,76 @@
 				</fo:static-content>
 				<fo:static-content flow-name="xsl-region-after"> </fo:static-content>
 				<fo:flow flow-name="xsl-region-body" font-size="9pt">
+					<fo:table table-layout="fixed" width="6in" >
+						<fo:table-column column-width="2in" />
+						<fo:table-column column-width="4in" />
+						<fo:table-body>
+							<fo:table-row>
+								<fo:table-cell padding="4pt">
+									<fo:block space-before="3mm" space-after="3mm">
+										<fo:table table-layout="fixed" width="1.7in" border="1pt solid #ccc">
+											<fo:table-column column-width="1in" />
+											<fo:table-column column-width=".5in" />
+											<fo:table-body>
+												<xsl:variable name="unique-list" select="//ROLE[not(.=following::ROLE)]" />
+												<xsl:for-each select="$unique-list">
+													<fo:table-row>
+														<fo:table-cell padding="4pt">
+															<fo:block>
+																<xsl:value-of select="." />
+															</fo:block>
+														</fo:table-cell>
+														<fo:table-cell padding="4pt">
+															<fo:block>
+																<xsl:variable name="this" select="." />
+																<xsl:value-of select="count(//ROLE[text()=$this])" />
+															</fo:block>
+														</fo:table-cell>
+													</fo:table-row>
+												</xsl:for-each>
+												<fo:table-row>
+													<fo:table-cell padding="4pt" border-top="1pt solid #ccc">
+														<fo:block font-weight="bold"> </fo:block>
+													</fo:table-cell>
+													<fo:table-cell padding="4pt" border-top="1pt solid #ccc">
+														<fo:block font-weight="bold">
+															<xsl:value-of select="count(//ROLE)" />
+														</fo:block>
+													</fo:table-cell>
+												</fo:table-row>
+											</fo:table-body>
+										</fo:table>
+									</fo:block>
+								</fo:table-cell>
+								<fo:table-cell padding="4pt">
+									<fo:block space-before="3mm" space-after="3mm">
+										<fo:table table-layout="fixed" width="4in" border="1pt solid #ccc">
+											<fo:table-column column-width="3.5in" />
+											<fo:table-column column-width=".5in" />
+											<fo:table-body>
+												<xsl:variable name="unique-list" select="//SECTION[not(.=following::SECTION)]" />
+												<xsl:for-each select="$unique-list">
+													<fo:table-row>
+														<fo:table-cell padding="4pt">
+															<fo:block>
+																<xsl:value-of select="." />
+															</fo:block>
+														</fo:table-cell>
+														<fo:table-cell padding="4pt">
+															<fo:block>
+																<xsl:variable name="this" select="." />
+																<xsl:value-of select="count(//SECTION[text()=$this])" />
+															</fo:block>
+														</fo:table-cell>
+													</fo:table-row>
+												</xsl:for-each>
+											</fo:table-body>
+										</fo:table>
+									</fo:block>
+								</fo:table-cell>
+							</fo:table-row>
+						</fo:table-body>
+					</fo:table>
 					<fo:table table-layout="fixed" width="100%">
 						<fo:table-column column-width="2.5in" />
 						<fo:table-column column-width="2in" />
