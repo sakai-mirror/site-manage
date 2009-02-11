@@ -24,10 +24,8 @@
 					<fo:table table-layout="fixed" width="100%">
 						<fo:table-column column-width="2.5in" />
 						<fo:table-column column-width="2in" />
-						<!-- cols for id and credits 
 						<fo:table-column column-width=".25in" />
 						<fo:table-column column-width=".6in" />
-						-->
 						<fo:table-column column-width=".5in" />
 						<fo:table-column column-width=".6in" />
 						<fo:table-body>
@@ -42,7 +40,6 @@
 										SECTION
 									</fo:block>
 								</fo:table-cell>
-								<!-- headers  for id and credits
 								<fo:table-cell padding="2pt">
 									<fo:block text-align="left">
 										ID
@@ -53,7 +50,6 @@
 										CREDITS
 									</fo:block>
 								</fo:table-cell>
-								-->	
 								<fo:table-cell padding="2pt">
 									<fo:block text-align="left">
 										ROLE
