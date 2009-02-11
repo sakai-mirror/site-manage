@@ -178,6 +178,11 @@ import org.apache.fop.apps.Options;
 import org.apache.fop.configuration.Configuration;
 import org.apache.fop.messaging.MessageHandler;
 
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.*;
+import javax.xml.transform.stream.StreamResult;
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -658,6 +663,7 @@ public class SiteAction extends PagedResourceActionII {
 	protected static final String SITE_TITLE_NODE_NAME = "SITE_TITLE";
 	protected static final String PARTICIPANT_NODE_NAME = "PARTICIPANT";
 	protected static final String PARTICIPANT_NAME_NODE_NAME = "NAME";
+	protected static final String PARTICIPANT_SECTIONS_NODE_NAME = "SECTIONS";
 	protected static final String PARTICIPANT_SECTION_NODE_NAME = "SECTION";
 	protected static final String PARTICIPANT_ID_NODE_NAME = "ID";
 	protected static final String PARTICIPANT_CREDIT_NODE_NAME = "CREDIT";
@@ -11337,6 +11343,21 @@ public class SiteAction extends PagedResourceActionII {
 			res.setBufferSize(outByteStream.size());
 		}
 
+		/*
+		// output xml for debugging purpose
+		try
+		{
+			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+	        Transformer transformer = transformerFactory.newTransformer();
+	        DOMSource source = new DOMSource(document);
+	        StreamResult result =  new StreamResult(System.out);
+	        transformer.transform(source, result);
+		}
+		catch (Exception e)
+		{
+			
+		}*/
+        
 		OutputStream out = null;
 		try
 		{
@@ -11423,14 +11444,25 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				writeStringNodeToDom(doc, participantNode, PARTICIPANT_NAME_NODE_NAME, StringUtil.trimToZero(participantName));
 
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_SECTION_NODE_NAME, StringUtil.trimToZero(participant.getSection()));
+				// sections
+				Element sectionsNode = doc.createElement(PARTICIPANT_SECTIONS_NODE_NAME);
+				for ( Iterator iSections = participant.getSectionEidList().iterator(); iSections.hasNext();)
+				{
+					String section = (String) iSections.next();
+					writeStringNodeToDom(doc, sectionsNode, PARTICIPANT_SECTION_NODE_NAME, StringUtil.trimToZero(section));
+				}
+				participantNode.appendChild(sectionsNode);
 
+				// registration id
 				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ID_NODE_NAME, StringUtil.trimToZero(participant.getRegId()));
 				
+				// credit
 				writeStringNodeToDom(doc, participantNode, PARTICIPANT_CREDIT_NODE_NAME, StringUtil.trimToZero(participant.getCredits()));
 
+				// role id
 				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ROLE_NODE_NAME, StringUtil.trimToZero(participant.getRole()));
 				
+				// status
 				writeStringNodeToDom(doc, participantNode, PARTICIPANT_STATUS_NODE_NAME, StringUtil.trimToZero(participant.active?rb.getString("sitegen.siteinfolist.active"):rb.getString("sitegen.siteinfolist.inactive")));
 			
 				// add participant node to participants node
@@ -11444,7 +11476,7 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected Element writeStringNodeToDom(Document doc, Element parent, String nodeName, String nodeValue)
 	{
-		if (nodeValue != null && nodeValue.length() != 0)
+		if (nodeValue != null)
 		{
 			Element name = doc.createElement(nodeName);
 			name.appendChild(doc.createTextNode(nodeValue));
@@ -11464,7 +11496,7 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected void generatePDF(Document doc, OutputStream streamOut)
 	{
-		String xslFileName = "participants.xsl";
+		String xslFileName = "participants-all-attrs.xsl";
 		Driver driver = new Driver();
 
 		org.apache.avalon.framework.logger.Logger logger = new ConsoleLogger(ConsoleLogger.LEVEL_ERROR);
