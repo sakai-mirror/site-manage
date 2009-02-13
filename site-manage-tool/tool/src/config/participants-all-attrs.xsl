@@ -21,12 +21,12 @@
 				</fo:static-content>
 				<fo:static-content flow-name="xsl-region-after"> </fo:static-content>
 				<fo:flow flow-name="xsl-region-body" font-size="9pt">
-					<fo:table table-layout="fixed" width="6in" >
+					<fo:table table-layout="fixed" width="6in">
 						<fo:table-column column-width="2in" />
 						<fo:table-column column-width="4in" />
 						<fo:table-body>
 							<fo:table-row>
-								<fo:table-cell padding="4pt">
+								<fo:table-cell  padding="4pt">
 									<fo:block space-before="3mm" space-after="3mm">
 										<fo:table table-layout="fixed" width="1.7in" border="1pt solid #ccc">
 											<fo:table-column column-width="1in" />
@@ -35,12 +35,12 @@
 												<xsl:variable name="unique-list" select="//ROLE[not(.=following::ROLE)]" />
 												<xsl:for-each select="$unique-list">
 													<fo:table-row>
-														<fo:table-cell padding="4pt">
+														<fo:table-cell  padding="4pt">
 															<fo:block>
 																<xsl:value-of select="." />
 															</fo:block>
 														</fo:table-cell>
-														<fo:table-cell padding="4pt">
+														<fo:table-cell  padding="4pt">
 															<fo:block>
 																<xsl:variable name="this" select="." />
 																<xsl:value-of select="count(//ROLE[text()=$this])" />
@@ -49,10 +49,10 @@
 													</fo:table-row>
 												</xsl:for-each>
 												<fo:table-row>
-													<fo:table-cell padding="4pt" border-top="1pt solid #ccc">
+													<fo:table-cell  padding="4pt" border-top="1pt solid #ccc">
 														<fo:block font-weight="bold"> </fo:block>
 													</fo:table-cell>
-													<fo:table-cell padding="4pt" border-top="1pt solid #ccc">
+													<fo:table-cell  padding="4pt" border-top="1pt solid #ccc">
 														<fo:block font-weight="bold">
 															<xsl:value-of select="count(//ROLE)" />
 														</fo:block>
@@ -62,7 +62,7 @@
 										</fo:table>
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="4pt">
+								<fo:table-cell  padding="4pt">
 									<fo:block space-before="3mm" space-after="3mm">
 										<fo:table table-layout="fixed" width="4in" border="1pt solid #ccc">
 											<fo:table-column column-width="3.5in" />
@@ -71,12 +71,12 @@
 												<xsl:variable name="unique-list" select="//SECTION[not(.=following::SECTION)]" />
 												<xsl:for-each select="$unique-list">
 													<fo:table-row>
-														<fo:table-cell padding="4pt">
+														<fo:table-cell  padding="4pt">
 															<fo:block>
 																<xsl:value-of select="." />
 															</fo:block>
 														</fo:table-cell>
-														<fo:table-cell padding="4pt">
+														<fo:table-cell  padding="4pt">
 															<fo:block>
 																<xsl:variable name="this" select="." />
 																<xsl:value-of select="count(//SECTION[text()=$this])" />
@@ -91,42 +91,48 @@
 							</fo:table-row>
 						</fo:table-body>
 					</fo:table>
-					<fo:table table-layout="fixed" width="100%">
-						<fo:table-column column-width="2.5in" />
-						<fo:table-column column-width="2in" />
+					<fo:table table-layout="fixed" width="100%"  text-align="left">
+						<!-- name col  -->
+						<fo:table-column   column-width="2in"/> 
+						<!-- section col -->
+						<fo:table-column column-width="2.2in" />
+						<!-- id col -->						
+						<fo:table-column column-width="1.15in" />
+						<!-- credits col -->
 						<fo:table-column column-width=".25in" />
-						<fo:table-column column-width=".6in" />
+						<!-- role col -->
 						<fo:table-column column-width=".5in" />
-						<fo:table-column column-width=".6in" />
+						<!-- status col -->						
+						<fo:table-column column-width=".5in" />
 						<fo:table-body>
 							<fo:table-row line-height="9pt" background-color="#cccccc" font-weight="bold" display-align="center">
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
+								<fo:table-cell  padding="2pt">
+									<fo:block>
 										NAME
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
+								<fo:table-cell  padding="2pt">
+									<fo:block>
 										SECTION
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
+								<fo:table-cell  padding="2pt">
+									<fo:block>
 										ID
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
-										CREDITS
+								<fo:table-cell  padding="2pt">
+									<fo:block>
+										CR
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
+								<fo:table-cell  padding="2pt">
+									<fo:block>
 										ROLE
 									</fo:block>
 								</fo:table-cell>
-								<fo:table-cell padding="2pt">
-									<fo:block text-align="left">
+								<fo:table-cell  padding="2pt">
+									<fo:block>
 										STATUS
 									</fo:block>
 								</fo:table-cell>
@@ -150,11 +156,6 @@
 		<xsl:choose>
 			<xsl:when test="position() mod 2 != 1">
 				<fo:table-row line-height="11pt" background-color="#eeeeee">
-					<!--
-						<fo:table-cell>
-						<fo:block font-weight="bold" white-space="nowrap">  <xsl:value-of select="position()" />  </fo:block>
-						</fo:table-cell>
-					-->
 					<xsl:apply-templates />
 				</fo:table-row>
 			</xsl:when>
@@ -166,7 +167,7 @@
 		</xsl:choose>
 	</xsl:template>
 	<xsl:template match="NAME" xmlns:fo="http://www.w3.org/1999/XSL/Format">
-		<fo:table-cell padding="2pt" white-space="nowrap">
+		<fo:table-cell  padding="2pt" white-space="nowrap">
 			<xsl:choose>
 				<xsl:when test="../ROLE='Instructor'">
 					<fo:block font-weight="bold" white-space="nowrap">
@@ -181,11 +182,31 @@
 			</xsl:choose>
 		</fo:table-cell>
 	</xsl:template>
-	<xsl:template match="SECTION | ROLE | STATUS | ID | CREDITS" xmlns:fo="http://www.w3.org/1999/XSL/Format">
-		<fo:table-cell padding="2pt">
-			<fo:block>
+	<xsl:template match="ROLE | STATUS | ID | CREDIT" xmlns:fo="http://www.w3.org/1999/XSL/Format">
+		<fo:table-cell  padding="2pt" >
+			<fo:block font-size="70%">
 				<xsl:value-of select="." />
 			</fo:block>
 		</fo:table-cell>
+	</xsl:template>
+	<xsl:template match="SECTIONS" xmlns:fo="http://www.w3.org/1999/XSL/Format">
+		<fo:table-cell  padding="2pt">
+			<fo:block>
+				<xsl:apply-templates select="SECTION" />
+			</fo:block>
+		</fo:table-cell>
+	</xsl:template>
+	<xsl:template match="SECTION" xmlns:fo="http://www.w3.org/1999/XSL/Format">
+		<fo:inline font-size="70%" padding-right="3em">
+			<xsl:choose>
+				<xsl:when test="position() = last()">
+					<xsl:value-of select="." />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+					<xsl:text>, </xsl:text>
+				</xsl:otherwise>
+			</xsl:choose>
+		</fo:inline>
 	</xsl:template>
 </xsl:stylesheet>
