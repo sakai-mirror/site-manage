@@ -6840,8 +6840,7 @@ public class SiteAction extends PagedResourceActionII {
 								.getAttribute(STATE_IMPORT_SITE_TOOL);
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-						importToolIntoSite(selectedTools, importTools,
-								existingSite);
+						importToolIntoSite(selectedTools, importTools, existingSite, false);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -6882,8 +6881,7 @@ public class SiteAction extends PagedResourceActionII {
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 						// Remove all old contents before importing contents from new site
-						importToolIntoSiteMigrate(selectedTools, importTools,
-								existingSite);
+						importToolIntoSite(selectedTools, importTools, existingSite, true);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -7430,7 +7428,8 @@ public class SiteAction extends PagedResourceActionII {
 								m_contentHostingService
 										.getSiteCollection(oSiteId),
 								m_contentHostingService
-										.getSiteCollection(nSiteId));
+										.getSiteCollection(nSiteId),
+								false);
 					} else if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) {
 						// handle Home tool specially, need to update the site infomration display url if needed
 						String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
@@ -7439,8 +7438,7 @@ public class SiteAction extends PagedResourceActionII {
 					else {
 						// other
 						// tools
-						transferCopyEntities(toolId,
-								oSiteId, nSiteId);
+						transferCopyEntities(toolId, oSiteId, nSiteId, false);
 					}
 				}
 			}
@@ -8458,7 +8456,7 @@ public class SiteAction extends PagedResourceActionII {
 		commitSite(site);
 
 		// import
-		importToolIntoSite(chosenList, importTools, site);
+		importToolIntoSite(chosenList, importTools, site, false);
 		
 	} // saveFeatures
 
@@ -8642,7 +8640,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	// import tool content into site
 	private void importToolIntoSite(List toolIds, Hashtable importTools,
-			Site site) {
+			Site site, boolean migrate) {
 		if (importTools != null) {
 			// import resources first
 			boolean resourcesImported = false;
@@ -8662,8 +8660,7 @@ public class SiteAction extends PagedResourceActionII {
 						String toSiteCollectionId = m_contentHostingService
 								.getSiteCollection(toSiteId);
 
-						transferCopyEntities(toolId, fromSiteCollectionId,
-								toSiteCollectionId);
+						transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
 						resourcesImported = true;
 					}
 				}
@@ -8678,57 +8675,12 @@ public class SiteAction extends PagedResourceActionII {
 					for (int k = 0; k < importSiteIds.size(); k++) {
 						String fromSiteId = (String) importSiteIds.get(k);
 						String toSiteId = site.getId();
-						transferCopyEntities(toolId, fromSiteId, toSiteId);
+						transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
 					}
 				}
 			}
 		}
 	} // importToolIntoSite
-
-	
-	private void importToolIntoSiteMigrate(List toolIds, Hashtable importTools,
-			Site site) {
-		
-		if (importTools != null) {
-			// import resources first
-			boolean resourcesImported = false;
-			for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
-				String toolId = (String) toolIds.get(i);
-
-				if (toolId.equalsIgnoreCase("sakai.resources")
-						&& importTools.containsKey(toolId)) {
-					List importSiteIds = (List) importTools.get(toolId);
-
-					for (int k = 0; k < importSiteIds.size(); k++) {
-						String fromSiteId = (String) importSiteIds.get(k);
-						String toSiteId = site.getId();
-
-						String fromSiteCollectionId = m_contentHostingService
-								.getSiteCollection(fromSiteId);
-						String toSiteCollectionId = m_contentHostingService
-								.getSiteCollection(toSiteId);
-						transferCopyEntitiesMigrate(toolId, fromSiteCollectionId,
-								toSiteCollectionId);
-						resourcesImported = true;
-					}
-				}
-			}
-
-			// import other tools then
-			for (int i = 0; i < toolIds.size(); i++) {
-				String toolId = (String) toolIds.get(i);
-				if (!toolId.equalsIgnoreCase("sakai.resources")
-						&& importTools.containsKey(toolId)) {
-					List importSiteIds = (List) importTools.get(toolId);
-					for (int k = 0; k < importSiteIds.size(); k++) {
-						String fromSiteId = (String) importSiteIds.get(k);
-						String toSiteId = site.getId();
-						transferCopyEntitiesMigrate(toolId, fromSiteId, toSiteId);
-					}
-				}
-			}
-		}
-	} // importToolIntoSiteMigrate
 
 
 	public void saveSiteStatus(SessionState state, boolean published) {
@@ -10149,9 +10101,10 @@ public class SiteAction extends PagedResourceActionII {
 	 *            The context to import from.
 	 * @param toContext
 	 *            The context to import into.
+	 * @param migrate Whether to remove the old content or not
 	 */
 	protected void transferCopyEntities(String toolId, String fromContext,
-			String toContext) {
+			String toContext, boolean migrate) {
 		// TODO: used to offer to resources first - why? still needed? -ggolden
 
 		// offer to all EntityProducers
@@ -10164,35 +10117,17 @@ public class SiteAction extends PagedResourceActionII {
 
 					// if this producer claims this tool id
 					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
-						et.transferCopyEntities(fromContext, toContext,
-								new Vector());
+						if (migrate)
+						{
+							et.transferCopyEntities(fromContext, toContext, new Vector(), true);
+						}
+						else
+						{
+							et.transferCopyEntities(fromContext, toContext, new Vector());
+						}
 					}
 				} catch (Throwable t) {
 					M_log.warn(this + ".transferCopyEntities: Error encountered while asking EntityTransfer to transferCopyEntities from: "
-									+ fromContext + " to: " + toContext, t);
-				}
-			}
-		}
-	}
-
-	protected void transferCopyEntitiesMigrate(String toolId, String fromContext,
-			String toContext) {
-		
-		for (Iterator i = EntityManager.getEntityProducers().iterator(); i
-				.hasNext();) {
-			EntityProducer ep = (EntityProducer) i.next();
-			if (ep instanceof EntityTransferrer) {
-				try {
-					EntityTransferrer et = (EntityTransferrer) ep;
-
-					// if this producer claims this tool id
-					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
-						et.transferCopyEntities(fromContext, toContext,
-								new Vector(), true);
-					}
-				} catch (Throwable t) {
-					M_log.warn(
-							"Error encountered while asking EntityTransfer to transferCopyEntities from: "
 									+ fromContext + " to: " + toContext, t);
 				}
 			}
