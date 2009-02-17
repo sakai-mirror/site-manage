@@ -40,6 +40,7 @@ import java.util.Locale;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Random;
@@ -153,6 +154,8 @@ import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
 
+
+import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -624,6 +627,11 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, rb.getString("java.recent"));
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
 	}
+	
+	private static final String ENTITYCOPY_THREAD_STATUS  = "status";
+	private static final String ENTITYCOPY_THREAD_STATUS_RUNNING="running";
+	private static final String ENTITYCOPY_THREAD_STATUS_ERROR="error";
+	private static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -1800,6 +1808,10 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-siteInfo-list.vm
 			 * 
 			 */
+			if (state.getAttribute(ENTITYCOPY_THREAD_STATUS) != null)
+			{
+				context.put("threadStatus", state.getAttribute(ENTITYCOPY_THREAD_STATUS));
+			}
 			context.put("userDirectoryService", UserDirectoryService
 					.getInstance());
 			try {
@@ -4860,7 +4872,7 @@ public class SiteAction extends PagedResourceActionII {
 			else
 			{
 				// create based on template: skip add features, and copying all the contents from the tools in template site
-				importToolContent(site.getId(), templateSite.getId(), site, true);
+				importToolContent(site.getId(), templateSite.getId(), site, true, state);
 			}
 				
 			// for course sites
@@ -6840,7 +6852,7 @@ public class SiteAction extends PagedResourceActionII {
 								.getAttribute(STATE_IMPORT_SITE_TOOL);
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-						importToolIntoSite(selectedTools, importTools, existingSite, false);
+						importToolIntoSite(selectedTools, importTools, existingSite.getId(), false, false, state);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -6881,7 +6893,7 @@ public class SiteAction extends PagedResourceActionII {
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 						// Remove all old contents before importing contents from new site
-						importToolIntoSite(selectedTools, importTools, existingSite, true);
+						importToolIntoSite(selectedTools, importTools, existingSite.getId(), true, false, state);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -7006,7 +7018,7 @@ public class SiteAction extends PagedResourceActionII {
 								site.setTitle(title);
 								
 								// import tool content
-								importToolContent(nSiteId, oSiteId, site, false);
+								importToolContent(nSiteId, oSiteId, site, false, state);
 
 							} catch (Exception e1) {
 								// if goes here, IdService
@@ -7391,22 +7403,9 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param oSiteId
 	 * @param site
 	 */
-	private void importToolContent(String nSiteId, String oSiteId, Site site, boolean bypassSecurity) {
-		// import tool content
-		
-		if (bypassSecurity)
-		{
-			// importing from template, bypass the permission checking:
-			// temporarily allow the user to read and write from assignments (asn.revise permission)
-	        SecurityService.pushAdvisor(new SecurityAdvisor()
-	            {
-	                public SecurityAdvice isAllowed(String userId, String function, String reference)
-	                {
-	                    return SecurityAdvice.ALLOWED;
-	                }
-	            });
-		}
-				
+	private void importToolContent(String nSiteId, String oSiteId, Site site, boolean bypassSecurity, SessionState state) {
+		List<String> toolIds = new Vector<String>();
+		Hashtable<String, List<String>> siteIds = new Hashtable<String, List<String>>();
 		List pageList = site.getPages();
 		if (!((pageList == null) || (pageList.size() == 0))) {
 			for (ListIterator i = pageList
@@ -7417,37 +7416,34 @@ public class SiteAction extends PagedResourceActionII {
 				if (!(pageToolList == null || pageToolList.size() == 0))
 				{
 					Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
-					String toolId = tool != null?tool.getId():"";
-					if (toolId.equalsIgnoreCase("sakai.resources")) {
-						// handle
-						// resource
-						// tool
-						// specially
-						transferCopyEntities(
-								toolId,
-								m_contentHostingService
-										.getSiteCollection(oSiteId),
-								m_contentHostingService
-										.getSiteCollection(nSiteId),
-								false);
-					} else if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) {
-						// handle Home tool specially, need to update the site infomration display url if needed
-						String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
-						site.setInfoUrl(newSiteInfoUrl);
-					}
-					else {
-						// other
-						// tools
-						transferCopyEntities(toolId, oSiteId, nSiteId, false);
+					if (tool != null)
+					{
+						String toolId = StringUtil.trimToNull(tool.getId());
+						if (toolId != null)
+						{
+							// populating the tool id list for importing
+							
+							// only have one sour site
+							List<String> sIds = new Vector<String>();
+							sIds.add(oSiteId);
+							
+							toolIds.add(toolId);
+							siteIds.put(toolId, sIds);
+							
+							if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) 
+							{
+								// handle Home tool specially, need to update the site infomration display url if needed
+								String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
+								site.setInfoUrl(newSiteInfoUrl);
+							}
+						}
 					}
 				}
 			}
 		}
 		
-		if (bypassSecurity)
-		{
-			SecurityService.clearAdvisors();
-		}
+		// now that we have the tool list, do the copy content
+		importToolIntoSite(toolIds, siteIds, site.getId(), false, true, state);
 	}
 	/**
 	 * get user answers to setup questions
@@ -8456,7 +8452,7 @@ public class SiteAction extends PagedResourceActionII {
 		commitSite(site);
 
 		// import
-		importToolIntoSite(chosenList, importTools, site, false);
+		importToolIntoSite(chosenList, importTools, site.getId(), false, false, state);
 		
 	} // saveFeatures
 
@@ -8639,45 +8635,18 @@ public class SiteAction extends PagedResourceActionII {
 	} // getFeatures
 
 	// import tool content into site
-	private void importToolIntoSite(List toolIds, Hashtable importTools,
-			Site site, boolean migrate) {
+	private void importToolIntoSite(List<String> toolIds, Hashtable<String, List<String>> importTools, String siteId, boolean migrate, boolean byPassSecurity, SessionState sessionState) {
 		if (importTools != null) {
-			// import resources first
-			boolean resourcesImported = false;
-			for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
-				String toolId = (String) toolIds.get(i);
-
-				if (toolId.equalsIgnoreCase("sakai.resources")
-						&& importTools.containsKey(toolId)) {
-					List importSiteIds = (List) importTools.get(toolId);
-
-					for (int k = 0; k < importSiteIds.size(); k++) {
-						String fromSiteId = (String) importSiteIds.get(k);
-						String toSiteId = site.getId();
-
-						String fromSiteCollectionId = m_contentHostingService
-								.getSiteCollection(fromSiteId);
-						String toSiteCollectionId = m_contentHostingService
-								.getSiteCollection(toSiteId);
-
-						transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
-						resourcesImported = true;
-					}
-				}
+			
+			// do the whole process in a separate thread
+			try
+			{
+				EntityCopyThread n = new EntityCopyThread(toolIds, importTools, siteId, migrate, byPassSecurity, sessionState);
+				Thread t = new Thread(n);
+				t.start();
 			}
-
-			// import other tools then
-			for (int i = 0; i < toolIds.size(); i++) {
-				String toolId = (String) toolIds.get(i);
-				if (!toolId.equalsIgnoreCase("sakai.resources")
-						&& importTools.containsKey(toolId)) {
-					List importSiteIds = (List) importTools.get(toolId);
-					for (int k = 0; k < importSiteIds.size(); k++) {
-						String fromSiteId = (String) importSiteIds.get(k);
-						String toSiteId = site.getId();
-						transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
-					}
-				}
+			catch(Exception e)
+			{
 			}
 		}
 	} // importToolIntoSite
@@ -10092,49 +10061,6 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	/**
-	 * Transfer a copy of all entites from another context for any entity
-	 * producer that claims this tool id.
-	 * 
-	 * @param toolId
-	 *            The tool id.
-	 * @param fromContext
-	 *            The context to import from.
-	 * @param toContext
-	 *            The context to import into.
-	 * @param migrate Whether to remove the old content or not
-	 */
-	protected void transferCopyEntities(String toolId, String fromContext,
-			String toContext, boolean migrate) {
-		// TODO: used to offer to resources first - why? still needed? -ggolden
-
-		// offer to all EntityProducers
-		for (Iterator i = EntityManager.getEntityProducers().iterator(); i
-				.hasNext();) {
-			EntityProducer ep = (EntityProducer) i.next();
-			if (ep instanceof EntityTransferrer) {
-				try {
-					EntityTransferrer et = (EntityTransferrer) ep;
-
-					// if this producer claims this tool id
-					if (ArrayUtil.contains(et.myToolIds(), toolId)) {
-						if (migrate)
-						{
-							et.transferCopyEntities(fromContext, toContext, new Vector(), true);
-						}
-						else
-						{
-							et.transferCopyEntities(fromContext, toContext, new Vector());
-						}
-					}
-				} catch (Throwable t) {
-					M_log.warn(this + ".transferCopyEntities: Error encountered while asking EntityTransfer to transferCopyEntities from: "
-									+ fromContext + " to: " + toContext, t);
-				}
-			}
-		}
-	}
-
-	/**
 	 * @return Get a list of all tools that support the import (transfer copy)
 	 *         option
 	 */
@@ -11190,4 +11116,150 @@ public class SiteAction extends PagedResourceActionII {
 		return true;
 	}
 	
+	/**
+	 * Thread to run the entity copy task needed when duplicating, copying, and importing site(s).
+	 * @author zqian
+	 *
+	 */
+	protected class EntityCopyThread extends Observable implements Runnable 
+	{
+		public void init(){}
+		public void start(){}
+		
+		private List<String> toolIds = null;
+		private Hashtable<String, List<String>> importTools = null;
+		private String toSiteId = null;
+		private boolean migrate = false;
+		private boolean byPassSecurity = false;
+		private SessionState sessionState = null;
+		
+		//constructor
+		EntityCopyThread(List<String> toolIds, Hashtable<String, List<String>> importTools, String toSiteId, boolean migrate, boolean byPassSecurity, SessionState sessionState)
+		{
+			this.toolIds = toolIds;
+			this.importTools = importTools;
+			this.toSiteId = toSiteId;
+			this.migrate = migrate;
+			this.byPassSecurity = byPassSecurity;
+			this.sessionState = sessionState;
+		}
+
+		public void run()
+		{
+			if (byPassSecurity)
+			{
+				// importing from template, bypass the permission checking:
+				// temporarily allow the user to read and write from assignments (asn.revise permission)
+		        SecurityService.pushAdvisor(new SecurityAdvisor()
+		            {
+		                public SecurityAdvice isAllowed(String userId, String function, String reference)
+		                {
+		                    return SecurityAdvice.ALLOWED;
+		                }
+		            });
+			}
+			// running
+			sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_RUNNING);
+			
+		    try
+			{
+		    	// import resources first
+				boolean resourcesImported = false;
+				for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
+					String toolId = (String) toolIds.get(i);
+
+					if (toolId.equalsIgnoreCase("sakai.resources")
+							&& importTools.containsKey(toolId)) {
+						List importSiteIds = (List) importTools.get(toolId);
+
+						for (int k = 0; k < importSiteIds.size(); k++) {
+							String fromSiteId = (String) importSiteIds.get(k);
+
+							String fromSiteCollectionId = m_contentHostingService
+									.getSiteCollection(fromSiteId);
+							String toSiteCollectionId = m_contentHostingService
+									.getSiteCollection(toSiteId);
+
+							transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
+							resourcesImported = true;
+						}
+					}
+				}
+
+				// import other tools then
+				for (int i = 0; i < toolIds.size(); i++) {
+					String toolId = (String) toolIds.get(i);
+					if (!toolId.equalsIgnoreCase("sakai.resources")
+							&& importTools.containsKey(toolId)) {
+						List importSiteIds = (List) importTools.get(toolId);
+						for (int k = 0; k < importSiteIds.size(); k++) {
+							String fromSiteId = (String) importSiteIds.get(k);
+							transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
+						}
+					}
+				}
+
+				if (byPassSecurity)
+				{
+					SecurityService.clearAdvisors();
+				}
+				
+				// finished
+				sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_FINISHED);
+			}
+		    catch(Exception e) {
+		    	// error
+		    	sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_ERROR);
+		    }
+		    finally
+			{
+				//clear any current bindings
+				ThreadLocalManager.clear();
+			}
+		}
+		
+		/**
+		 * Transfer a copy of all entites from another context for any entity
+		 * producer that claims this tool id.
+		 * 
+		 * @param toolId
+		 *            The tool id.
+		 * @param fromContext
+		 *            The context to import from.
+		 * @param toContext
+		 *            The context to import into.
+		 * @param migrate Whether to remove the old content or not
+		 */
+		protected void transferCopyEntities(String toolId, String fromContext,
+				String toContext, boolean migrate) {
+			// TODO: used to offer to resources first - why? still needed? -ggolden
+
+			// offer to all EntityProducers
+			for (Iterator i = EntityManager.getEntityProducers().iterator(); i
+					.hasNext();) {
+				EntityProducer ep = (EntityProducer) i.next();
+				if (ep instanceof EntityTransferrer) {
+					try {
+						EntityTransferrer et = (EntityTransferrer) ep;
+
+						// if this producer claims this tool id
+						if (ArrayUtil.contains(et.myToolIds(), toolId)) {
+							if (migrate)
+							{
+								et.transferCopyEntities(fromContext, toContext, new Vector(), true);
+							}
+							else
+							{
+								et.transferCopyEntities(fromContext, toContext, new Vector());
+							}
+						}
+					} catch (Throwable t) {
+						M_log.warn(this + ".transferCopyEntities: Error encountered while asking EntityTransfer to transferCopyEntities from: "
+										+ fromContext + " to: " + toContext, t);
+					}
+				}
+			}
+		}
+		
+	}//EntityCopyThread
  }

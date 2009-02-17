@@ -3,6 +3,9 @@
 <div class ="portletBody">
 	#if($menu)#toolbar($menu)#end
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
+	#if ($!threadStatus)
+		<div class="alertMessage">$threadStatus</div>
+	#end
 	<div class="navPanel">
 		<div class="viewNav">
 			<form name="viewForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">
