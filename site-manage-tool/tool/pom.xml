@@ -177,14 +177,6 @@
           <include>**/*.properties</include>
         </includes>
       </resource>
-	  <resource>
-        <directory>${basedir}/src/config</directory>
-        <includes>
-          <include>**/*.xsl</include>
-          <include>**/*.xml</include>
-          <include>**/*.ttf</include>
-        </includes>
-      </resource>
     </resources>
 <!-- java source -->
   </build>

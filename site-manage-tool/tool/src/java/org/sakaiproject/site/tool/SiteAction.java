@@ -51,17 +51,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.stream.StreamSource;
 
-import org.apache.avalon.framework.logger.ConsoleLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.velocity.tools.generic.SortTool;
@@ -142,6 +132,7 @@ import org.sakaiproject.site.util.SiteComparator;
 import org.sakaiproject.site.util.ToolComparator;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SiteHelper;
+import org.sakaiproject.sitemanage.api.SiteParticipantProvider;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
 import org.sakaiproject.time.cover.TimeService;
@@ -654,21 +645,6 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, rb.getString("java.recent"));
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
 	}
-	
-	// FOP for PDF file generation
-	private TransformerFactory transformerFactory = null;
-	private DocumentBuilder docBuilder = null;
-	// XML Node/Attribute Names
-	protected static final String PARTICIPANTS_NODE_NAME = "PARTICIPANTS";
-	protected static final String SITE_TITLE_NODE_NAME = "SITE_TITLE";
-	protected static final String PARTICIPANT_NODE_NAME = "PARTICIPANT";
-	protected static final String PARTICIPANT_NAME_NODE_NAME = "NAME";
-	protected static final String PARTICIPANT_SECTIONS_NODE_NAME = "SECTIONS";
-	protected static final String PARTICIPANT_SECTION_NODE_NAME = "SECTION";
-	protected static final String PARTICIPANT_ID_NODE_NAME = "ID";
-	protected static final String PARTICIPANT_CREDIT_NODE_NAME = "CREDIT";
-	protected static final String PARTICIPANT_ROLE_NODE_NAME = "ROLE";
-	protected static final String PARTICIPANT_STATUS_NODE_NAME = "STATUS";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -2154,6 +2130,10 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("groupsWithMember", site
 					.getGroupsWithMember(UserDirectoryService.getCurrentUser()
 							.getId()));
+			
+			// get the access url for downloading the participants
+			String accessPointUrl = ServerConfigurationService.getAccessUrl().concat(SiteParticipantProvider.REFERENCE_ROOT).concat("/").concat(site.getId());
+			context.put("accessPointUrl", accessPointUrl);
 			return (String) getContext(data).get("template") + TEMPLATE[12];
 
 		case 13:
@@ -6338,18 +6318,6 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_SITE_TITLE_MAX, siteTitleMaxLength);
 		}
 		
-        // create transformerFactory object needed by generatePDF
-        transformerFactory = TransformerFactory.newInstance();
-
-        try
-        {
-			// create DocumentBuilder object needed by print PDF
-			docBuilder =  DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        }
-        catch (Exception e)
-        {
-        	M_log.warn(this + ":init problem with getting docBuilder.");
-        }
 	} // init
 
 	public void doNavigate_to_site(RunData data) {
@@ -11313,231 +11281,4 @@ public class SiteAction extends PagedResourceActionII {
 		return true;
 	}
 	
-	/**
-	 * generate PDF file containing all site participant
-	 * @param data
-	 */
-	public void doPrint_participant(RunData data)
-	{
-		final SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		
-		String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
-		
-		HttpServletResponse res = (HttpServletResponse) ThreadLocalManager.get(RequestFilter.CURRENT_HTTP_RESPONSE);
-		
-		ByteArrayOutputStream outByteStream = new ByteArrayOutputStream();
-
-		res.addHeader("Content-Disposition", "inline; filename=\"participants.pdf\"");
-		res.setContentType("application/pdf");
-		
-		Document document = docBuilder.newDocument();
-		
-		// get the participant xml document
-		generateParticipantXMLDocument(document, siteId, state);
-
-		generatePDF(document, outByteStream);
-		res.setContentLength(outByteStream.size());
-		if (outByteStream.size() > 0)
-		{
-			// Increase the buffer size for more speed.
-			res.setBufferSize(outByteStream.size());
-		}
-
-		/*
-		// output xml for debugging purpose
-		try
-		{
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	        Transformer transformer = transformerFactory.newTransformer();
-	        DOMSource source = new DOMSource(document);
-	        StreamResult result =  new StreamResult(System.out);
-	        transformer.transform(source, result);
-		}
-		catch (Exception e)
-		{
-			
-		}*/
-        
-		OutputStream out = null;
-		try
-		{
-			out = res.getOutputStream();
-			if (outByteStream.size() > 0)
-			{
-				outByteStream.writeTo(out);
-			}
-			res.setHeader("Refresh", "0");
-
-			out.flush();
-			out.close();
-		}
-		catch (Throwable ignore)
-		{
-		}
-		finally
-		{
-			if (out != null)
-			{
-				try
-				{
-					out.close();
-				}
-				catch (Throwable ignore)
-				{
-				}
-			}
-		
-			scheduleTopRefresh();
-		}
-	}
-	
-	/**
-	 * Generate participant document
-	 * @param doc
-	 * @param siteId
-	 * @param state
-	 */
-	protected void generateParticipantXMLDocument(Document doc, String siteId, SessionState state)
-	{
-		Collection<Participant> participants = (Collection<Participant>) state.getAttribute(STATE_PARTICIPANT_LIST);
-		
-		// Create Root Element
-		Element root = doc.createElement(PARTICIPANTS_NODE_NAME);
-
-		String siteTitle = "";
-		
-		if (siteId != null)
-		{
-			try
-			{
-				Site site = SiteService.getSite(siteId);
-				siteTitle = site.getTitle();
-
-				// site title
-				writeStringNodeToDom(doc, root, SITE_TITLE_NODE_NAME, rb.getFormattedMessage("participant_pdf_title", new String[] {siteTitle}));
-			}
-			catch (Exception e)
-			{
-				M_log.warn(this + ":generateParticipantXMLDocument: Cannot find site with id =" + siteId);
-			}
-		}
-
-		// Add the Root Element to Document
-		doc.appendChild(root);
-
-
-		if (participants != null)
-		{
-		
-			// Go through all the time ranges (days)
-			for (Iterator<Participant> iParticipants = participants.iterator(); iParticipants.hasNext();)
-			{
-				Participant participant = iParticipants.next();
-				// Create Participant Element
-				Element participantNode = doc.createElement(PARTICIPANT_NODE_NAME);
-				
-				// participant name
-				String participantName= participant.getName();
-				if (participant.getDisplayId() != null)
-				{
-					participantName +="( " +  participant.getDisplayId() + " )";
-				}
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_NAME_NODE_NAME, StringUtil.trimToZero(participantName));
-
-				// sections
-				Element sectionsNode = doc.createElement(PARTICIPANT_SECTIONS_NODE_NAME);
-				for ( Iterator iSections = participant.getSectionEidList().iterator(); iSections.hasNext();)
-				{
-					String section = (String) iSections.next();
-					writeStringNodeToDom(doc, sectionsNode, PARTICIPANT_SECTION_NODE_NAME, StringUtil.trimToZero(section));
-				}
-				participantNode.appendChild(sectionsNode);
-
-				// registration id
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ID_NODE_NAME, StringUtil.trimToZero(participant.getRegId()));
-				
-				// credit
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_CREDIT_NODE_NAME, StringUtil.trimToZero(participant.getCredits()));
-
-				// role id
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_ROLE_NODE_NAME, StringUtil.trimToZero(participant.getRole()));
-				
-				// status
-				writeStringNodeToDom(doc, participantNode, PARTICIPANT_STATUS_NODE_NAME, StringUtil.trimToZero(participant.active?rb.getString("sitegen.siteinfolist.active"):rb.getString("sitegen.siteinfolist.inactive")));
-			
-				// add participant node to participants node
-				root.appendChild(participantNode);
-			}
-		}
-	}
-	
-	/**
-	 * Utility routine to write a string node to the DOM.
-	 */
-	protected Element writeStringNodeToDom(Document doc, Element parent, String nodeName, String nodeValue)
-	{
-		if (nodeValue != null)
-		{
-			Element name = doc.createElement(nodeName);
-			name.appendChild(doc.createTextNode(nodeValue));
-			parent.appendChild(name);
-			return name;
-		}
-
-		return null;
-	}
-	/**
-	 * Takes a DOM structure and renders a PDF
-	 * 
-	 * @param doc
-	 *        DOM structure
-	 * @param xslFileName
-	 *        XSL file to use to translate the DOM document to FOP
-	 */
-	protected void generatePDF(Document doc, OutputStream streamOut)
-	{
-		String xslFileName = "participants-all-attrs.xsl";
-		Driver driver = new Driver();
-
-		org.apache.avalon.framework.logger.Logger logger = new ConsoleLogger(ConsoleLogger.LEVEL_ERROR);
-		MessageHandler.setScreenLogger(logger);
-		driver.setLogger(logger);
-
-		/*try {
-			String baseDir = getClass().getClassLoader().getResource(FOP_FONTBASEDIR).toString();
-			Configuration.put("fontBaseDir", baseDir);
-			InputStream userConfig = getClass().getClassLoader().getResourceAsStream(FOP_USERCONFIG);
-			Options options = new Options(userConfig);
-		}
-      catch (FOPException fe){
-			M_log.warn(this+".generatePDF: ", fe);
-		}
-      catch(Exception e){
-			M_log.warn(this+".generatePDF: ", e);
-		}*/
-
-		driver.setOutputStream(streamOut);
-		driver.setRenderer(Driver.RENDER_PDF);
-
-		try
-		{
-			InputStream in = getClass().getClassLoader().getResourceAsStream(xslFileName);
-			Transformer transformer = transformerFactory.newTransformer(new StreamSource(in));
-
-			Source src = new DOMSource(doc);
-         
-			// Kludge: Xalan in JDK 1.4/1.5 does not properly resolve java classes 
-			// (http://xml.apache.org/xalan-j/faq.html#jdk14)
-			// Clean this up in JDK 1.6 and pass ResourceBundle/ArrayList parms
-			//transformer.setParameter("dayNames0", dayNames[0]);
-			transformer.transform(src, new SAXResult(driver.getContentHandler()));
-		}
-
-		catch (TransformerException e)
-		{
-			e.printStackTrace();
-			M_log.warn(this+".generatePDF(): " + e);
-			return;
-		}
-	}
  }
