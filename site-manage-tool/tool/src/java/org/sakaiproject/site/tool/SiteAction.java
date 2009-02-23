@@ -10776,6 +10776,11 @@ public class SiteAction extends PagedResourceActionII {
 				}
 
 				result = compareString(s1, s2);
+			
+			// sort by name if previous sort result is equal
+			if (result == 0)
+				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+			
 			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_COURSE)) {
 				// sort by whether the site is joinable or not
 				String s1 = null;
@@ -10788,7 +10793,12 @@ public class SiteAction extends PagedResourceActionII {
 					s2 = ((Participant) o2).getSection();
 				}
 
-				result = compareString(s1, s2);
+				result = compareString(s1, s2);			
+
+			// sort by name if previous sort result is equal
+			if (result == 0)
+				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+			
 			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_ID)) {
 				String s1 = null;
 				if (o1.getClass().equals(Participant.class)) {
@@ -10800,7 +10810,11 @@ public class SiteAction extends PagedResourceActionII {
 					s2 = ((Participant) o2).getRegId();
 				}
 
-				result = compareString(s1, s2);
+				result = compareString(s1, s2);			
+			// sort by name if previous sort result is equal
+			if (result == 0)
+				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+			
 			} else if (m_criterion.equals(SORTED_BY_PARTICIPANT_CREDITS)) {
 				String s1 = null;
 				if (o1.getClass().equals(Participant.class)) {
@@ -10812,7 +10826,11 @@ public class SiteAction extends PagedResourceActionII {
 					s2 = ((Participant) o2).getCredits();
 				}
 
-				result = compareString(s1, s2);
+				result = compareString(s1, s2);			
+			// sort by name if previous sort result is equal
+			if (result == 0)
+				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+			
 			} else if (m_criterion.equals(SORTED_BY_CREATION_DATE)) {
 				// sort by the site's creation date
 				Time t1 = null;
