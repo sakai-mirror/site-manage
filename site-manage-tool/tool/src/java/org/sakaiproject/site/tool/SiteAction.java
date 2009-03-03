@@ -11146,6 +11146,9 @@ public class SiteAction extends PagedResourceActionII {
 
 		public void run()
 		{
+			// running
+			sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_RUNNING);
+			
 			if (byPassSecurity)
 			{
 				// importing from template, bypass the permission checking:
@@ -11158,8 +11161,6 @@ public class SiteAction extends PagedResourceActionII {
 		                }
 		            });
 			}
-			// running
-			sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_RUNNING);
 			
 		    try
 			{
