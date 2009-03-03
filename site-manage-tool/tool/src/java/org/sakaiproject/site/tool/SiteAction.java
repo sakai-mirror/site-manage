@@ -21,6 +21,9 @@
 package org.sakaiproject.site.tool;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -130,6 +133,7 @@ import org.sakaiproject.site.util.SiteComparator;
 import org.sakaiproject.site.util.ToolComparator;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SiteHelper;
+import org.sakaiproject.sitemanage.api.SiteParticipantProvider;
 import org.sakaiproject.time.api.Time;
 import org.sakaiproject.time.api.TimeBreakdown;
 import org.sakaiproject.time.cover.TimeService;
@@ -153,9 +157,9 @@ import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
-
-
+import org.sakaiproject.util.RequestFilter;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
+
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -678,7 +682,7 @@ public class SiteAction extends PagedResourceActionII {
 				catch (Throwable t)
 				{
 
-					M_log.warn(this + ": getHomeToolIds cannot find site " + templateSiteId + t.getMessage());
+					M_log.debug(this + ": getHomeToolIds cannot find site " + templateSiteId + t.getMessage());
 					// use the fall-back, user template site
 					try
 					{
@@ -687,7 +691,7 @@ public class SiteAction extends PagedResourceActionII {
 					}
 					catch (Throwable tt)
 					{
-						M_log.warn(this + ": getHomeToolIds cannot find site " + templateSiteId + tt.getMessage());
+						M_log.debug(this + ": getHomeToolIds cannot find site " + templateSiteId + tt.getMessage());
 					}
 				}
 			}
@@ -707,7 +711,7 @@ public class SiteAction extends PagedResourceActionII {
 					}
 					catch (Throwable t)
 					{
-						M_log.warn(this + ": getHomeToolIds cannot find site " + templateSiteId + t.getMessage());
+						M_log.debug(this + ": getHomeToolIds cannot find site " + templateSiteId + t.getMessage());
 					
 						// thrid: if cannot find template site with the site type, use the default template
 						templateSiteId = SiteService.SITE_TEMPLATE;
@@ -717,7 +721,7 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						catch (Throwable tt)
 						{
-							M_log.warn(this + ": getHomeToolIds cannot find site " + templateSiteId + tt.getMessage());
+							M_log.debug(this + ": getHomeToolIds cannot find site " + templateSiteId + tt.getMessage());
 						}			
 					}
 				}
@@ -734,7 +738,9 @@ public class SiteAction extends PagedResourceActionII {
 						// found home page, add all tool ids to return value
 						for(ToolConfiguration tConfiguration : (List<ToolConfiguration>) page.getTools())
 						{
-							rv.add(tConfiguration.getToolId());
+							String toolId = tConfiguration.getToolId();
+							if (ToolManager.getTool(toolId) != null)
+								rv.add(toolId);
 						}
 						break;
 					}
@@ -1426,6 +1432,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-newSiteInformation.vm
 			 * 
 			 */
+			context.put("displaySiteAlias", Boolean.valueOf(displaySiteAlias()));
 			context.put("siteTypes", state.getAttribute(STATE_SITE_TYPES));
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			context.put("type", siteType);
@@ -2121,6 +2128,10 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("groupsWithMember", site
 					.getGroupsWithMember(UserDirectoryService.getCurrentUser()
 							.getId()));
+			
+			// get the access url for downloading the participants
+			String accessPointUrl = ServerConfigurationService.getAccessUrl().concat(SiteParticipantProvider.REFERENCE_ROOT).concat("/").concat(site.getId());
+			context.put("accessPointUrl", accessPointUrl);
 			return (String) getContext(data).get("template") + TEMPLATE[12];
 
 		case 13:
@@ -2159,7 +2170,18 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("iconUrl", siteInfo.iconUrl);
 				}
 			}
-			context.put("description", siteInfo.description);
+			
+			if (siteInfo.description.indexOf("\n") != -1 && siteInfo.description.indexOf("<br />") == -1 && siteInfo.description.indexOf("<br/>") == -1)
+			{
+				// replace the old style line break before WYSIWYG editor "\n" with the current line break <br />
+				context.put("description", siteInfo.description.replaceAll("\n", "<br />"));
+				addAlert(state, rb.getString("description.linebreak"));
+			}
+			else 
+			{
+				context.put("description", siteInfo.description);
+			}
+			
 			context.put("short_description", siteInfo.short_description);
 			context.put("form_site_contact_name", siteInfo.site_contact_name);
 			context.put("form_site_contact_email", siteInfo.site_contact_email);
@@ -6304,6 +6326,7 @@ public class SiteAction extends PagedResourceActionII {
 			int siteTitleMaxLength = ServerConfigurationService.getInt("site.title.maxlength", 20);
 			state.setAttribute(STATE_SITE_TITLE_MAX, siteTitleMaxLength);
 		}
+		
 	} // init
 
 	public void doNavigate_to_site(RunData data) {
@@ -6387,7 +6410,6 @@ public class SiteAction extends PagedResourceActionII {
 				|| SiteService.allowUpdateSiteMembership(s.getId())) {
 			try {
 				AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realmId);
-
 				// does the site has maintain type user(s) before updating
 				// participants?
 				String maintainRoleString = realmEdit.getMaintainRole();
@@ -6396,6 +6418,10 @@ public class SiteAction extends PagedResourceActionII {
 
 				// update participant roles
 				List participants = collectionToList((Collection) state.getAttribute(STATE_PARTICIPANT_LIST));
+
+				// list of roles being added or removed
+				HashSet<String>roles = new HashSet<String>();
+
 				// remove all roles and then add back those that were checked
 				for (int i = 0; i < participants.size(); i++) {
 					String id = null;
@@ -6408,6 +6434,12 @@ public class SiteAction extends PagedResourceActionII {
 						// get the newly assigned role
 						String inputRoleField = "role" + id;
 						String roleId = params.getString(inputRoleField);
+						String oldRoleId = participant.getRole();
+						// save any roles changed for permission check
+						if (!roleId.equals(oldRoleId)) {
+						    roles.add(roleId);
+						    roles.add(oldRoleId);
+						}
 
 						// only change roles when they are different than before
 						if (roleId != null) {
@@ -6440,11 +6472,27 @@ public class SiteAction extends PagedResourceActionII {
 						String rId = (String) removals.get(i);
 						try {
 							User user = UserDirectoryService.getUser(rId);
+							// save role for permission check
+							roles.add(realmEdit.getUserRole(user.getId()).getId());
 							realmEdit.removeMember(user.getId());
 						} catch (UserNotDefinedException e) {
 							M_log.warn(this + ".doUpdate_participant: IdUnusedException " + rId + ". ", e);
 						}
 					}
+				}
+
+				// if user doesn't have update, don't let them add
+				// or remove any role with site.upd in it.
+
+				if (!AuthzGroupService.allowUpdate(realmId)) {
+				    // see if any changed have site.upd
+				    for (String rolename: roles) {
+					Role role = realmEdit.getRole(rolename);
+					if (role != null && role.isAllowed("site.upd")) {
+					    addAlert(state, rb.getFormattedMessage("java.roleperm", new Object[]{rolename}));
+					    return;
+					}
+				    }
 				}
 
 				if (hadMaintainUser
@@ -8992,7 +9040,7 @@ public class SiteAction extends PagedResourceActionII {
 		List pageToolList = page.getTools();
 
 		// if no tools on the page, return false
-		if (pageToolList == null || pageToolList.size() == 0) {
+		if (pageToolList == null) {
 			return null;
 		}
 
@@ -11110,7 +11158,7 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	public boolean displaySiteAlias() {
-		if (ServerConfigurationService.getBoolean("wsetup.disable.siteAlias", true)) {
+		if (ServerConfigurationService.getBoolean("wsetup.disable.siteAlias", false)) {
 			return false;
 		}
 		return true;
