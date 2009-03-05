@@ -241,37 +241,33 @@ public class MembershipAction extends PagedResourceActionII
 	 */
 	public class MembershipFormattedText
 	{
-		// constructor
-		public MembershipFormattedText()
-		{
-
-		}
-
+		
 		/**
-		 * Two of FormattedText object's functions --> convertFormattedTextToPlaintext and trimFormattedText are used.
-		 * @param formattedText The formatted text to convert to plain text and then to trim
-		 * @param maxNumOfChars The maximum number of displayed characters in the returned trimmed text.
-		 * @return Ellipse A String which represents the ending pattern of the trimmed text
+		 * @param formattedText 
+		          The formatted text to convert to plain text and then to trim
+		 * @param maxNumOfChars
+		          The maximum number of characters for the trimmed text.
+		 * @return Ellipse 
+		           A String to represent the ending pattern of the trimmed text
 		 */
 		public String doPlainTextAndLimit(String formattedText, int maxNumOfChars, String ellipse)
 		{
-			if(!formattedText.equalsIgnoreCase("<br/>")){
+			if(formattedText.equalsIgnoreCase("<br/>") || formattedText.equalsIgnoreCase("<br>")||
+					formattedText.length()==0 || formattedText.equals(" ") || formattedText.equals("&nbsp;") || formattedText.equals("") ||
+					FormattedText.escapeHtml(formattedText,false).equals("&lt;br type=&quot;_moz&quot; /&gt;")){
+				
+				return formattedText;
+			}
 
 				StringBuilder sb = new StringBuilder();
-
-				String text = FormattedText.convertFormattedTextToPlaintext(formattedText);
-				
+				String text = FormattedText.convertFormattedTextToPlaintext(formattedText);				
 				if(maxNumOfChars>text.length()){
 					maxNumOfChars=text.length();
 				}
 				String trimmedText=text.substring(0, maxNumOfChars);
 				sb.setLength(0);
 				sb.append(trimmedText).append(ellipse);
-				return sb.toString();	
-			}
-			else{
-				return formattedText;
-			}
+				return sb.toString();				
 		}
 	}
 	
