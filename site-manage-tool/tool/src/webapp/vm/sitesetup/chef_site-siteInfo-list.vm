@@ -1,5 +1,56 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
 ## Site list Sites list on worksite setup home page
+##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->## Site list Sites list on worksite setup home page
+<script type="text/javascript" src="/library/js/jquery.js">
+</script>
+<script type="text/javascript" src="/library/js/jqmodal/jqModal.js">
+</script>
+<link href="/library/js/jqmodal/jqModal.css" type="text/css" rel="stylesheet" media="all" />
+<div id="dialog" class="jqmWindow messageValidation" style="height:auto">
+    <h4 style="padding-left:2em">Sorry! We are working very hard to copy your things to the new site.</h4>
+</div>
+<script type="text/javascript">
+
+    $(document).ready(function() {
+    	var completeUrl = $("#urlholder").text().substring(0,$("#urlholder").text().indexOf('?')) + "?sakai_action=doGet_CopyThreadStatus";
+    	$('#testholder').text(completeUrl)
+      	$('#dialog').jqm({modal:true}); 
+	        jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
+			    if (data.indexOf('working') >= 0) {
+					$('#dialog').jqmShow(); 
+	            }
+	            else {
+					$('#dialog').jqmHide(); 
+	           }
+	        });
+		function checkStatus(){
+			var thisStatus = this;
+			this.queryStatus = function(){
+	        	jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
+			    	if (data.indexOf('working') >= 0) {
+						$('#dialog').jqmShow(); 
+		            }
+		            else {
+						$('#dialog').jqmHide(); 
+					    window.clearInterval(this.intTimer);
+	           		}
+	
+		        });
+	  		}
+			this.intTimer = window.setInterval(function(e) {  
+	    		thisStatus.queryStatus()},5000)
+	  		}
+			checkStatus();		
+    	});
+    
+</script>
+<div id="urlholder" class="highlight" style="display:none">
+    $sakai_ActionURL
+</div>
+<div id="testholder" class="highlight" style="">
+    $sakai_ActionURL
+</div>
+
 <div class ="portletBody">
 	#if($menu)#toolbar($menu)#end
 	#if ($alertMessage)
@@ -7,7 +58,9 @@
 		<div class="clear"></div>
 	#end
 	#if ($!threadStatus)
+
 		<div class="alertMessage">$threadStatus</div>
+
 	#end
 	#if ($fromWSetup)
 		<form name="siteForm" id="siteForm" class="inlineForm" action="#toolForm("SiteAction")" method="post">
