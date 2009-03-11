@@ -12,22 +12,28 @@
 <script type="text/javascript">
 
     $(document).ready(function() {
-    	var completeUrl = $("#urlholder").text().substring(0,$("#urlholder").text().indexOf('?')) + "?sakai_action=doGet_CopyThreadStatus";
-    	$('#testholder').text(completeUrl)
+    	var completeUrl = $("#urlholder").text().substring(0,$("#urlholder").text().indexOf('/portal')) + "/sakai-site-manage-tool/tool/sitecopystatus/" + trim($("#currentToolId").text());
+     var workingText = $("#workingText").text();
+    	$('#testholder').text(completeUrl + workingText);
       	$('#dialog').jqm({modal:true}); 
-	        jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
-			    if (data.indexOf('working') >= 0) {
+	        jQuery.get(completeUrl, function(data){
+			    if (data.indexOf(workingText) >= 0) {
 					$('#dialog').jqmShow(); 
 	            }
 	            else {
 					$('#dialog').jqmHide(); 
 	           }
 	        });
+	 function trim(testString)
+	 {
+	 	return testString.replace(/^\s*/, "").replace(/\s*$/, "");
+	 }
 		function checkStatus(){
 			var thisStatus = this;
+			var workingText = trim($("#workingText").text());
 			this.queryStatus = function(){
-	        	jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
-			    	if (data.indexOf('working') >= 0) {
+	        	jQuery.get(completeUrl, function(data){
+			    	if (data.indexOf(workingText) >= 0) {
 						$('#dialog').jqmShow(); 
 		            }
 		            else {
@@ -38,7 +44,7 @@
 		        });
 	  		}
 			this.intTimer = window.setInterval(function(e) {  
-	    		thisStatus.queryStatus()},5000)
+	    		thisStatus.queryStatus()},10000)
 	  		}
 			checkStatus();		
     	});
@@ -46,6 +52,12 @@
 </script>
 <div id="urlholder" class="highlight" style="display:none">
     $sakai_ActionURL
+</div>
+<div id="currentToolId" class="highlight" style="display:none">
+    $currentToolId
+</div>
+<div id="workingText" class="highlight" style="display:none">
+    $workingText
 </div>
 <div id="testholder" class="highlight" style="">
     $sakai_ActionURL

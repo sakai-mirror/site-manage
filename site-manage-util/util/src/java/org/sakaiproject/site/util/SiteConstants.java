@@ -40,5 +40,13 @@ public class SiteConstants {
 	public static final String GROUP_PROP_ROLE_PROVIDERID = "group_prop_role_providerid";
 	
 	public static final int SITE_GROUP_TITLE_LIMIT = 99;
+	
+	public static final String ENTITYCOPY_THREAD_STATUS  = "entity_copy_thread_status";
+	
+	public static final String ENTITYCOPY_THREAD_STATUS_RUNNING="working";
+	
+	public static final String ENTITYCOPY_THREAD_STATUS_ERROR="error";
+	
+	public static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
 
 }

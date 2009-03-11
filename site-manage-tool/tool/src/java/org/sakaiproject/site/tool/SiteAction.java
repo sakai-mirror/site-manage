@@ -632,11 +632,6 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
 	}
 	
-	private static final String ENTITYCOPY_THREAD_STATUS  = "status";
-	private static final String ENTITYCOPY_THREAD_STATUS_RUNNING="running";
-	private static final String ENTITYCOPY_THREAD_STATUS_ERROR="error";
-	private static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
-	
 	/**
 	 * what are the tool ids within Home page?
 	 * If this is for a newly added Home tool, get the tool ids from template site or system set default
@@ -1815,10 +1810,25 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-siteInfo-list.vm
 			 * 
 			 */
-			if (state.getAttribute(ENTITYCOPY_THREAD_STATUS) != null)
+			// for showing site copy thread status
+			Tool tool = ToolManager.getCurrentTool();
+			if (tool != null)
 			{
-				context.put("threadStatus", state.getAttribute(ENTITYCOPY_THREAD_STATUS));
+				// the current tool should be Site Info
+				ToolConfiguration toolConfiguration = site.getToolForCommonId(tool.getId());
+				if (toolConfiguration != null)
+				{
+					String toolId = toolConfiguration.getId();
+					context.put("currentToolId", toolId);
+					context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
+				}
 			}
+			if (state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null)
+			{
+				context.put("threadStatus", state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS));
+			}
+			
+			
 			context.put("userDirectoryService", UserDirectoryService
 					.getInstance());
 			try {
@@ -7030,6 +7040,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			if (forward) {
+				String oSiteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
 				if (state.getAttribute(SITE_DUPLICATED) == null) {
 					if (StringUtil.trimToNull(params.getString("title")) == null) {
 						addAlert(state, rb.getString("java.dupli") + " ");
@@ -7039,8 +7050,6 @@ public class SiteAction extends PagedResourceActionII {
 
 						String nSiteId = IdManager.createUuid();
 						try {
-							String oSiteId = (String) state
-									.getAttribute(STATE_SITE_INSTANCE_ID);
 							
 							Site site = SiteService.addSite(nSiteId,
 									getStateSite(state));
@@ -7065,6 +7074,49 @@ public class SiteAction extends PagedResourceActionII {
 								// set title
 								site.setTitle(title);
 								
+								if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+									// for course site, need to
+									// read in the input for
+									// term information
+									String termId = StringUtil.trimToNull(params
+											.getString("selectTerm"));
+									if (termId != null) {
+										AcademicSession term = cms.getAcademicSession(termId);
+										if (term != null) {
+											ResourcePropertiesEdit rp = site.getPropertiesEdit();
+											rp.addProperty(PROP_SITE_TERM, term.getTitle());
+											rp.addProperty(PROP_SITE_TERM_EID, term.getEid());
+										} else {
+											M_log.warn("termId=" + termId + " not found");
+										}
+									}
+								}
+								try {
+									SiteService.save(site);
+									
+									if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) 
+									{
+										// also remove the provider id attribute if any
+										String realm = SiteService.siteReference(site.getId());
+										try 
+										{
+											AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
+											realmEdit.setProviderGroupId(null);
+											AuthzGroupService.save(realmEdit);
+										} catch (GroupNotDefinedException e) {
+											M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: IdUnusedException, not found, or not an AuthzGroup object "+ realm, e);
+											addAlert(state, rb.getString("java.realm"));
+										} catch (Exception e) {
+											addAlert(state, this + rb.getString("java.problem"));
+											M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.problem"), e);
+										}
+									}
+								} catch (IdUnusedException e) {
+									// TODO:
+								} catch (PermissionException e) {
+									// TODO:
+								}
+								
 								// import tool content
 								importToolContent(nSiteId, oSiteId, site, false, state);
 
@@ -7073,49 +7125,6 @@ public class SiteAction extends PagedResourceActionII {
 								// or SiteService has done
 								// something wrong.
 								M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + e1 + ":" + nSiteId + "when duplicating site", e1);
-							}
-
-							if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
-								// for course site, need to
-								// read in the input for
-								// term information
-								String termId = StringUtil.trimToNull(params
-										.getString("selectTerm"));
-								if (termId != null) {
-									AcademicSession term = cms.getAcademicSession(termId);
-									if (term != null) {
-										ResourcePropertiesEdit rp = site.getPropertiesEdit();
-										rp.addProperty(PROP_SITE_TERM, term.getTitle());
-										rp.addProperty(PROP_SITE_TERM_EID, term.getEid());
-									} else {
-										M_log.warn("termId=" + termId + " not found");
-									}
-								}
-							}
-							try {
-								SiteService.save(site);
-								
-								if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) 
-								{
-									// also remove the provider id attribute if any
-									String realm = SiteService.siteReference(site.getId());
-									try 
-									{
-										AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
-										realmEdit.setProviderGroupId(null);
-										AuthzGroupService.save(realmEdit);
-									} catch (GroupNotDefinedException e) {
-										M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: IdUnusedException, not found, or not an AuthzGroup object "+ realm, e);
-										addAlert(state, rb.getString("java.realm"));
-									} catch (Exception e) {
-										addAlert(state, this + rb.getString("java.problem"));
-										M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.problem"), e);
-									}
-								}
-							} catch (IdUnusedException e) {
-								// TODO:
-							} catch (PermissionException e) {
-								// TODO:
 							}
 
 							// TODO: hard coding this frame id
@@ -7145,6 +7154,10 @@ public class SiteAction extends PagedResourceActionII {
 
 					// return to the list view
 					state.setAttribute(STATE_TEMPLATE_INDEX, "12");
+				}
+				else
+				{
+					M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate:  site id = " + oSiteId + state.getAttribute(STATE_MESSAGE) );
 				}
 			}
 			break;
@@ -8690,8 +8703,7 @@ public class SiteAction extends PagedResourceActionII {
 			try
 			{
 				EntityCopyThread n = new EntityCopyThread(toolIds, importTools, siteId, migrate, byPassSecurity, sessionState);
-				Thread t = new Thread(n);
-				t.start();
+				n.start();
 			}
 			catch(Exception e)
 			{
@@ -11171,8 +11183,23 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	protected class EntityCopyThread extends Observable implements Runnable 
 	{
+		/** My thread running my timeout checker. */
+		protected Thread m_thread = null;
+
+		/** Signal to the timeout checker to stop. */
+		protected boolean m_threadStop = false;
+		
 		public void init(){}
-		public void start(){}
+		public void start()
+		{
+			if (m_thread != null) return;
+
+			m_thread = new Thread(this, "Sakai.SiteInfo.SiteCopy");
+			m_threadStop = false;
+			m_thread.setDaemon(true);
+			m_thread.start();
+			M_log.warn(this + " SiteCopy start tositeId = " + toSiteId);
+		}
 		
 		private List<String> toolIds = null;
 		private Hashtable<String, List<String>> importTools = null;
@@ -11192,78 +11219,107 @@ public class SiteAction extends PagedResourceActionII {
 			this.sessionState = sessionState;
 		}
 
+		public void stop()
+		{
+			if (m_thread != null)
+			{
+				m_threadStop = true;
+				m_thread.interrupt();
+				try
+				{
+					// wait for it to die
+					m_thread.join();
+				}
+				catch (InterruptedException ignore)
+				{
+				}
+				m_thread = null;
+			}
+			M_log.info(this + ":stop EntityCopyThread target site Id=" + toSiteId);
+		}
+		
 		public void run()
 		{
-			// running
-			sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_RUNNING);
-			
-			if (byPassSecurity)
+			// since we might be running while the component manager is still being created and populated, such as at server
+			// startup, wait here for a complete component manager
+			ComponentManager.waitTillConfigured();
+
+			while (!m_threadStop)
 			{
-				// importing from template, bypass the permission checking:
-				// temporarily allow the user to read and write from assignments (asn.revise permission)
-		        SecurityService.pushAdvisor(new SecurityAdvisor()
-		            {
-		                public SecurityAdvice isAllowed(String userId, String function, String reference)
-		                {
-		                    return SecurityAdvice.ALLOWED;
-		                }
-		            });
-			}
-			
-		    try
-			{
-		    	// import resources first
-				boolean resourcesImported = false;
-				for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
-					String toolId = (String) toolIds.get(i);
-
-					if (toolId.equalsIgnoreCase("sakai.resources")
-							&& importTools.containsKey(toolId)) {
-						List importSiteIds = (List) importTools.get(toolId);
-
-						for (int k = 0; k < importSiteIds.size(); k++) {
-							String fromSiteId = (String) importSiteIds.get(k);
-
-							String fromSiteCollectionId = m_contentHostingService
-									.getSiteCollection(fromSiteId);
-							String toSiteCollectionId = m_contentHostingService
-									.getSiteCollection(toSiteId);
-
-							transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
-							resourcesImported = true;
-						}
-					}
-				}
-
-				// import other tools then
-				for (int i = 0; i < toolIds.size(); i++) {
-					String toolId = (String) toolIds.get(i);
-					if (!toolId.equalsIgnoreCase("sakai.resources")
-							&& importTools.containsKey(toolId)) {
-						List importSiteIds = (List) importTools.get(toolId);
-						for (int k = 0; k < importSiteIds.size(); k++) {
-							String fromSiteId = (String) importSiteIds.get(k);
-							transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
-						}
-					}
-				}
-
+				
+				// running
+				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
+				
 				if (byPassSecurity)
 				{
-					SecurityService.clearAdvisors();
+					// importing from template, bypass the permission checking:
+					// temporarily allow the user to read and write from assignments (asn.revise permission)
+			        SecurityService.pushAdvisor(new SecurityAdvisor()
+			            {
+			                public SecurityAdvice isAllowed(String userId, String function, String reference)
+			                {
+			                    return SecurityAdvice.ALLOWED;
+			                }
+			            });
 				}
 				
-				// finished
-				sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_FINISHED);
-			}
-		    catch(Exception e) {
-		    	// error
-		    	sessionState.setAttribute(ENTITYCOPY_THREAD_STATUS, ENTITYCOPY_THREAD_STATUS_ERROR);
-		    }
-		    finally
-			{
-				//clear any current bindings
-				ThreadLocalManager.clear();
+			    try
+				{
+			    	// import resources first
+					boolean resourcesImported = false;
+					for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
+						String toolId = (String) toolIds.get(i);
+	
+						if (toolId.equalsIgnoreCase("sakai.resources")
+								&& importTools.containsKey(toolId)) {
+							List importSiteIds = (List) importTools.get(toolId);
+	
+							for (int k = 0; k < importSiteIds.size(); k++) {
+								String fromSiteId = (String) importSiteIds.get(k);
+	
+								String fromSiteCollectionId = m_contentHostingService
+										.getSiteCollection(fromSiteId);
+								String toSiteCollectionId = m_contentHostingService
+										.getSiteCollection(toSiteId);
+	
+								transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
+								resourcesImported = true;
+							}
+						}
+					}
+	
+					// import other tools then
+					for (int i = 0; i < toolIds.size(); i++) {
+						String toolId = (String) toolIds.get(i);
+						if (!toolId.equalsIgnoreCase("sakai.resources")
+								&& importTools.containsKey(toolId)) {
+							List importSiteIds = (List) importTools.get(toolId);
+							for (int k = 0; k < importSiteIds.size(); k++) {
+								String fromSiteId = (String) importSiteIds.get(k);
+								transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
+							}
+						}
+					}
+	
+					if (byPassSecurity)
+					{
+						SecurityService.clearAdvisors();
+					}
+					
+					// finished
+					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
+					m_threadStop = true;
+				}
+			    catch(Exception e) {
+			    	// error
+			    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+			    }
+			    finally
+				{
+					//clear any current bindings
+					ThreadLocalManager.clear();
+					stop();
+				}
 			}
 		}
 		
