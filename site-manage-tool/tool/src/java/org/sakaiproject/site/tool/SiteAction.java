@@ -193,8 +193,6 @@ public class SiteAction extends PagedResourceActionII {
 	private org.sakaiproject.sitemanage.api.AffiliatedSectionProvider affiliatedSectionProvider = (org.sakaiproject.sitemanage.api.AffiliatedSectionProvider) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.AffiliatedSectionProvider.class);
 	
-	private ContentHostingService contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
-	
 	private static org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService questionService = (org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService) ComponentManager
 	.get(org.sakaiproject.sitemanage.api.model.SiteSetupQuestionService.class);
 	
@@ -300,10 +298,6 @@ public class SiteAction extends PagedResourceActionII {
 	private final static String PROP_SITE_CONTACT_EMAIL = "contact-email";
 
 	private final static String PROP_SITE_CONTACT_NAME = "contact-name";
-
-	private final static String PROP_SITE_TERM = "term";
-
-	private final static String PROP_SITE_TERM_EID = "term_eid";
 
 	/**
 	 * Name of the state attribute holding the site list column list is sorted
@@ -548,9 +542,6 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String STATE_PAGESIZE_SITEINFO = "state_pagesize_siteinfo";
 
 	private static final String IMPORT_DATA_SOURCE = "import_data_source";
-
-	// Special tool id for Home page
-	private static final String SITE_INFORMATION_TOOL="sakai.iframe.site";
 
 	private static final String STATE_CM_LEVELS = "site.cm.levels";
 	
@@ -2115,7 +2106,7 @@ public class SiteAction extends PagedResourceActionII {
 					coursesIntoContext(state, context, site);
 					
 					context.put("term", siteProperties
-							.getProperty(PROP_SITE_TERM));
+							.getProperty(SiteConstants.PROP_SITE_TERM));
 				} else {
 					context.put("isCourseSite", Boolean.FALSE);
 				}
@@ -2167,7 +2158,7 @@ public class SiteAction extends PagedResourceActionII {
 
 				if (siteInfo.term == null) {
 					String currentTerm = site.getProperties().getProperty(
-							PROP_SITE_TERM);
+							SiteConstants.PROP_SITE_TERM);
 					if (currentTerm != null) {
 						siteInfo.term = currentTerm;
 					}
@@ -2570,7 +2561,7 @@ public class SiteAction extends PagedResourceActionII {
 			if (sType != null && sType.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("currentTermId", site.getProperties().getProperty(
-						PROP_SITE_TERM));
+						SiteConstants.PROP_SITE_TERM));
 				setTermListForContext(context, state, true); // true upcoming only
 			} else {
 				context.put("isCourseSite", Boolean.FALSE);
@@ -4904,7 +4895,7 @@ public class SiteAction extends PagedResourceActionII {
 			else
 			{
 				// create based on template: skip add features, and copying all the contents from the tools in template site
-				importToolContent(site.getId(), templateSite.getId(), site, true, state);
+				CopyUtil.importToolContent(site.getId(), templateSite.getId(), site, true, state);
 			}
 				
 			// for course sites
@@ -4918,8 +4909,8 @@ public class SiteAction extends PagedResourceActionII {
 				if (state.getAttribute(STATE_TERM_SELECTED) != null) {
 					term = (AcademicSession) state
 							.getAttribute(STATE_TERM_SELECTED);
-					rp.addProperty(PROP_SITE_TERM, term.getTitle());
-					rp.addProperty(PROP_SITE_TERM_EID, term.getEid());
+					rp.addProperty(SiteConstants.PROP_SITE_TERM, term.getTitle());
+					rp.addProperty(SiteConstants.PROP_SITE_TERM_EID, term.getEid());
 				}
 
 				// update the site and related realm based on the rosters chosen or requested
@@ -6045,11 +6036,11 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		Site site = getStateSite(state);
-		String termEid = site.getProperties().getProperty(PROP_SITE_TERM_EID);
+		String termEid = site.getProperties().getProperty(SiteConstants.PROP_SITE_TERM_EID);
 		if (termEid == null)
 		{
 			// no term eid stored, need to get term eid from the term title
-			String termTitle = site.getProperties().getProperty(PROP_SITE_TERM);
+			String termTitle = site.getProperties().getProperty(SiteConstants.PROP_SITE_TERM);
 			List asList = cms.getAcademicSessions();
 			if (termTitle != null && asList != null)
 			{
@@ -6060,7 +6051,7 @@ public class SiteAction extends PagedResourceActionII {
 					if (as.getTitle().equals(termTitle))
 					{
 						termEid = as.getEid();
-						site.getPropertiesEdit().addProperty(PROP_SITE_TERM_EID, termEid);
+						site.getPropertiesEdit().addProperty(SiteConstants.PROP_SITE_TERM_EID, termEid);
 						
 						try
 						{
@@ -6910,7 +6901,7 @@ public class SiteAction extends PagedResourceActionII {
 								.getAttribute(STATE_IMPORT_SITE_TOOL);
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-						importToolIntoSite(selectedTools, importTools, existingSite.getId(), false, false, state);
+						CopyUtil.importToolIntoSite(selectedTools, importTools, existingSite.getId(), false, false, state);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -6951,7 +6942,7 @@ public class SiteAction extends PagedResourceActionII {
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 						// Remove all old contents before importing contents from new site
-						importToolIntoSite(selectedTools, importTools, existingSite.getId(), true, false, state);
+						CopyUtil.importToolIntoSite(selectedTools, importTools, existingSite.getId(), true, false, state);
 
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -7047,102 +7038,18 @@ public class SiteAction extends PagedResourceActionII {
 					} else {
 						String title = params.getString("title");
 						state.setAttribute(SITE_DUPLICATED_NAME, title);
-
-						String nSiteId = IdManager.createUuid();
-						try {
-							
-							Site site = SiteService.addSite(nSiteId,
-									getStateSite(state));
-							
-							// get the new site icon url
-							if (site.getIconUrl() != null)
-							{
-								site.setIconUrl(transferSiteResource(oSiteId, nSiteId, site.getIconUrl()));
-							}
-							
-							try {
-								SiteService.save(site);
-							} catch (IdUnusedException e) {
-								// TODO:
-							} catch (PermissionException e) {
-								// TODO:
-							}
-
-							try {
-								site = SiteService.getSite(nSiteId);
-
-								// set title
-								site.setTitle(title);
-								
-								if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
-									// for course site, need to
-									// read in the input for
-									// term information
-									String termId = StringUtil.trimToNull(params
-											.getString("selectTerm"));
-									if (termId != null) {
-										AcademicSession term = cms.getAcademicSession(termId);
-										if (term != null) {
-											ResourcePropertiesEdit rp = site.getPropertiesEdit();
-											rp.addProperty(PROP_SITE_TERM, term.getTitle());
-											rp.addProperty(PROP_SITE_TERM_EID, term.getEid());
-										} else {
-											M_log.warn("termId=" + termId + " not found");
-										}
-									}
-								}
-								try {
-									SiteService.save(site);
-									
-									if (site.getType().equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) 
-									{
-										// also remove the provider id attribute if any
-										String realm = SiteService.siteReference(site.getId());
-										try 
-										{
-											AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
-											realmEdit.setProviderGroupId(null);
-											AuthzGroupService.save(realmEdit);
-										} catch (GroupNotDefinedException e) {
-											M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: IdUnusedException, not found, or not an AuthzGroup object "+ realm, e);
-											addAlert(state, rb.getString("java.realm"));
-										} catch (Exception e) {
-											addAlert(state, this + rb.getString("java.problem"));
-											M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.problem"), e);
-										}
-									}
-								} catch (IdUnusedException e) {
-									// TODO:
-								} catch (PermissionException e) {
-									// TODO:
-								}
-								
-								// import tool content
-								importToolContent(nSiteId, oSiteId, site, false, state);
-
-							} catch (Exception e1) {
-								// if goes here, IdService
-								// or SiteService has done
-								// something wrong.
-								M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + e1 + ":" + nSiteId + "when duplicating site", e1);
-							}
-
-							// TODO: hard coding this frame id
-							// is fragile, portal dependent, and
-							// needs to be fixed -ggolden
-							// schedulePeerFrameRefresh("sitenav");
-							scheduleTopRefresh();
-
-							state.setAttribute(SITE_DUPLICATED, Boolean.TRUE);
-						} catch (IdInvalidException e) {
-							addAlert(state, rb.getString("java.siteinval"));
-							M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.siteinval") + " site id = " + nSiteId, e);
-						} catch (IdUsedException e) {
-							addAlert(state, rb.getString("java.sitebeenused"));
-							M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.sitebeenused") + " site id = " + nSiteId, e);
-						} catch (PermissionException e) {
-							addAlert(state, rb.getString("java.allowcreate"));
-							M_log.warn(this + ".actionForTemplate chef_siteinfo-duplicate: " + rb.getString("java.allowcreate") + " site id = " + nSiteId, e);
+						
+						String selectedTerm = StringUtil.trimToNull(params.getString("selectTerm"));
+						
+						// run thread
+						try
+						{
+							SiteCopyThread n = new SiteCopyThread(oSiteId, selectedTerm, title, true, state);
+							n.start();
+						}
+						catch(Exception e)
+						{
+							M_log.warn(this + " actionForTemplate: problem with duplicating site id=" + oSiteId + e.getMessage());
 						}
 					}
 				}
@@ -7458,54 +7365,6 @@ public class SiteAction extends PagedResourceActionII {
 		return rv;
 	}
 	
-	/**
-	 * 
-	 * @param nSiteId
-	 * @param oSiteId
-	 * @param site
-	 */
-	private void importToolContent(String nSiteId, String oSiteId, Site site, boolean bypassSecurity, SessionState state) {
-		List<String> toolIds = new Vector<String>();
-		Hashtable<String, List<String>> siteIds = new Hashtable<String, List<String>>();
-		List pageList = site.getPages();
-		if (!((pageList == null) || (pageList.size() == 0))) {
-			for (ListIterator i = pageList
-					.listIterator(); i.hasNext();) {
-				SitePage page = (SitePage) i.next();
-
-				List pageToolList = page.getTools();
-				if (!(pageToolList == null || pageToolList.size() == 0))
-				{
-					Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
-					if (tool != null)
-					{
-						String toolId = StringUtil.trimToNull(tool.getId());
-						if (toolId != null)
-						{
-							// populating the tool id list for importing
-							
-							// only have one sour site
-							List<String> sIds = new Vector<String>();
-							sIds.add(oSiteId);
-							
-							toolIds.add(toolId);
-							siteIds.put(toolId, sIds);
-							
-							if (toolId.equalsIgnoreCase(SITE_INFORMATION_TOOL)) 
-							{
-								// handle Home tool specially, need to update the site infomration display url if needed
-								String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
-								site.setInfoUrl(newSiteInfoUrl);
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		// now that we have the tool list, do the copy content
-		importToolIntoSite(toolIds, siteIds, site.getId(), false, true, state);
-	}
 	/**
 	 * get user answers to setup questions
 	 * @param params
@@ -8513,7 +8372,7 @@ public class SiteAction extends PagedResourceActionII {
 		commitSite(site);
 
 		// import
-		importToolIntoSite(chosenList, importTools, site.getId(), false, false, state);
+		CopyUtil.importToolIntoSite(chosenList, importTools, site.getId(), false, false, state);
 		
 	} // saveFeatures
 
@@ -8694,23 +8553,6 @@ public class SiteAction extends PagedResourceActionII {
 			state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
 		}
 	} // getFeatures
-
-	// import tool content into site
-	private void importToolIntoSite(List<String> toolIds, Hashtable<String, List<String>> importTools, String siteId, boolean migrate, boolean byPassSecurity, SessionState sessionState) {
-		if (importTools != null) {
-			
-			// do the whole process in a separate thread
-			try
-			{
-				EntityCopyThread n = new EntityCopyThread(toolIds, importTools, siteId, migrate, byPassSecurity, sessionState);
-				n.start();
-			}
-			catch(Exception e)
-			{
-			}
-		}
-	} // importToolIntoSite
-
 
 	public void saveSiteStatus(SessionState state, boolean published) {
 		Site site = getStateSite(state);
@@ -9003,7 +8845,7 @@ public class SiteAction extends PagedResourceActionII {
 				siteInfo.short_description = site.getShortDescription();
 				siteInfo.site_type = site.getType();
 				// term information
-				String term = siteProperties.getProperty(PROP_SITE_TERM);
+				String term = siteProperties.getProperty(SiteConstants.PROP_SITE_TERM);
 				if (term != null) {
 					siteInfo.term = term;
 				}
@@ -11176,195 +11018,4 @@ public class SiteAction extends PagedResourceActionII {
 		return true;
 	}
 	
-	/**
-	 * Thread to run the entity copy task needed when duplicating, copying, and importing site(s).
-	 * @author zqian
-	 *
-	 */
-	protected class EntityCopyThread extends Observable implements Runnable 
-	{
-		/** My thread running my timeout checker. */
-		protected Thread m_thread = null;
-
-		/** Signal to the timeout checker to stop. */
-		protected boolean m_threadStop = false;
-		
-		public void init(){}
-		public void start()
-		{
-			if (m_thread != null) return;
-
-			m_thread = new Thread(this, "Sakai.SiteInfo.SiteCopy");
-			m_threadStop = false;
-			m_thread.setDaemon(true);
-			m_thread.start();
-			M_log.warn(this + " SiteCopy start tositeId = " + toSiteId);
-		}
-		
-		private List<String> toolIds = null;
-		private Hashtable<String, List<String>> importTools = null;
-		private String toSiteId = null;
-		private boolean migrate = false;
-		private boolean byPassSecurity = false;
-		private SessionState sessionState = null;
-		
-		//constructor
-		EntityCopyThread(List<String> toolIds, Hashtable<String, List<String>> importTools, String toSiteId, boolean migrate, boolean byPassSecurity, SessionState sessionState)
-		{
-			this.toolIds = toolIds;
-			this.importTools = importTools;
-			this.toSiteId = toSiteId;
-			this.migrate = migrate;
-			this.byPassSecurity = byPassSecurity;
-			this.sessionState = sessionState;
-		}
-
-		public void stop()
-		{
-			if (m_thread != null)
-			{
-				m_threadStop = true;
-				m_thread.interrupt();
-				try
-				{
-					// wait for it to die
-					m_thread.join();
-				}
-				catch (InterruptedException ignore)
-				{
-				}
-				m_thread = null;
-			}
-			M_log.info(this + ":stop EntityCopyThread target site Id=" + toSiteId);
-		}
-		
-		public void run()
-		{
-			// since we might be running while the component manager is still being created and populated, such as at server
-			// startup, wait here for a complete component manager
-			ComponentManager.waitTillConfigured();
-
-			while (!m_threadStop)
-			{
-				
-				// running
-				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
-				
-				if (byPassSecurity)
-				{
-					// importing from template, bypass the permission checking:
-					// temporarily allow the user to read and write from assignments (asn.revise permission)
-			        SecurityService.pushAdvisor(new SecurityAdvisor()
-			            {
-			                public SecurityAdvice isAllowed(String userId, String function, String reference)
-			                {
-			                    return SecurityAdvice.ALLOWED;
-			                }
-			            });
-				}
-				
-			    try
-				{
-			    	// import resources first
-					boolean resourcesImported = false;
-					for (int i = 0; i < toolIds.size() && !resourcesImported; i++) {
-						String toolId = (String) toolIds.get(i);
-	
-						if (toolId.equalsIgnoreCase("sakai.resources")
-								&& importTools.containsKey(toolId)) {
-							List importSiteIds = (List) importTools.get(toolId);
-	
-							for (int k = 0; k < importSiteIds.size(); k++) {
-								String fromSiteId = (String) importSiteIds.get(k);
-	
-								String fromSiteCollectionId = m_contentHostingService
-										.getSiteCollection(fromSiteId);
-								String toSiteCollectionId = m_contentHostingService
-										.getSiteCollection(toSiteId);
-	
-								transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
-								resourcesImported = true;
-							}
-						}
-					}
-	
-					// import other tools then
-					for (int i = 0; i < toolIds.size(); i++) {
-						String toolId = (String) toolIds.get(i);
-						if (!toolId.equalsIgnoreCase("sakai.resources")
-								&& importTools.containsKey(toolId)) {
-							List importSiteIds = (List) importTools.get(toolId);
-							for (int k = 0; k < importSiteIds.size(); k++) {
-								String fromSiteId = (String) importSiteIds.get(k);
-								transferCopyEntities(toolId, fromSiteId, toSiteId, migrate);
-							}
-						}
-					}
-	
-					if (byPassSecurity)
-					{
-						SecurityService.clearAdvisors();
-					}
-					
-					// finished
-					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
-					m_threadStop = true;
-				}
-			    catch(Exception e) {
-			    	// error
-			    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-			    }
-			    finally
-				{
-					//clear any current bindings
-					ThreadLocalManager.clear();
-					stop();
-				}
-			}
-		}
-		
-		/**
-		 * Transfer a copy of all entites from another context for any entity
-		 * producer that claims this tool id.
-		 * 
-		 * @param toolId
-		 *            The tool id.
-		 * @param fromContext
-		 *            The context to import from.
-		 * @param toContext
-		 *            The context to import into.
-		 * @param migrate Whether to remove the old content or not
-		 */
-		protected void transferCopyEntities(String toolId, String fromContext,
-				String toContext, boolean migrate) {
-			// TODO: used to offer to resources first - why? still needed? -ggolden
-
-			// offer to all EntityProducers
-			for (Iterator i = EntityManager.getEntityProducers().iterator(); i
-					.hasNext();) {
-				EntityProducer ep = (EntityProducer) i.next();
-				if (ep instanceof EntityTransferrer) {
-					try {
-						EntityTransferrer et = (EntityTransferrer) ep;
-
-						// if this producer claims this tool id
-						if (ArrayUtil.contains(et.myToolIds(), toolId)) {
-							if (migrate)
-							{
-								et.transferCopyEntities(fromContext, toContext, new Vector(), true);
-							}
-							else
-							{
-								et.transferCopyEntities(fromContext, toContext, new Vector());
-							}
-						}
-					} catch (Throwable t) {
-						M_log.warn(this + ".transferCopyEntities: Error encountered while asking EntityTransfer to transferCopyEntities from: "
-										+ fromContext + " to: " + toContext, t);
-					}
-				}
-			}
-		}
-		
-	}//EntityCopyThread
  }

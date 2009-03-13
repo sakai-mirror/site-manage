@@ -48,5 +48,12 @@ public class SiteConstants {
 	public static final String ENTITYCOPY_THREAD_STATUS_ERROR="error";
 	
 	public static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
+	
+	public final static String PROP_SITE_TERM = "term";
+
+	public final static String PROP_SITE_TERM_EID = "term_eid";
+	
+	// Special tool id for Home page
+	public static final String SITE_INFORMATION_TOOL="sakai.iframe.site";
 
 }
