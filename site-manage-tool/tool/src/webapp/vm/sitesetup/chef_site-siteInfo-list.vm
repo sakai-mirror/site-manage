@@ -1,6 +1,5 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
 ## Site list Sites list on worksite setup home page
-##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->## Site list Sites list on worksite setup home page
 <script type="text/javascript" src="/library/js/jquery.js">
 </script>
 <script type="text/javascript" src="/library/js/jqmodal/jqModal.js">
@@ -33,6 +32,7 @@
 			var workingText = trim($("#workingText").text());
 			this.queryStatus = function(){
 	        	jQuery.get(completeUrl, function(data){
+	        	
 			    	if (data.indexOf(workingText) >= 0) {
 						$('#dialog').jqmShow(); 
 		            }
@@ -44,11 +44,10 @@
 		        });
 	  		}
 			this.intTimer = window.setInterval(function(e) {  
-	    		thisStatus.queryStatus()},10000)
+	    		thisStatus.queryStatus()},3000)
 	  		}
 			checkStatus();		
     	});
-    
 </script>
 <div id="urlholder" class="highlight" style="display:none">
     $sakai_ActionURL
@@ -59,20 +58,11 @@
 <div id="workingText" class="highlight" style="display:none">
     $workingText
 </div>
-<div id="testholder" class="highlight" style="">
-    $sakai_ActionURL
-</div>
-
 <div class ="portletBody">
 	#if($menu)#toolbar($menu)#end
 	#if ($alertMessage)
 		<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>
 		<div class="clear"></div>
-	#end
-	#if ($!threadStatus)
-
-		<div class="alertMessage">$threadStatus</div>
-
 	#end
 	#if ($fromWSetup)
 		<form name="siteForm" id="siteForm" class="inlineForm" action="#toolForm("SiteAction")" method="post">

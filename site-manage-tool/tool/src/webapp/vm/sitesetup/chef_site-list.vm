@@ -1,11 +1,65 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-list.vm,v 1.3 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
 ## Site list Sites list on worksite setup home page
+<script type="text/javascript" src="/library/js/jquery.js">
+</script>
+<script type="text/javascript" src="/library/js/jqmodal/jqModal.js">
+</script>
+<link href="/library/js/jqmodal/jqModal.css" type="text/css" rel="stylesheet" media="all" />
+<div id="dialog" class="jqmWindow messageValidation" style="height:auto">
+    <h4 style="padding-left:2em">Sorry! We are working very hard to copy your things to the new site.</h4>
+</div>
+<script type="text/javascript">
+
+    $(document).ready(function() {
+    	var completeUrl = $("#urlholder").text().substring(0,$("#urlholder").text().indexOf('/portal')) + "/sakai-site-manage-tool/tool/sitecopystatus/" + trim($("#currentToolId").text());
+     var workingText = $("#workingText").text();
+    	$('#testholder').text(completeUrl + workingText);
+      	$('#dialog').jqm({modal:true}); 
+	        jQuery.get(completeUrl, function(data){
+			    if (data.indexOf(workingText) >= 0) {
+					$('#dialog').jqmShow(); 
+	            }
+	            else {
+					$('#dialog').jqmHide(); 
+	           }
+	        });
+	 function trim(testString)
+	 {
+	 	return testString.replace(/^\s*/, "").replace(/\s*$/, "");
+	 }
+		function checkStatus(){
+			var thisStatus = this;
+			var workingText = trim($("#workingText").text());
+			this.queryStatus = function(){
+	        	jQuery.get(completeUrl, function(data){
+			    	if (data.indexOf(workingText) >= 0) {
+						$('#dialog').jqmShow(); 
+		            }
+		            else {
+						$('#dialog').jqmHide(); 
+					    window.clearInterval(this.intTimer);
+	           		}
+	
+		        });
+	  		}
+			this.intTimer = window.setInterval(function(e) {  
+	    		thisStatus.queryStatus()},3000)
+	  		}
+			checkStatus();		
+    	});
+</script>
+<div id="urlholder" class="highlight" style="display:none">
+    $sakai_ActionURL
+</div>
+<div id="currentToolId" class="highlight" style="display:none">
+    $currentToolId
+</div>
+<div id="workingText" class="highlight" style="display:none">
+    $workingText
+</div>
 <div class ="portletBody">
 	#if($menu)#toolbar($menu)#end
 	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div>#end
-	#if ($!threadStatus)
-		<div class="alertMessage">$threadStatus</div>
-	#end
 	<div class="navPanel">
 		<div class="viewNav">
 			<form name="viewForm" class="inlineForm" method="post" action="#toolForm("SiteAction")">

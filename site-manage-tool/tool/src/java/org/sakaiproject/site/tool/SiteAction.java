@@ -1214,6 +1214,34 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-list.vm
 			 * 
 			 */
+			String userSiteId = SiteService.getUserSiteId(SessionManager.getCurrentSessionUserId());
+			Tool tool = null;
+			try
+			{
+				// for showing copy thread status
+				site = SiteService.getSite(userSiteId);
+				tool = ToolManager.getCurrentTool();
+				if (tool != null)
+				{
+					// the current tool should be Site Info
+					ToolConfiguration toolConfiguration = site.getToolForCommonId(tool.getId());
+					if (toolConfiguration != null)
+					{
+						String toolId = toolConfiguration.getId();
+						context.put("currentToolId", toolId);
+						context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
+					}
+				}
+				if (state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null)
+				{
+					context.put("threadStatus", state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS));
+				}
+			}
+			catch (Exception e)
+			{
+				M_log.warn(this + "buildContextForTemplate chef_site-list.vm problem of getting myworkspace site for id = " + userSiteId + e.getMessage());
+			}
+			
 			// site types
 			List sTypes = (List) state.getAttribute(STATE_SITE_TYPES);
 
@@ -1802,7 +1830,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			// for showing site copy thread status
-			Tool tool = ToolManager.getCurrentTool();
+			tool = ToolManager.getCurrentTool();
 			if (tool != null)
 			{
 				// the current tool should be Site Info
@@ -4895,7 +4923,16 @@ public class SiteAction extends PagedResourceActionII {
 			else
 			{
 				// create based on template: skip add features, and copying all the contents from the tools in template site
-				CopyUtil.importToolContent(site.getId(), templateSite.getId(), site, true, state);
+				// run thread
+				try
+				{
+					SiteCopyThread n = new SiteCopyThread(templateSite.getId()/*source*/, site.getId()/*target*/,  false/*not create new site*/, null, null, true, state, SessionManager.getCurrentSessionUserId());
+					n.start();
+				}
+				catch(Exception e)
+				{
+					M_log.warn(this + " actionForTemplate: problem with copying template site =" + templateSite.getId() + " into site id = " + site.getId() + " " + e.getMessage());
+				}
 			}
 				
 			// for course sites
@@ -6901,8 +6938,18 @@ public class SiteAction extends PagedResourceActionII {
 								.getAttribute(STATE_IMPORT_SITE_TOOL);
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-						CopyUtil.importToolIntoSite(selectedTools, importTools, existingSite.getId(), false, false, state);
-
+						
+						// run thread for copying tool content
+						try
+						{
+							EntityCopyThread n = new EntityCopyThread(selectedTools, importTools, existingSite.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
+							n.start();
+						}
+						catch(Exception e)
+						{
+							M_log.warn(this + " actionForTemplate chef_site-importSites.vm: problem with import into site id=" + existingSite.getId() + e.getMessage());
+						}
+						
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
 
@@ -6942,8 +6989,17 @@ public class SiteAction extends PagedResourceActionII {
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 						// Remove all old contents before importing contents from new site
-						CopyUtil.importToolIntoSite(selectedTools, importTools, existingSite.getId(), true, false, state);
-
+						// run thread for copying tool content
+						try
+						{
+							EntityCopyThread n = new EntityCopyThread(selectedTools, importTools, existingSite.getId(), true, false, state, SessionManager.getCurrentSessionUserId());
+							n.start();
+						}
+						catch(Exception e)
+						{
+							M_log.warn(this + " actionForTemplate chef_site-importSites-migrate.vm: problem with import into site id=" + existingSite.getId() + e.getMessage());
+						}
+						
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
 
@@ -7044,7 +7100,7 @@ public class SiteAction extends PagedResourceActionII {
 						// run thread
 						try
 						{
-							SiteCopyThread n = new SiteCopyThread(oSiteId, selectedTerm, title, true, state);
+							SiteCopyThread n = new SiteCopyThread(oSiteId, null/*no site id yet*/, true/*create new site*/, selectedTerm, title, true, state, SessionManager.getCurrentSessionUserId());
 							n.start();
 						}
 						catch(Exception e)
@@ -8372,8 +8428,15 @@ public class SiteAction extends PagedResourceActionII {
 		commitSite(site);
 
 		// import
-		CopyUtil.importToolIntoSite(chosenList, importTools, site.getId(), false, false, state);
-		
+		try
+		{
+			EntityCopyThread n = new EntityCopyThread(chosenList, importTools, site.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
+			n.start();
+		}
+		catch(Exception e)
+		{
+			M_log.warn(this + " savefeatures: problem with import tool into site id=" + site.getId() + e.getMessage());
+		}
 	} // saveFeatures
 
 	/**

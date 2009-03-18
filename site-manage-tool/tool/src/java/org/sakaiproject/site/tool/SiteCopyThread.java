@@ -33,9 +33,11 @@ import org.sakaiproject.id.cover.IdManager;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.user.api.User;
+import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 import org.sakaiproject.util.ArrayUtil;
-import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.StringUtil;
 
 /**
@@ -49,12 +51,13 @@ public class SiteCopyThread extends Observable implements Runnable
 	
 	private ContentHostingService m_contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
 	
+	private UserDirectoryService m_userDirectoryService = (UserDirectoryService) ComponentManager.get("org.sakaiproject.user.api.UserDirectoryService");
+	
 	private SiteService m_siteService = (SiteService) ComponentManager.get("org.sakaiproject.site.api.SiteService");
 	
-	private org.sakaiproject.coursemanagement.api.CourseManagementService cms = (org.sakaiproject.coursemanagement.api.CourseManagementService) ComponentManager.get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
+	private SessionManager m_sessionManager = (SessionManager) ComponentManager.get("org.sakaiproject.tool.api.SessionManager");
 	
-	/** Resource bundle using current language locale */
-	private static ResourceLoader rb = new ResourceLoader("sitesetupgeneric");
+	private org.sakaiproject.coursemanagement.api.CourseManagementService cms = (org.sakaiproject.coursemanagement.api.CourseManagementService) ComponentManager.get(org.sakaiproject.coursemanagement.api.CourseManagementService.class);
 	
 	/** My thread running my timeout checker. */
 	protected Thread m_thread = null;
@@ -62,11 +65,14 @@ public class SiteCopyThread extends Observable implements Runnable
 	/** Signal to the timeout checker to stop. */
 	protected boolean m_threadStop = false;
 	
-	private String oSiteId = null;
+	private String sourceSiteId = null;
+	private String targetSiteId = null;
+	private boolean createNewSite = false;
 	private String toTitle = null;
 	private String selectedTerm = null;
 	private boolean byPassSecurity = false;
 	private SessionState sessionState = null;
+	private String userId = null;
 	
 	
 	public void init(){}
@@ -82,24 +88,30 @@ public class SiteCopyThread extends Observable implements Runnable
 		m_threadStop = false;
 		m_thread.setDaemon(true);
 		m_thread.start();
-		M_log.warn(this + " SiteCopy start from site Id = " + oSiteId);
+		M_log.info(this + " SiteCopy start from site Id = " + sourceSiteId);
 	}
 
 	/**
 	 * constructor
-	 * @param oSiteId
+	 * @param sourceSiteId
+	 * @param targetSiteId
+	 * @param createNewSite
 	 * @param selectedTerm
 	 * @param toTitle
 	 * @param byPassSecurity
 	 * @param sessionState
+	 * @param userId
 	 */
-	SiteCopyThread(String oSiteId, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState)
+	SiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId)
 	{
-		this.oSiteId = oSiteId;
+		this.sourceSiteId = sourceSiteId;
+		this.targetSiteId = targetSiteId;
+		this.createNewSite = createNewSite;
 		this.toTitle = toTitle;
 		this.selectedTerm = selectedTerm;
 		this.byPassSecurity = byPassSecurity;
 		this.sessionState = sessionState;
+		this.userId = userId;
 	}
 
 	/**
@@ -121,7 +133,7 @@ public class SiteCopyThread extends Observable implements Runnable
 			}
 			m_thread = null;
 		}
-		M_log.info(this + ":stop SiteCopyThread source site Id=" + oSiteId);
+		M_log.info(this + ":stop SiteCopyThread source site Id=" + sourceSiteId);
 	}
 	
 	public void run()
@@ -132,92 +144,111 @@ public class SiteCopyThread extends Observable implements Runnable
 
 		if (!m_threadStop)
 		{
+			org.sakaiproject.tool.api.Session s = null;
+			if (s == null)
+			{
+				s = m_sessionManager.startSession();
+				try
+				{
+					User u = m_userDirectoryService.getUser(userId);
+					s.setUserId(u.getId());
+					m_sessionManager.setCurrentSession(s);
+				}
+				catch (Exception e)
+				{
+					M_log.warn(this + ":run cannot find user with id " + userId + e.getMessage());
+				}
+			}
+			
 			// running
 			sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
-			
-			// bypass the security checks
-	        SecurityService.pushAdvisor(new SecurityAdvisor()
-            {
-                public SecurityAdvice isAllowed(String userId, String function, String reference)
-                {
-                    return SecurityAdvice.ALLOWED;
-                }
-            });
 	        
-			String nSiteId = IdManager.createUuid();
+			String targetSiteId = this.targetSiteId;
 			
 			// get the original site
-			Site oSite = null;
+			Site sourceSite = null;
 			try {
 				// get the original site id
-				oSite = m_siteService.getSite(oSiteId);
+				sourceSite = m_siteService.getSite(sourceSiteId);
 				
-			} catch (Exception ignore) {
+			} catch (Exception e) {
+				M_log.warn(this + "run: cannot get sour site with id = " + sourceSiteId + e.getMessage());
 			}
 				
 			try
 			{
-				// add new site
-				Site site = m_siteService.addSite(nSiteId, oSite);
-					
-				// get the new site icon url
-				if (site.getIconUrl() != null)
+				Site site = null;
+				if (createNewSite)
 				{
-					site.setIconUrl(CopyUtil.transferSiteResource(oSiteId, nSiteId, site.getIconUrl()));
-				}
-	
-				// set title
-				site.setTitle(toTitle);
-				
-				String courseSiteType = ServerConfigurationService.getString("courseSiteType", "course");
-				if (site.getType().equals(courseSiteType)) {
-					// for course site, need to
-					// read in the input for
-					// term information
-					String termId = StringUtil.trimToNull(selectedTerm);
-					if (termId != null) {
-						AcademicSession term = cms.getAcademicSession(termId);
-						if (term != null) {
-							ResourcePropertiesEdit rp = site.getPropertiesEdit();
-							rp.addProperty(SiteConstants.PROP_SITE_TERM, term.getTitle());
-							rp.addProperty(SiteConstants.PROP_SITE_TERM_EID, term.getEid());
-						} else {
-							M_log.warn("termId=" + termId + " not found");
-						}
-					}
-				}
-				try {
-					m_siteService.save(site);
+					targetSiteId = IdManager.createUuid();
 					
-					if (site.getType().equals(courseSiteType)) 
+					// add new site
+					site = m_siteService.addSite(targetSiteId, sourceSite);
+						
+					// get the new site icon url
+					if (site.getIconUrl() != null)
 					{
-						// also remove the provider id attribute if any
-						String realm = m_siteService.siteReference(site.getId());
-						try 
-						{
-							AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
-							realmEdit.setProviderGroupId(null);
-							AuthzGroupService.save(realmEdit);
-						} catch (GroupNotDefinedException gndException) {
-							sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-							M_log.warn(this + ".run: IdUnusedException, not found, or not an AuthzGroup object "+ realm, gndException);
-						} catch (Exception exception) {
-							sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-							M_log.warn(this + ".run " + rb.getString("java.problem"), exception);
+						site.setIconUrl(CopyUtil.transferSiteResource(sourceSiteId, targetSiteId, site.getIconUrl()));
+					}
+		
+					// set title
+					site.setTitle(toTitle);
+					
+					String courseSiteType = ServerConfigurationService.getString("courseSiteType", "course");
+					if (site.getType().equals(courseSiteType)) {
+						// for course site, need to
+						// read in the input for
+						// term information
+						String termId = StringUtil.trimToNull(selectedTerm);
+						if (termId != null) {
+							AcademicSession term = cms.getAcademicSession(termId);
+							if (term != null) {
+								ResourcePropertiesEdit rp = site.getPropertiesEdit();
+								rp.addProperty(SiteConstants.PROP_SITE_TERM, term.getTitle());
+								rp.addProperty(SiteConstants.PROP_SITE_TERM_EID, term.getEid());
+							} else {
+								M_log.warn("termId=" + termId + " not found");
+							}
 						}
 					}
-				} catch (IdUnusedException e) {
-					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-					M_log.warn(this + ".run: IdUnusedException, not able to save site id=" + site.getId() , e);
-				} catch (PermissionException e) {
-					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-					M_log.warn(this + ".run: PermissionException, not able to save site id=" + site.getId(), e);
+					try {
+						m_siteService.save(site);
+						
+						if (site.getType().equals(courseSiteType)) 
+						{
+							// also remove the provider id attribute if any
+							String realm = m_siteService.siteReference(site.getId());
+							try 
+							{
+								AuthzGroup realmEdit = AuthzGroupService.getAuthzGroup(realm);
+								realmEdit.setProviderGroupId(null);
+								AuthzGroupService.save(realmEdit);
+							} catch (GroupNotDefinedException gndException) {
+								sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+								M_log.warn(this + ".run: IdUnusedException, not found, or not an AuthzGroup object "+ realm, gndException);
+							} catch (Exception exception) {
+								sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+								M_log.warn(this + ".run problem of get realm for site " + site.getId() , exception);
+							}
+						}
+					} catch (IdUnusedException e) {
+						sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						M_log.warn(this + ".run: IdUnusedException, not able to save site id=" + site.getId() , e);
+					} catch (PermissionException e) {
+						sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						M_log.warn(this + ".run: PermissionException, not able to save site id=" + site.getId(), e);
+					}
+				}
+				else
+				{
+					// no need to create a new site
+					site = m_siteService.getSite(targetSiteId);
 				}
 						
 				try
 				{
 					// import tool content
-					CopyUtil.importToolContent(nSiteId, oSiteId, site, true, sessionState);
+					CopyUtil.importToolContent(targetSiteId, sourceSiteId, true, sessionState);
 		
 				    // finished
 					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
@@ -228,17 +259,17 @@ public class SiteCopyThread extends Observable implements Runnable
 			    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 			    }
 			    
-			    SecurityService.clearAdvisors();
-			    
-
+			} catch (IdUnusedException e) {
+				M_log.warn(this + ".run: cannot find site with id =" + targetSiteId, e);
+				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 			} catch (IdInvalidException e) {
-				M_log.warn(this + ".run: " + rb.getString("java.siteinval") + " site id = " + nSiteId, e);
+				M_log.warn(this + ".run: invalid site id = " + targetSiteId, e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 			} catch (IdUsedException e) {
-				M_log.warn(this + ".run: " + rb.getString("java.sitebeenused") + " site id = " + nSiteId, e);
+				M_log.warn(this + ".run: site id = " + targetSiteId + " has been used", e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 			} catch (PermissionException e) {
-				M_log.warn(this + ".run: " + rb.getString("java.allowcreate") + " site id = " + nSiteId, e);
+				M_log.warn(this + ".run: no right permission for adding or getting site id = " + targetSiteId, e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 			}			    
 			finally

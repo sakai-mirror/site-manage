@@ -19,6 +19,7 @@ import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.util.SiteConstants;
@@ -33,6 +34,7 @@ public class CopyUtil {
 	
 	public static ContentHostingService m_contentHostingService = (ContentHostingService) ComponentManager.get("org.sakaiproject.content.api.ContentHostingService");
 	
+	public static SiteService m_siteService = (SiteService) ComponentManager.get("org.sakaiproject.site.api.SiteService");
 	
 	/**
 	 * 
@@ -40,47 +42,55 @@ public class CopyUtil {
 	 * @param oSiteId
 	 * @param site
 	 */
-	public static void importToolContent(String nSiteId, String oSiteId, Site site, boolean bypassSecurity, SessionState state) {
-		List<String> toolIds = new Vector<String>();
-		Hashtable<String, List<String>> siteIds = new Hashtable<String, List<String>>();
-		List pageList = site.getPages();
-		if (!((pageList == null) || (pageList.size() == 0))) {
-			for (ListIterator i = pageList
-					.listIterator(); i.hasNext();) {
-				SitePage page = (SitePage) i.next();
-
-				List pageToolList = page.getTools();
-				if (!(pageToolList == null || pageToolList.size() == 0))
-				{
-					Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
-					if (tool != null)
+	public static void importToolContent(String nSiteId, String oSiteId, boolean bypassSecurity, SessionState state) {
+		try
+		{
+			Site site = m_siteService.getSite(nSiteId);
+			List<String> toolIds = new Vector<String>();
+			Hashtable<String, List<String>> siteIds = new Hashtable<String, List<String>>();
+			List pageList = site.getPages();
+			if (!((pageList == null) || (pageList.size() == 0))) {
+				for (ListIterator i = pageList
+						.listIterator(); i.hasNext();) {
+					SitePage page = (SitePage) i.next();
+	
+					List pageToolList = page.getTools();
+					if (!(pageToolList == null || pageToolList.size() == 0))
 					{
-						String toolId = StringUtil.trimToNull(tool.getId());
-						if (toolId != null)
+						Tool tool = ((ToolConfiguration) pageToolList.get(0)).getTool();
+						if (tool != null)
 						{
-							// populating the tool id list for importing
-							
-							// only have one sour site
-							List<String> sIds = new Vector<String>();
-							sIds.add(oSiteId);
-							
-							toolIds.add(toolId);
-							siteIds.put(toolId, sIds);
-							
-							if (toolId.equalsIgnoreCase(SiteConstants.SITE_INFORMATION_TOOL)) 
+							String toolId = StringUtil.trimToNull(tool.getId());
+							if (toolId != null)
 							{
-								// handle Home tool specially, need to update the site infomration display url if needed
-								String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
-								site.setInfoUrl(newSiteInfoUrl);
+								// populating the tool id list for importing
+								
+								// only have one sour site
+								List<String> sIds = new Vector<String>();
+								sIds.add(oSiteId);
+								
+								toolIds.add(toolId);
+								siteIds.put(toolId, sIds);
+								
+								if (toolId.equalsIgnoreCase(SiteConstants.SITE_INFORMATION_TOOL)) 
+								{
+									// handle Home tool specially, need to update the site infomration display url if needed
+									String newSiteInfoUrl = transferSiteResource(oSiteId, nSiteId, site.getInfoUrl());
+									site.setInfoUrl(newSiteInfoUrl);
+								}
 							}
 						}
 					}
 				}
 			}
+			
+			// now that we have the tool list, do the copy content
+			importToolIntoSite(toolIds, siteIds, nSiteId, false, true, state);
 		}
-		
-		// now that we have the tool list, do the copy content
-		importToolIntoSite(toolIds, siteIds, site.getId(), false, true, state);
+		catch (Exception e)
+		{
+			M_log.warn("Site manage CopyUtil:importToolContent problem of getting the site with id " + nSiteId + e.getMessage());
+		}
 	}
 	
 	/**
