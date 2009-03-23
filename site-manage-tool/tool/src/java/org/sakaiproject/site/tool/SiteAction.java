@@ -4958,23 +4958,35 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param siteId
 	 */
 	private void setSiteAlias(SessionState state, String siteId) {
-		String alias = StringUtil.trimToNull((String) state
-				.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
-		if (alias != null) {
-			String channelReference = mailArchiveChannelReference(siteId);
-			try {
-				AliasService.setAlias(alias, channelReference);
-			} catch (IdUsedException ee) {
-				addAlert(state, rb.getString("java.alias") + " " + alias
-						+ " " + rb.getString("java.exists"));
-				M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"), ee);
-			} catch (IdInvalidException ee) {
-				addAlert(state, rb.getString("java.alias") + " " + alias
-						+ " " + rb.getString("java.isinval"));
-				M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"), ee);
-			} catch (PermissionException ee) {
-				addAlert(state, rb.getString("java.addalias") + " ");
-				M_log.warn(this + ".setSiteAlias: " + rb.getString("java.addalias") + ee);
+		List oTools = (List) state.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST);
+		if (oTools == null || (oTools!=null && !oTools.contains("sakai.mailbox")))
+		{
+			// set alias only if the email archive tool is newly added
+			String alias = StringUtil.trimToNull((String) state
+					.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
+			if (alias != null) {
+				String channelReference = mailArchiveChannelReference(siteId);
+				try {
+					// test whether the alias already is used for some channel
+					AliasService.getTarget(alias);
+				} catch (IdUnusedException e)
+				{
+					// only if the targe is not used, then add it as the alias to the site
+					try {
+						AliasService.setAlias(alias, channelReference);
+					} catch (IdUsedException ee) {
+						addAlert(state, rb.getString("java.alias") + " " + alias
+								+ " " + rb.getString("java.exists"));
+						M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"), ee);
+					} catch (IdInvalidException ee) {
+						addAlert(state, rb.getString("java.alias") + " " + alias
+								+ " " + rb.getString("java.isinval"));
+						M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"), ee);
+					} catch (PermissionException ee) {
+						addAlert(state, rb.getString("java.addalias") + " ");
+						M_log.warn(this + ".setSiteAlias: " + rb.getString("java.addalias") + ee);
+					}
+				}
 			}
 		}
 	}
