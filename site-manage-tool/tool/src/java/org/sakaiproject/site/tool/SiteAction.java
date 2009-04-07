@@ -7079,7 +7079,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * actionForTemplate chef_site-modifyENW.vm
 			 * 
 			 */
-			updateSelectedToolList(state, params, forward);
+			updateSelectedToolList(state, params, true);
 			if (state.getAttribute(STATE_MESSAGE) == null) {
 				updateCurrentStep(state, forward);
 			}
@@ -8206,13 +8206,14 @@ public class SiteAction extends PagedResourceActionII {
 				hasEmail = true;
 				String alias = StringUtil.trimToNull((String) state
 						.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
+				String channelReference = mailArchiveChannelReference(site.getId());
 				if (alias != null) {
 					if (!Validator.checkEmailLocal(alias)) {
 						addAlert(state, rb.getString("java.theemail"));
+					} else if (!AliasService.allowSetAlias(alias, channelReference )) {
+						addAlert(state, rb.getString("java.addalias"));
 					} else {
 						try {
-							String channelReference = mailArchiveChannelReference(site
-									.getId());
 							// first, clear any alias set to this channel
 							AliasService.removeTargetAliases(channelReference); // check
 							// to
@@ -10480,25 +10481,25 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (id.equalsIgnoreCase(HOME_TOOL_ID)) {
 				has_home = true;
 			} else if (id.equalsIgnoreCase("sakai.mailbox")) {
-				// if Email archive tool is selected, check the email alias
-				emailId = StringUtil.trimToNull(params.getString("emailId"));
-				if (verifyData) {
+				if ( updateConfigVariables ) {
+					// if Email archive tool is selected, check the email alias
+					emailId = StringUtil.trimToNull(params.getString("emailId"));
+					String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
+					String channelReference = mailArchiveChannelReference(siteId);
 					if (emailId == null) {
 						addAlert(state, rb.getString("java.emailarchive") + " ");
 					} else {
 						if (!Validator.checkEmailLocal(emailId)) {
 							addAlert(state, rb.getString("java.theemail"));
+						} else if (!AliasService.allowSetAlias(emailId, channelReference )) {
+							addAlert(state, rb.getString("java.addalias"));
 						} else {
 							// check to see whether the alias has been used by
 							// other sites
 							try {
 								String target = AliasService.getTarget(emailId);
 								if (target != null) {
-									if (state
-											.getAttribute(STATE_SITE_INSTANCE_ID) != null) {
-										String siteId = (String) state
-												.getAttribute(STATE_SITE_INSTANCE_ID);
-										String channelReference = mailArchiveChannelReference(siteId);
+									if (siteId != null) {
 										if (!target.equals(channelReference)) {
 											// the email alias is not used by
 											// current site
