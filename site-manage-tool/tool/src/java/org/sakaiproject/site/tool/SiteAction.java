@@ -10411,11 +10411,10 @@ public class SiteAction extends PagedResourceActionII {
 	 * 
 	 * @param params
 	 *            The ParameterParser object
-	 * @param verifyData
-	 *            Need to verify input data or not
+	 * @param updateConfigVariables
+	 * 			  Need to update configuration variables
 	 */
-	private void updateSelectedToolList(SessionState state,
-			ParameterParser params, boolean verifyData) {
+	private void updateSelectedToolList(SessionState state, ParameterParser params, boolean updateConfigVariables) {
 		List selectedTools = new ArrayList(Arrays.asList(params
 				.getStrings("selectedTools")));
 
