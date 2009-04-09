@@ -3,7 +3,7 @@
  * $Id$
  ***********************************************************************************
  *
- * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Sakai Foundation
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService.SelectionType;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.site.util.SiteTextEditUtil;
 import org.sakaiproject.sitemanage.api.SiteHelper;
 import org.sakaiproject.tool.api.Tool;
 import org.sakaiproject.tool.api.ToolException;
@@ -214,6 +215,7 @@ public class SiteBrowserAction extends PagedResourceActionII implements SiteHelp
 		 */
 	} // updateObservationOfChannel
 
+
 	/**
 	 * build the context
 	 */
@@ -260,6 +262,7 @@ public class SiteBrowserAction extends PagedResourceActionII implements SiteHelp
 		context.put("searchText", (String) state.getAttribute(STATE_SEARCH));
 		context.put("siteType", (String) state.getAttribute(STATE_SEARCH_SITE_TYPE));
 		context.put("termSelection", (String) state.getAttribute(STATE_TERM_SELECTION));
+		context.put("siteBrowserTextEdit", new SiteTextEditUtil());
 
 		// String newPageSize = state.getAttribute(STATE_PAGESIZE).toString();
 		Integer newPageSize = (Integer) state.getAttribute(INTER_SIZE);

@@ -3,7 +3,7 @@
  * $Id$
  ***********************************************************************************
  *
- * Copyright (c) 2003, 2004, 2005, 2006, 2007 Sakai Foundation
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.sakaiproject.exception.InUseException;
 import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.javax.PagingPosition;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.site.util.SiteTextEditUtil;
 import org.sakaiproject.util.ResourceLoader;
 
 /**
@@ -60,6 +61,8 @@ public class MembershipAction extends PagedResourceActionII
 	private static String UNJOIN_SITE = "unjoin_site";
 
 	private static String SEARCH_TERM = "search";
+	
+	private static final String STATE_TOP_PAGE_MESSAGE = "msg-top";
 
 	/*
 	 * (non-Javadoc)
@@ -116,12 +119,12 @@ public class MembershipAction extends PagedResourceActionII
 		{
 			if (((Boolean) state.getAttribute(SORT_ASC)).booleanValue())
 			{
-				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, search,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_ASC, page);
 			}
 			else
 			{
-				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, null,
+				rv = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ACCESS, null, search,
 						null, org.sakaiproject.site.api.SiteService.SortType.TITLE_DESC, page);
 			}
 		}
@@ -225,19 +228,30 @@ public class MembershipAction extends PagedResourceActionII
 		}
 		context.put("tlang", rb);
 		context.put("alertMessage", state.getAttribute(STATE_MESSAGE));
+		context.put("membershipTextEdit", new SiteTextEditUtil());
 
 		return template;
 
 	} // buildMainPanelContext
-
+	
 	/**
 	 * Navigate to confirmation screen
 	 */
 	public void doGoto_unjoinconfirm(RunData data)
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		state.setAttribute(STATE_CONFIRM_VIEW_MODE, "unjoinconfirm");
-		String id = data.getParameters().getString("itemReference");
+		String[] id = data.getParameters().getStrings("itemReference");
+				
+		if (id==null){
+			state.setAttribute(STATE_CONFIRM_VIEW_MODE, "noSelectionUnjoin");
+			addAlert(state, rb.getString("gen.alert")+ rb.getString("mb.noselection.unjoin"));
+		}
+		else
+		{
+			state.setAttribute(STATE_CONFIRM_VIEW_MODE, "unjoinconfirm");
+			
+		}
+		
 		state.setAttribute(UNJOIN_SITE, id);
 	}
 
@@ -256,14 +270,21 @@ public class MembershipAction extends PagedResourceActionII
 		context.put("tlang", rb);
 		if (state.getAttribute(UNJOIN_SITE) != null)
 		{
-			try
-			{
-				context.put("unjoinSite", SiteService.getSite(((String) state.getAttribute(UNJOIN_SITE))).getTitle());
+			String[] items=(String[])state.getAttribute(UNJOIN_SITE);
+			List unjoinSite=new Vector();
+
+			for (int i=0; i<items.length;i++){
+				try
+				{
+					unjoinSite.add(SiteService.getSite(items[i]).getTitle());
+				}
+				catch (IdUnusedException e)
+				{
+					Log.warn("chef", this + ".buildUnjoinconfirmContext(): " + e);
+				}
 			}
-			catch (IdUnusedException e)
-			{
-				Log.warn("chef", this + ".buildUnjoinconfirmContext(): " + e);
-			}
+			context.put("unjoinSite", unjoinSite);
+			
 		}
 
 		String template = (String) getContext(runData).get("template");
@@ -279,6 +300,7 @@ public class MembershipAction extends PagedResourceActionII
 	{
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		state.removeAttribute(STATE_CONFIRM_VIEW_MODE);
+		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
 		doUnjoin(data);
 	}
 
@@ -331,6 +353,7 @@ public class MembershipAction extends PagedResourceActionII
 		state.removeAttribute(STATE_VIEW_MODE);
 		state.removeAttribute(STATE_PAGESIZE);
 		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
+		state.removeAttribute(SEARCH_TERM);		
 	}
 
 	/**
@@ -342,6 +365,7 @@ public class MembershipAction extends PagedResourceActionII
 		state.setAttribute(STATE_VIEW_MODE, "joinable");
 		state.removeAttribute(STATE_PAGESIZE);
 		state.removeAttribute(STATE_TOP_PAGE_MESSAGE);
+		state.removeAttribute(SEARCH_TERM);
 	}
 
 	/**
@@ -392,29 +416,34 @@ public class MembershipAction extends PagedResourceActionII
 
 		// read the form / state to figure out which attachment(s) to add.
 		// String id = data.getParameters().getString("itemReference");
-		String id = (String) state.getAttribute(UNJOIN_SITE);
+		String[] id = (String[]) state.getAttribute(UNJOIN_SITE);
 		if (id != null)
 		{
-			try
-			{
-				SiteService.unjoin(id);
-				String msg = rb.getString("mb.youhave") + " " + SiteService.getSite(id).getTitle();
-				addAlert(state, msg);
+			String msg = rb.getString("mb.youhave") + " "; 
+			for(int i=0; i< id.length; i++){
+
+				try
+				{
+					SiteService.unjoin(id[i]);
+					if (i>0) msg=msg+" ,";
+					msg = msg+SiteService.getSite(id[i]).getTitle();
+				}
+				catch (IdUnusedException ignore)
+				{
+				}
+				catch (PermissionException e)
+				{
+					// This could occur if the user's role is the maintain role for the site, and we don't let the user
+					// unjoin sites they are maintainers of
+					Log.warn("chef", this + ".doUnjoin(): " + e);
+				}
+				catch (InUseException e)
+				{
+					Log.warn("chef", this + ".doJoin(): " + e);
+					addAlert(state, rb.getString("mb.sitebeing"));
+				}
 			}
-			catch (IdUnusedException ignore)
-			{
-			}
-			catch (PermissionException e)
-			{
-				// This could occur if the user's role is the maintain role for the site, and we don't let the user
-				// unjoin sites they are maintainers of
-				Log.warn("chef", this + ".doUnjoin(): " + e);
-			}
-			catch (InUseException e)
-			{
-				Log.warn("chef", this + ".doJoin(): " + e);
-				addAlert(state, rb.getString("mb.sitebeing"));
-			}
+			addAlert(state, msg);
 		}
 
 		// TODO: hard coding this frame id is fragile, portal dependent, and needs to be fixed -ggolden

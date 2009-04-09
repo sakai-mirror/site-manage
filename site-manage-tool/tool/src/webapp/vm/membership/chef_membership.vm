@@ -1,23 +1,59 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/prefs/chef_membership.vm,v 1.10 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery.js"></script>
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery-ui.js"></script>
+<link type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" rel="stylesheet" media="screen" />
+<!--
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/jqModal.js"></script>
+<link type="text/css" href="/library/js/jqmodal/jqModal.css" rel="stylesheet" media="screen" />
+-->
+<script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
+
+<link type="text/css" href="/sakai-site-manage-tool/css/site-manage.css" rel="stylesheet" media="screen" />
+<div id="dialog">
+</div>
+<script type="text/javascript">
+    $(document).ready(function(){
+		sakai.getSiteInfo('getSiteDesc','dialog','$tlang.getString("mb.nosd")','$tlang.getString("mb.nold")');
+        sakai.setupMessageListener("messageHolder", "information messageInformation");
+		sakai.setupSelectList('currentSites','selunselallid','selectedSelected');
+    });
+</script>
+
 <div class="portletBody">
 	<ul class="navIntraTool actionToolbar" role="menu">
 	<li class="firstToolBarItem" role="menuitem" aria-disabled="true"><span class="current">$tlang.getString("mb.cursit")</span></li>
 	<li role="menuitem"><span><a href="#toolLink("$action" "doGoto_joinable")" title="$tlang.getString('mb.joisit')">$tlang.getString('mb.joisit')</a></span></li>
 </ul>
-	
-	<h3>
-		$tlang.getString("mb.cursit") 
-	</h3>                                                                                           
 
-	#if ($alertMessage)<p class="information">$validator.escapeHtml($alertMessage)</p>#end
+	#if ($unjoinableSites.size() > 0 || $search.length() > 0)
+	<div class="navPanel">
+		<div class="viewNav">
+			<h3 style="margin:0;padding:0">
+				$tlang.getString("mb.cursit") 
+			</h3>                                                                                           
+		</div>
+
+		<div class="searchNav">
+			<form name="searchform" method="post" class="inlineForm" action="#toolForm("$action")">
+			<label for="search" class="skip">$tlang.getString("mb.list.search")</label>
+			<input type="text" size="15" id="search" name="search" value="$validator.escapeHtml($search)" /> 
+			<input type="submit" name="eventSubmit_doSearch" value="$tlang.getString("mb.list.search")" />
+			<input type="submit" name="eventSubmit_doSearch_clear" value="$tlang.getString("mb.list.clear")" />
+			</form> 
+		</div>
+	</div>	
+	#end
 	
 	#if ($unjoinableSites.size()>0)
 		
-		<p class="instruction">
-		$tlang.getString("mb.listunjoin")
-		</p>
-		
 		<div class="navPanel">
+			#if ($alertMessage)
+				<p class="information messageInformation viewNav" id="messageHolder" style="width:50%;padding:0 0 0 2em;margin:0">
+					$validator.escapeHtml($alertMessage)
+				</p>
+			#end
+	
+
 		<div class="listNav">
 				<div class="instruction">
 					$tlang.getString("mb.list.viewing") $topMsgPos - $btmMsgPos $tlang.getString("mb.list.of") $allMsgNumber $tlang.getString("mb.list.sites")
@@ -81,9 +117,12 @@
 		</div>	
 		
 		<form action="#toolForm("$action")" method="post">
-			<table class = "listHier lines" cellspacing="0" summary ="$tlang.getString('joinable.list.summary')">
+			<table class = "listHier lines specialLink" cellspacing="0" summary ="$tlang.getString('joinable.list.summary')" id="currentSites">
 				<tr>
-					<th id="worksite">
+					<th id="checkbox" class="screenOnly attach">
+						<input title="$tlang.getString("mb.selectalltitle")" type="checkbox" name="selunselall" id="selunselallid"/>
+					</th>
+					<th id="worksite" class="attach">
 						<a href="#toolLink("$action" "doToggle_sort")" title ="$tlang.getString('list.sortbytitle')"> 
 							$tlang.getString("gen.worksite")
 							#if ($currentSortAsc) 
@@ -95,31 +134,51 @@
 					</th>
 					<th id="description">$tlang.getString("gen.description")</th>
 				</tr>
-				#foreach ($site in $unjoinableSites)
-					<tr>
-						<td headers="worksite" style="white-space:nowrap">
-							<h4><a href="$site.Url" target="_top" title="$tlang.getString('mb.gotosite') $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a></h4>
-							#set($siteType=$site.Type)
-							## don't show unjoin link if (1) unjoin is disabled for all sites; (2) unjoin is disabled for current site type
-							#if($disableUnjoinSelection || ($!siteType && $!disableUnjoinSiteTypes.contains($!siteType)))
-								<p class ="shorttext"></p>
-							#else		
-								#if ($SiteService.allowUnjoinSite($site.Id))
-									<div class="itemAction">
-										<a href="#toolLinkParam("$action" "doGoto_unjoinconfirm" "itemReference=$validator.escapeUrl($site.Id)")" title="$tlang.getString('mb.unjoinsite') $validator.escapeHtml($site.Title)">$tlang.getString('mb.unjoin')</a>
-									</div>	
+				<tbody>
+					#set ($rowCount =0)
+					#foreach ($site in $unjoinableSites)
+					#set ($rowCount =$rowCount + 1)
+						<tr>
+							<td headers="checkbox" class="screenOnly attach">
+								## don't show unjoin link if (1) unjoin is disabled for all sites; (2) unjoin is disabled for current site type
+								#if($disableUnjoinSelection || ($!siteType && $!disableUnjoinSiteTypes.contains($!siteType)))
+									<input title="$tlang.getString('mb.unjoin')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)" disabled="disabled" />
+									<label for ="check-$rowCount" class="skip">$tlang.getString('mb.unjoin')</label>
+								#else	
+									#if ($SiteService.allowUnjoinSite($site.Id))
+									<input title="$tlang.getString('mb.unjointitle')" type="checkbox" id="check-$rowCount" name="itemReference" value="$validator.escapeUrl($site.Id)" class="joinable"/>
+									<label for ="check-$rowCount" class="skip">$tlang.getString('mb.unjoin')</label>
+									#end
+								#end						
+							</td>	
+	
+							<td headers="worksite" style="white-space:nowrap" class="attach">
+								<h4><a href="$site.Url" target="_top" title="$tlang.getString('mb.gotosite') $validator.escapeHtml($site.Title)">$validator.escapeHtml($site.Title)</a></h4>
+								#set($siteType=$site.Type)
+							</td>
+							<td headers="description" class="specialLink">
+								#if ($validator.escapeHtml($site.Description) != '')
+									$!membershipTextEdit.doPlainTextAndLimit($site.Description,65,"...")
+									<span class="itemAction"><a class="getSiteDesc" id="$site.Id" href="#">$tlang.getString("list.desc.more")</a></span>
 								#end
-							#end
-						</td>
-						<td headers="description">
-							$!site.Description
-						</td>
-					</tr>
-				#end
+					    </td>
+						</tr>
+					#end
+				</tbody>	
 			</table>
-		</form>
+		
+		<p class="act">
+    		<input type="submit" class="active" name="eventSubmit_doGoto_unjoinconfirm" value="$tlang.getString('mb.unjoin')" accesskey="s" />
+    		<input type="reset" name="reset" id="reset" value="$tlang.getString('mb.cancel')"  accesskey="x" />
+		</p>
+
+	  </form>
+	#elseif ($search.length() > 0)
+		<p class="instruction">$tlang.getString('mb.list.nosearchsites')${validator.escapeHtml($search)}$tlang.getString('mb.list.nosearchsites2')</p>
 	#else
 		<p class="instruction">$tlang.getString('mb.list.nomembs')</p>
-	#end
-</div>	
+	#end	
+</div>
+
+
 

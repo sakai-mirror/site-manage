@@ -3,7 +3,7 @@
  * $Id$
  ***********************************************************************************
  *
- * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Sakai Foundation
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,7 @@ import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteParticipantHelper;
 import org.sakaiproject.site.util.SiteConstants;
 import org.sakaiproject.site.util.SiteComparator;
+import org.sakaiproject.site.util.SiteTextEditUtil;
 import org.sakaiproject.site.util.ToolComparator;
 import org.sakaiproject.sitemanage.api.SectionField;
 import org.sakaiproject.sitemanage.api.SiteHelper;
@@ -160,6 +161,21 @@ import org.sakaiproject.util.Validator;
 import org.sakaiproject.util.RequestFilter;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+//get pdf
+import org.apache.fop.apps.Driver;
+import org.apache.fop.apps.FOPException;
+import org.apache.fop.apps.Options;
+import org.apache.fop.configuration.Configuration;
+import org.apache.fop.messaging.MessageHandler;
+
+
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.*;
+import javax.xml.transform.stream.StreamResult;
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -209,7 +225,7 @@ public class SiteAction extends PagedResourceActionII {
 	protected final static String[] TEMPLATE = {
 			"-list",// 0
 			"-type",
-			"-newSiteInformation",
+			"",// combined with 13
 			"-editFeatures",
 			"",
 			"-addParticipant",
@@ -719,7 +735,7 @@ public class SiteAction extends PagedResourceActionII {
 				{
 					String title = page.getTitle();
 					
-					if (isHomeTool(title))
+					if (isHomePage(page))
 					{
 						// found home page, add all tool ids to return value
 						for(ToolConfiguration tConfiguration : (List<ToolConfiguration>) page.getTools())
@@ -1075,6 +1091,7 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // buildMainPanelContext
 
+
 	/**
 	 * add index into the visited template indices list
 	 * @param state
@@ -1151,6 +1168,7 @@ public class SiteAction extends PagedResourceActionII {
 		ParameterParser params = data.getParameters();
 		context.put("tlang", rb);
 		context.put("alertMessage", state.getAttribute(STATE_MESSAGE));
+		context.put("siteTextEdit", new SiteTextEditUtil());
 		
 		// the last visited template index
 		if (preIndex != null)
@@ -1440,96 +1458,6 @@ public class SiteAction extends PagedResourceActionII {
 			setTemplateListForContext(context, state);
 			
 			return (String) getContext(data).get("template") + TEMPLATE[1];
-
-		case 2:
-			/*
-			 * buildContextForTemplate chef_site-newSiteInformation.vm
-			 * 
-			 */
-			context.put("displaySiteAlias", Boolean.valueOf(displaySiteAlias()));
-			context.put("siteTypes", state.getAttribute(STATE_SITE_TYPES));
-			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-			context.put("type", siteType);
-			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, siteType)));
-
-			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
-				context.put("isCourseSite", Boolean.TRUE);
-				context.put("isProjectSite", Boolean.FALSE);
-
-				putSelectedProviderCourseIntoContext(context, state);
-
-				List<SectionObject> cmRequestedList = (List<SectionObject>) state
-						.getAttribute(STATE_CM_REQUESTED_SECTIONS);
-
-				if (cmRequestedList != null) {
-					context.put("cmRequestedSections", cmRequestedList);
-				}
-
-				List<SectionObject> cmAuthorizerSectionList = (List<SectionObject>) state
-						.getAttribute(STATE_CM_AUTHORIZER_SECTIONS);
-				if (cmAuthorizerSectionList != null) {
-					context
-							.put("cmAuthorizerSections",
-									cmAuthorizerSectionList);
-				}
-
-				if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
-					int number = ((Integer) state
-							.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
-							.intValue();
-					context.put("manualAddNumber", new Integer(number - 1));
-					context.put("manualAddFields", state
-							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-				} else {
-					if (courseManagementIsImplemented()) {
-					} else {
-						context.put("templateIndex", "37");
-					}
-				}
-
-				// whether to show course skin selection choices or not
-				courseSkinSelection(context, state, null, siteInfo);
-				
-			} else {
-				context.put("isCourseSite", Boolean.FALSE);
-				if (siteType.equalsIgnoreCase("project")) {
-					context.put("isProjectSite", Boolean.TRUE);
-				}
-
-				if (StringUtil.trimToNull(siteInfo.iconUrl) != null) {
-					context.put(FORM_ICON_URL, siteInfo.iconUrl);
-				}
-			}
-
-			if (state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) != null) {
-				context.put("titleEditableSiteType", Boolean.FALSE);
-				siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
-			} else {
-				context.put("titleEditableSiteType", state
-						.getAttribute(TITLE_EDITABLE_SITE_TYPE));
-			}
-			context.put(FORM_TITLE, siteInfo.title);
-			context.put(FORM_URL_BASE, aliasBaseUrl);
-			context.put(FORM_URL_ALIAS, siteInfo.url_alias);
-			context.put(FORM_SHORT_DESCRIPTION, siteInfo.short_description);
-			context.put(FORM_DESCRIPTION, siteInfo.description);
-
-			// defalt the site contact person to the site creator
-			if (siteInfo.site_contact_name.equals(NULL_STRING)
-					&& siteInfo.site_contact_email.equals(NULL_STRING)) {
-				User user = UserDirectoryService.getCurrentUser();
-				siteInfo.site_contact_name = user.getDisplayName();
-				siteInfo.site_contact_email = user.getEmail();
-			}
-			context.put("form_site_contact_name", siteInfo.site_contact_name);
-			context.put("form_site_contact_email", siteInfo.site_contact_email);
-
-			// those manual inputs
-			context.put("form_requiredFields", sectionFieldProvider
-					.getRequiredFields());
-			context.put("fieldValues", state
-					.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
-			return (String) getContext(data).get("template") + TEMPLATE[2];
 		case 3:
 			/*
 			 * buildContextForTemplate chef_site-editFeatures.vm
@@ -1591,11 +1519,9 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("check_home", checkHome);
 			
 			// get the email alias when an Email Archive tool has been selected
-			String channelReference = site!=null?mailArchiveChannelReference(site.getId()):"";
-			List aliases = AliasService.getAliases(channelReference, 1, 1);
-			if (aliases.size() > 0) {
-				state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, ((Alias) aliases
-						.get(0)).getId());
+			String alias = getSiteAlias(site!=null?mailArchiveChannelReference(site.getId()):"");
+			if (alias != null) {
+				state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, alias);
 			}
 			
 			if (state.getAttribute(STATE_TOOL_EMAIL_ADDRESS) != null) {
@@ -1620,7 +1546,7 @@ public class SiteAction extends PagedResourceActionII {
 			else
 			{
 				context.put("existSite", Boolean.FALSE);
-				context.put("backIndex", "2");	// back to new site information page
+				context.put("backIndex", "13");	// back to new site information page
 			}
 
 			context.put("homeToolId", TOOL_ID_HOME);
@@ -1635,7 +1561,7 @@ public class SiteAction extends PagedResourceActionII {
 			roles = getRoles(state);
 			context.put("roles", roles);
 			
-			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
+			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			context.put("isCourseSite", siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))?Boolean.TRUE:Boolean.FALSE);
 			
 			// Note that (for now) these strings are in both sakai.properties
@@ -1890,6 +1816,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("siteIcon", site.getIconUrl());
 				context.put("siteTitle", site.getTitle());
 				context.put("siteDescription", site.getDescription());
+				context.put("siteId", site.getId());
 				if (unJoinableSiteTypes != null && !unJoinableSiteTypes.contains(siteType))
 				{
 					context.put("siteJoinable", new Boolean(site.isJoinable()));
@@ -2168,39 +2095,122 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_site-siteInfo-editInfo.vm
 			 * 
 			 */
-			siteProperties = site.getProperties();
-
-			context.put("title", siteInfo.title);
-			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, site.getType())));
-			context.put("type", site.getType());
-			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
-
-			siteType = siteInfo.site_type;
-			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
-				context.put("isCourseSite", Boolean.TRUE);
-				
-				// whether to show course skin selection choices or not
-				courseSkinSelection(context, state, site, siteInfo);
-
-				setTermListForContext(context, state, true); // true->only future terms
-
-				if (siteInfo.term == null) {
-					String currentTerm = site.getProperties().getProperty(
-							SiteConstants.PROP_SITE_TERM);
-					if (currentTerm != null) {
-						siteInfo.term = currentTerm;
-					}
-				}
-				context.put("selectedTerm", siteInfo.term);
+			if (site != null) {
+				// revising a existing site's tool
+				context.put("existingSite", Boolean.TRUE);
+				context.put("continue", "14");
 			} else {
-				context.put("isCourseSite", Boolean.FALSE);
-				
-				if (siteInfo.iconUrl != null) {
-					context.put("iconUrl", siteInfo.iconUrl);
-				}
+				// new site
+				context.put("existingSite", Boolean.FALSE);
+				context.put("continue", "3");
 			}
 			
-			if (siteInfo.description.indexOf("\n") != -1 && siteInfo.description.indexOf("<br />") == -1 && siteInfo.description.indexOf("<br/>") == -1)
+			boolean displaySiteAlias = displaySiteAlias();
+			context.put("displaySiteAlias", Boolean.valueOf(displaySiteAlias));
+			if (displaySiteAlias)
+			{
+				alias = getSiteAlias(site!=null?site.getReference():"");
+				if (alias != null) {
+					String urlAliasFull = aliasBaseUrl + alias;
+					context.put(FORM_URL_ALIAS_FULL, urlAliasFull);
+				}
+				context.put(FORM_URL_BASE, aliasBaseUrl);
+				context.put(FORM_URL_ALIAS, alias);
+			}
+			
+			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
+			context.put("type", siteType);
+			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, siteType)));
+			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
+
+			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+				context.put("isCourseSite", Boolean.TRUE);
+				context.put("isProjectSite", Boolean.FALSE);
+
+				putSelectedProviderCourseIntoContext(context, state);
+
+				List<SectionObject> cmRequestedList = (List<SectionObject>) state
+						.getAttribute(STATE_CM_REQUESTED_SECTIONS);
+
+				if (cmRequestedList != null) {
+					context.put("cmRequestedSections", cmRequestedList);
+				}
+
+				List<SectionObject> cmAuthorizerSectionList = (List<SectionObject>) state
+						.getAttribute(STATE_CM_AUTHORIZER_SECTIONS);
+				if (cmAuthorizerSectionList != null) {
+					context
+							.put("cmAuthorizerSections",
+									cmAuthorizerSectionList);
+				}
+
+				if (state.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER) != null) {
+					int number = ((Integer) state
+							.getAttribute(STATE_MANUAL_ADD_COURSE_NUMBER))
+							.intValue();
+					context.put("manualAddNumber", new Integer(number - 1));
+					context.put("manualAddFields", state
+							.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
+				} else {
+					if (courseManagementIsImplemented()) {
+					} else {
+						context.put("templateIndex", "37");
+					}
+				}
+
+				// whether to show course skin selection choices or not
+				courseSkinSelection(context, state, site, siteInfo);
+				
+				if (StringUtil.trimToNull(siteInfo.term) == null) {
+					if (site != null)
+					{
+						// existing site
+						siteInfo.term = site.getProperties().getProperty(SiteConstants.PROP_SITE_TERM);
+					}
+					else
+					{
+						// creating new site
+						AcademicSession t = (AcademicSession) state.getAttribute(STATE_TERM_SELECTED);
+						siteInfo.term = t != null?t.getEid() : "";
+					}
+				}
+				context.put("selectedTerm", siteInfo.term != null? siteInfo.term:"");
+				
+			} else {
+				context.put("isCourseSite", Boolean.FALSE);
+				if (siteType.equalsIgnoreCase("project")) {
+					context.put("isProjectSite", Boolean.TRUE);
+				}
+
+				if (StringUtil.trimToNull(siteInfo.iconUrl) != null) {
+					context.put(FORM_ICON_URL, siteInfo.iconUrl);
+				}
+			}
+
+			if (state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE) != null) {
+				context.put("titleEditableSiteType", Boolean.FALSE);
+				siteInfo.title = (String)state.getAttribute(SiteHelper.SITE_CREATE_SITE_TITLE);
+			} else {
+				context.put("titleEditableSiteType", state
+						.getAttribute(TITLE_EDITABLE_SITE_TYPE));
+			}
+
+			// defalt the site contact person to the site creator
+			if (siteInfo.site_contact_name.equals(NULL_STRING)
+					&& siteInfo.site_contact_email.equals(NULL_STRING)) {
+				User u = UserDirectoryService.getCurrentUser();
+				siteInfo.site_contact_name = u != null? u.getDisplayName():"";
+				siteInfo.site_contact_email = u != null?u.getEmail():"";
+			}
+
+			// those manual inputs
+			context.put("form_requiredFields", sectionFieldProvider.getRequiredFields());
+			context.put("fieldValues", state.getAttribute(STATE_MANUAL_ADD_COURSE_FIELDS));
+			
+			context.put("title", siteInfo.title);
+			context.put(FORM_URL_BASE, aliasBaseUrl);
+			context.put(FORM_URL_ALIAS, siteInfo.url_alias);
+			if (siteInfo.description!=null && siteInfo.description.indexOf("\n") != -1 && siteInfo.description.indexOf("<br />") == -1 && siteInfo.description.indexOf("<br/>") == -1)
 			{
 				// replace the old style line break before WYSIWYG editor "\n" with the current line break <br />
 				context.put("description", siteInfo.description.replaceAll("\n", "<br />"));
@@ -2210,7 +2220,6 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				context.put("description", siteInfo.description);
 			}
-			
 			context.put("short_description", siteInfo.short_description);
 			context.put("form_site_contact_name", siteInfo.site_contact_name);
 			context.put("form_site_contact_email", siteInfo.site_contact_email);
@@ -2222,6 +2231,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
+			context.put("displaySiteAlias", Boolean.valueOf(displaySiteAlias()));
 			siteProperties = site.getProperties();
 			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -2249,7 +2259,10 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("oName", siteProperties.getProperty(PROP_SITE_CONTACT_NAME));
 			context.put("email", siteInfo.site_contact_email);
 			context.put("oEmail", siteProperties.getProperty(PROP_SITE_CONTACT_EMAIL));
-
+			if (StringUtil.trimToNull(siteInfo.getUrlAlias()) != null) {
+				String urlAliasFull = aliasBaseUrl + siteInfo.getUrlAlias();
+				context.put(FORM_URL_ALIAS_FULL, urlAliasFull);
+			}
 			return (String) getContext(data).get("template") + TEMPLATE[14];
 		case 15:
 			/*
@@ -3001,6 +3014,14 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			context.put("authzGroupService", AuthzGroupService.getInstance());
+			
+			if (selectedSect !=null){
+				context.put("value_uniqname", selectedSect.getAuthorizer());
+			}
+			else {
+				context.put("value_uniqname", "");
+			}
+
 			return (String) getContext(data).get("template") + TEMPLATE[53];
 		}
 		case 54:
@@ -4245,7 +4266,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			} else if (type.equals("project")) {
 				totalSteps = 4;
-				state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+				state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 			} else if (type.equals(SITE_TYPE_GRADTOOLS_STUDENT)) {
 				// if a GradTools site use pre-defined site info and exclude
 				// from public listing
@@ -4266,7 +4287,7 @@ public class SiteAction extends PagedResourceActionII {
 				// skip directly to confirm creation of site
 				state.setAttribute(STATE_TEMPLATE_INDEX, "42");
 			} else {
-				state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+				state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 			}
 			// get the user selected template
 			getSelectedTemplate(state, params, type);
@@ -4483,7 +4504,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				if (state.getAttribute(STATE_MESSAGE) == null) {
 					if (getStateSite(state) == null) {
-						state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+						state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 					} else {
 						state.setAttribute(STATE_TEMPLATE_INDEX, "44");
 					}
@@ -4991,7 +5012,25 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	}// doFinish
-
+	
+	/**
+	 * get one alias for site, if it exists
+	 * @param channelReference
+	 * @return
+	 */
+	private String getSiteAlias(String reference)
+	{
+		String alias = null;
+		if (reference != null)
+		{
+			// get the email alias when an Email Archive tool has been selected
+			List aliases = AliasService.getAliases(reference, 1, 1);
+			if (aliases.size() > 0) {
+				alias = ((Alias) aliases.get(0)).getId();
+			}
+		}
+		return alias;
+	}
 
 	/**
 	 * set site mail alias
@@ -5629,7 +5668,7 @@ public class SiteAction extends PagedResourceActionII {
 			state.removeAttribute(STATE_TOOL_EMAIL_ADDRESS);
 			state.removeAttribute(STATE_MESSAGE);
 			removeEditToolState(state);
-		} else if (currentIndex.equals("13") || currentIndex.equals("14")) {
+		} else if (getStateSite(state) != null && (currentIndex.equals("13") || currentIndex.equals("14"))) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "12");
 		} else if (currentIndex.equals("15")) {
 			params = data.getParameters();
@@ -6218,6 +6257,8 @@ public class SiteAction extends PagedResourceActionII {
 		{
 			Site.setTitle(siteInfo.title);
 		}
+		// set an alias for the site
+		setSiteAlias(siteInfo.url_alias, Site.getReference(), state);
 
 		Site.setDescription(siteInfo.description);
 		Site.setShortDescription(siteInfo.short_description);
@@ -6795,32 +6836,6 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			break;
-		case 2:
-			/*
-			 * actionForTemplate chef_site-newSiteInformation.vm
-			 * 
-			 */
-			updateSiteInfo(params, state);
-
-			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
-			
-			// alerts after clicking Continue but not Back
-			if (!forward) {
-				// removing previously selected template site
-				state.removeAttribute(STATE_TEMPLATE_SITE);				
-			}
-			
-			updateSiteAttributes(state);
-
-			if (state.getAttribute(STATE_MESSAGE) == null) {
-				updateCurrentStep(state, forward);
-			}
-			else
-			{
-				state.setAttribute(STATE_TEMPLATE_INDEX, "2");
-			}
-
-			break;
 		case 3:
 			/*
 			 * actionForTemplate chef_site-editFeatures.vm
@@ -6877,11 +6892,18 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			if (forward) {
-				updateSiteInfo(params, state);
-
-				if (state.getAttribute(STATE_MESSAGE) == null) {
-					state.setAttribute(STATE_TEMPLATE_INDEX, "14");
+				if (getStateSite(state) == null)
+				{
+					// alerts after clicking Continue but not Back
+					if (!forward) {
+						// removing previously selected template site
+						state.removeAttribute(STATE_TEMPLATE_SITE);				
+					}
+					
+					updateSiteAttributes(state);
 				}
+				
+				updateSiteInfo(params, state);
 			}
 			break;
 		case 14:
@@ -7945,9 +7967,18 @@ public class SiteAction extends PagedResourceActionII {
 				M_log.warn(this + ".updateSiteInfo: " + rb.getString("java.alias") + " " + siteInfo.url_alias + " " + rb.getString("java.isinval"));
 			} else {
 				try {
-					AliasService.getTarget(siteInfo.url_alias);
-					addAlert(state, rb.getString("java.alias") + " " + siteInfo.url_alias
-							+ " " + rb.getString("java.exists"));
+					String reference = AliasService.getTarget(siteInfo.url_alias);
+					boolean aliasForOtherSite = true;
+					if (state.getAttribute(STATE_SITE_INSTANCE_ID) != null)
+					{
+						String currentSiteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
+						if (reference.indexOf(currentSiteId) != -1)
+						{
+							aliasForOtherSite = false;
+						}
+					}
+					if (aliasForOtherSite)
+						addAlert(state, rb.getString("java.alias") + " " + siteInfo.url_alias + " " + rb.getString("java.exists"));
 				} catch (IdUnusedException e) {
 					// Do nothing. We want the alias to be unused.
 				}
@@ -8058,13 +8089,14 @@ public class SiteAction extends PagedResourceActionII {
 				hasEmail = true;
 				String alias = StringUtil.trimToNull((String) state
 						.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
+				String channelReference = mailArchiveChannelReference(site.getId());
 				if (alias != null) {
 					if (!Validator.checkEmailLocal(alias)) {
 						addAlert(state, rb.getString("java.theemail"));
+					} else if (!AliasService.allowSetAlias(alias, channelReference )) {
+						addAlert(state, rb.getString("java.addalias"));
 					} else {
 						try {
-							String channelReference = mailArchiveChannelReference(site
-									.getId());
 							// first, clear any alias set to this channel
 							AliasService.removeTargetAliases(channelReference); // check
 							// to
@@ -8106,7 +8138,7 @@ public class SiteAction extends PagedResourceActionII {
 		String homePageId = null;
 		for (ListIterator i = wSetupPageList.listIterator(); i.hasNext();) {
 			wSetupPage = (WorksiteSetupPage) i.next();
-			if (isHomeTool(wSetupPage.getPageTitle())) {
+			if (isHomePage(site.getPage(wSetupPage.getPageId()))) {
 				homeInWSetupPageList = true;
 				homePageId = wSetupPage.getPageId();
 				break;
@@ -8194,6 +8226,13 @@ public class SiteAction extends PagedResourceActionII {
 				// only use one column layout
 				page.setLayout(SitePage.LAYOUT_SINGLE_COL);
 			}
+			
+			// mark this page as Home page inside its property
+			if (page.getProperties().getProperty(SiteConstants.IS_HOME_PAGE) == null)
+			{
+				page.getPropertiesEdit().addProperty(SiteConstants.IS_HOME_PAGE, Boolean.TRUE.toString());
+			}
+			
 		} // add Home
 
 		// if Home is in wSetupPageList and not chosen, remove Home feature from
@@ -8376,7 +8415,7 @@ public class SiteAction extends PagedResourceActionII {
 				if (pageList != null && pageList.size() != 0) {
 					for (ListIterator i = pageList.listIterator(); i.hasNext();) {
 						SitePage page = (SitePage) i.next();
-						if (isHomeTool(page.getTitle()))
+						if (isHomePage(page))
 						{
 							homePage = page;
 							break;
@@ -8547,13 +8586,9 @@ public class SiteAction extends PagedResourceActionII {
 						// get the email alias when an Email Archive tool
 						// has been selected
 						goToToolConfigPage = true;
-						String channelReference = mailArchiveChannelReference((String) state
-								.getAttribute(STATE_SITE_INSTANCE_ID));
-						List aliases = AliasService.getAliases(
-								channelReference, 1, 1);
-						if (aliases.size() > 0) {
-							state.setAttribute(STATE_TOOL_EMAIL_ADDRESS,
-									((Alias) aliases.get(0)).getId());
+						String alias = getSiteAlias(mailArchiveChannelReference((String) state.getAttribute(STATE_SITE_INSTANCE_ID)));
+						if (alias != null) {
+							state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, alias);
 						}
 					}
 					idsSelected.add(toolId);
@@ -8763,22 +8798,7 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_SITE_INSTANCE_ID, site.getId());
 				
 				// create an alias for the site
-				if (!siteInfo.url_alias.equals(NULL_STRING)) {
-					String alias = siteInfo.url_alias;
-					String siteReference = site.getReference();
-					try {
-						AliasService.setAlias(alias, siteReference);
-					} catch (IdUsedException ee) {
-						addAlert(state, rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"));
-						M_log.warn(this + ".addNewSite: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"));
-					} catch (IdInvalidException ee) {
-						addAlert(state, rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"));
-						M_log.warn(this + ".addNewSite: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"));	
-					} catch (PermissionException ee) {
-						addAlert(state, SessionManager.getCurrentSessionUserId() + " does not have permission to add alias. ");
-						M_log.warn(this + ".addNewSite: " + SessionManager.getCurrentSessionUserId() + " does not have permission to add alias. ");
-					}
-				}
+				setSiteAlias(siteInfo.url_alias, site.getReference(), state);
 
 				// commit newly added site in order to enable related realm
 				commitSite(site);
@@ -8802,7 +8822,29 @@ public class SiteAction extends PagedResourceActionII {
 		}
 	} // addNewSite
 
-
+	private void setSiteAlias(String alias, String siteReference, SessionState state)
+	{
+		if (StringUtil.trimToNull(alias) != null && StringUtil.trimToNull(siteReference) != null) 
+		{
+			String currentAlias = StringUtil.trimToNull(getSiteAlias(siteReference));
+			
+			if (currentAlias == null || !currentAlias.equals(alias))
+			{
+				try {
+					AliasService.setAlias(alias, siteReference);
+				} catch (IdUsedException ee) {
+					addAlert(state, rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"));
+					M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.exists"));
+				} catch (IdInvalidException ee) {
+					addAlert(state, rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"));
+					M_log.warn(this + ".setSiteAlias: " + rb.getString("java.alias") + " " + alias + " " + rb.getString("java.isinval"));	
+				} catch (PermissionException ee) {
+					addAlert(state, SessionManager.getCurrentSessionUserId() + " does not have permission to add alias. ");
+					M_log.warn(this + ".setSiteAlias: " + SessionManager.getCurrentSessionUserId() + " does not have permission to add alias. ");
+				}
+			}
+		}
+	}
 
 	private void sendTemplateUseNotification(Site site, User currentUser,
 			Site templateSite) {
@@ -8966,7 +9008,7 @@ public class SiteAction extends PagedResourceActionII {
 		int count = pageToolList.size();
 		
 		// check Home tool first
-		if (isHomeTool(page.getTitle()))
+		if (isHomePage(page))
 			return TOOL_ID_HOME;
 
 		// Other than Home page, no other page is allowed to have more than one tool within. Otherwise, WSetup/Site Info tool won't handle it
@@ -9060,7 +9102,7 @@ public class SiteAction extends PagedResourceActionII {
 				// collect the pages consistent with Worksite Setup patterns
 				wSetupTool = pageMatchesPattern(state, page);
 				if (wSetupTool != null) {
-					if (isHomeTool(page.getTitle()))
+					if (TOOL_ID_HOME.equals(wSetupTool))
 					{
 						check_home = true;
 					}
@@ -9401,23 +9443,22 @@ public class SiteAction extends PagedResourceActionII {
 				if ( updateConfigVariables ) {
 					// if Email archive tool is selected, check the email alias
 					emailId = StringUtil.trimToNull(params.getString("emailId"));
-					
+					String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
+					String channelReference = mailArchiveChannelReference(siteId);
 					if (emailId == null) {
 						addAlert(state, rb.getString("java.emailarchive") + " ");
 					} else {
 						if (!Validator.checkEmailLocal(emailId)) {
 							addAlert(state, rb.getString("java.theemail"));
+						} else if (!AliasService.allowSetAlias(emailId, channelReference )) {
+							addAlert(state, rb.getString("java.addalias"));
 						} else {
 							// check to see whether the alias has been used by
 							// other sites
 							try {
 								String target = AliasService.getTarget(emailId);
 								if (target != null) {
-									if (state
-											.getAttribute(STATE_SITE_INSTANCE_ID) != null) {
-										String siteId = (String) state
-												.getAttribute(STATE_SITE_INSTANCE_ID);
-										String channelReference = mailArchiveChannelReference(siteId);
+									if (siteId != null) {
 										if (!target.equals(channelReference)) {
 											// the email alias is not used by
 											// current site
@@ -10359,6 +10400,21 @@ public class SiteAction extends PagedResourceActionII {
 			this.eid = section.getEid();
 			this.title = section.getTitle();
 			this.category = section.getCategory();
+			String authorizers = "";
+			if (section.getEnrollmentSet() != null){
+			        Set instructorset = section.getEnrollmentSet().getOfficialInstructors();
+			        List list = new ArrayList(instructorset);
+			        if (list != null) {
+			                for (int i = 0; i < list.size(); i++) {
+			                        if (i == 0) {
+			                                authorizers = (String) list.get(i);
+			                        } else {
+			                                authorizers = authorizers + ", " + list.get(i);
+			                        }
+			                }
+			        }
+			}
+			this.authorizer = authorizers;
 			this.categoryDescription = cms
 					.getSectionCategoryDescription(section.getCategory());
 			if ("01.lct".equals(section.getCategory())) {
@@ -10609,7 +10665,7 @@ public class SiteAction extends PagedResourceActionII {
 				} else {
 					// if creating a site, go the the site
 					// information entry page
-					state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+					state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 				}
 			}
 		}
@@ -10863,7 +10919,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				if (state.getAttribute(STATE_MESSAGE) == null) {
 					if (getStateSite(state) == null) {
-						state.setAttribute(STATE_TEMPLATE_INDEX, "2");
+						state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 					} else {
 						state.setAttribute(STATE_TEMPLATE_INDEX, "44");
 					}
@@ -11069,9 +11125,19 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param toolTitle
 	 * @return
 	 */
-	private boolean isHomeTool(String toolTitle)
+	private boolean isHomePage(SitePage page)
 	{
-		return TOOL_ID_HOME.equalsIgnoreCase(toolTitle) || rb.getString("java.home").equalsIgnoreCase(toolTitle);
+		if (page.getProperties().getProperty(SiteConstants.IS_HOME_PAGE) != null)
+		{
+			// check based on the page property first
+			return true;
+		}
+		else
+		{
+			// if above fails, check based on the page title
+			String pageTitle = page.getTitle();
+			return TOOL_ID_HOME.equalsIgnoreCase(pageTitle) || rb.getString("java.home").equalsIgnoreCase(pageTitle);
+		}
 	}
 
 	public boolean displaySiteAlias() {

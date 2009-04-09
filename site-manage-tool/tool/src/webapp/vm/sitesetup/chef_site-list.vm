@@ -1,5 +1,16 @@
 ##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-list.vm,v 1.3 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
-## Site list Sites list on worksite setup home page
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery.js"></script>
+<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery-ui.js"></script>
+<link type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" rel="stylesheet" media="screen" />
+<script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
+<link type="text/css" href="/sakai-site-manage-tool/css/site-manage.css" rel="stylesheet" media="screen" />
+<div id="dialog"></div>
+<script type="text/javascript">
+    $(document).ready(function(){
+		sakai.getSiteInfo('getSiteDesc','dialog','$tlang.getString("sitegen.siteinfolist.nosd")','$tlang.getString("sitegen.siteinfolist.nold")');
+		sakai.setupSelectList('siteList','selunselallid','selectedSelected');
+    });
+</script>
 <script type="text/javascript" src="/library/js/jquery.js">
 </script>
 <script type="text/javascript" src="/library/js/jqmodal/jqModal.js">
@@ -80,7 +91,7 @@
 				<form name="searchForm" class="inlineForm" action="#toolForm("SiteAction")" method="post">
 					<input type="hidden" name="eventSubmit_doSite_search" value="null" />
 					<label for="$form_search" class="skip">$tlang.getString('list.search')</label>
-					<input size="20" value="$validator.escapeHtml($!searchString)" name="$form_search" id="$form_search" type="text" class="searchField"  />
+					<input size="20"  value="$validator.escapeHtml($!searchString)" name="$form_search" id="$form_search" type="text" class="searchField"  />
 					<a href="#" title="$tlang.getString('list.search')" onclick="location = '#toolLink($action "doSite_search")'+buildQueryString('searchForm');return false;">
 						<input type="button" value="$tlang.getString('list.search')" />
 					</a>
@@ -101,7 +112,7 @@
 				#if ($sites.size() > 0)
 					<div class ="viewNav">
 						#if (($!searchString) && (!$searchString.equals("")))
-						<span class="instruction highlight">#if($!allMsgNumber == "1") $tlang.getString("list.onesite")#else $allMsgNumber $tlang.getString("list.sites")#end $tlang.getString("list.found") "$!searchString" $tlang.getString("list.inthe") "$!viewSelected".</span>
+						<span class="instruction highlight">#if($!allMsgNumber == "1") $tlang.getString("list.onesite")#else $allMsgNumber $tlang.getString("list.sites")#end $tlang.getString("list.found") "Validator.escapeHtml($!searchString" $tlang.getString("list.inthe") "$!viewSelected".</span>
 						#end
 
 						<br /><span class="instruction">$tlang.getString("list.check")</span>
@@ -141,10 +152,10 @@
 		</div>	
 	#end
 	#if ($sites.size() > 0)
-		<form name="sitesForm" action="#toolForm("SiteAction")" method="post">
-			<table class ="listHier lines nolines" cellspacing="0" summary ="$tlang.getString('list.summary')" border ="0">
+			<form name="sitesForm" action="#toolForm("SiteAction")" method="post">
+			<table class ="listHier lines nolines" summary ="$tlang.getString('list.summary')" border ="0" id ="siteList">
 				<tr>
-					<th id="checkbox" class="screenOnly">
+					<th id="checkbox" class="screenOnly attach">
 						&nbsp;
 					</th>
 					<th id="title">
@@ -183,6 +194,8 @@
 							#end 
 						</a>
 					</th>
+					<th class="attach"></th>
+
 					<th id="term">
 						##<a href="#toolLinkParam("SiteAction" "doSort_sites" "criterion=term")" title ="$tlang.getString('list.sortbyterm')"> 
 							$tlang.getString("list.term")
@@ -226,7 +239,7 @@
 					#set ($siteCount=$siteCount + 1)
 						#set ($properties = $site.getProperties())
 						<tr>
-							<td headers="checkbox" class="screenOnly">
+							<td headers="checkbox" class="screenOnly attach">
 								#if ($service.allowUpdateSite($site.Id))
 									<input type="checkbox" name="selectedMembers" value="$validator.escapeHtml($site.getId())" id="site$siteCount" />
 									<label class="skip" for="site$siteCount">Select $validator.escapeHtml($site.getTitle())</label>
@@ -249,6 +262,10 @@
 									$validator.escapeHtml($site.CreatedBy.DisplayId)
 								#end
 							</td>
+							<td class="attach specialLink">
+								<a href="#"  id="$site.Id" class="getSiteDesc" title="$tlang.getString('list.moreinfotooltip')">$tlang.getString('list.moreinfo')</a> 
+							</td>
+
 							<td headers="term">
 								#if($site.getType()==$!courseSiteType)
 									#set($term = "")
@@ -280,7 +297,7 @@
 		<br />
 			$tlang.getString("list.nosites") 
 			#if ($!searchString && !$searchString.equals(""))
-				$tlang.getString("list.thatmatch") "$validator.escapeHtml($!searchString)"
+				$tlang.getString("list.thatmatch") $validator.escapeHtml($!searchString)
 			#end
 			$tlang.getString("list.inthe") "$!viewSelected".
 		</div>	

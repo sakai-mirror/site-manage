@@ -1,0 +1,20 @@
+/*
+toggler needs
+*/
+.toggleAnchor {
+    border: 1px solid #cef;
+    background: #cef !important;
+    padding: 5px !important;
+    cursor: pointer;
+	outline:none;
+}
+ .toggleAnchor:hover{
+    border: 1px solid #9cf;
+}
+.toggledContent {
+    margin: 0;
+    border: 2px solid #cef;
+    border-top: none;
+    padding: 1em
+}
+

@@ -50,6 +50,8 @@ public class SiteConstants {
 	public static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
 	
 	public final static String PROP_SITE_TERM = "term";
+	
+	public static final String IS_HOME_PAGE = "is_home_page";
 
 	public final static String PROP_SITE_TERM_EID = "term_eid";
 	
