@@ -628,6 +628,7 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_ID_MAP.put(TOOL_ID_SYNOPTIC_CHAT, new ArrayList(Arrays.asList("sakai.chat")));
 		SYNOPTIC_TOOL_ID_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, new ArrayList(Arrays.asList("sakai.messages", "sakai.forums", "sakai.messagecenter")));
 	}
+	
 	// Map of synoptic tool titles
 	private final static Map<String, String> SYNOPTIC_TOOL_TITLE_MAP;
 	static
@@ -638,6 +639,9 @@ public class SiteAction extends PagedResourceActionII {
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_CHAT, rb.getString("java.recent"));
 		SYNOPTIC_TOOL_TITLE_MAP.put(TOOL_ID_SYNOPTIC_MESSAGECENTER, rb.getString("java.recmsg"));
 	}
+	
+	// the url for getting task status
+	private final static String TASK_STATUS_ENTRY_URL = "task_status_entry_url";
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -1250,10 +1254,9 @@ public class SiteAction extends PagedResourceActionII {
 						context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
 					}
 				}
-				if (state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null)
-				{
-					context.put("threadStatus", state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS));
-				}
+				
+				// thread status into context
+				putThreadStatusIntoContext(context, state);
 			}
 			catch (Exception e)
 			{
@@ -1768,11 +1771,9 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
 				}
 			}
-			if (state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null)
-			{
-				context.put("threadStatus", state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS));
-			}
 			
+			// thread status into context
+			putThreadStatusIntoContext(context, state);
 			
 			context.put("userDirectoryService", UserDirectoryService
 					.getInstance());
@@ -4945,15 +4946,7 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				// create based on template: skip add features, and copying all the contents from the tools in template site
 				// run thread
-				try
-				{
-					SiteCopyThread n = new SiteCopyThread(templateSite.getId()/*source*/, site.getId()/*target*/,  false/*not create new site*/, null, null, true, state, SessionManager.getCurrentSessionUserId());
-					n.start();
-				}
-				catch(Exception e)
-				{
-					M_log.warn(this + " actionForTemplate: problem with copying template site =" + templateSite.getId() + " into site id = " + site.getId() + " " + e.getMessage());
-				}
+				startSiteCopyThread(templateSite.getId()/*source*/, site.getId()/*target*/,  false/*not create new site*/, null, null, true, state, SessionManager.getCurrentSessionUserId());
 			}
 				
 			// for course sites
@@ -6961,16 +6954,8 @@ public class SiteAction extends PagedResourceActionII {
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 						
-						// run thread for copying tool content
-						try
-						{
-							EntityCopyThread n = new EntityCopyThread(selectedTools, importTools, existingSite.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
-							n.start();
-						}
-						catch(Exception e)
-						{
-							M_log.warn(this + " actionForTemplate chef_site-importSites.vm: problem with import into site id=" + existingSite.getId() + e.getMessage());
-						}
+						// import
+						startEntityCopyThread(selectedTools, importTools, existingSite.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
 						
 						existingSite = getStateSite(state); // refresh site for
 						// WC and News
@@ -7010,21 +6995,14 @@ public class SiteAction extends PagedResourceActionII {
 								.getAttribute(STATE_IMPORT_SITE_TOOL);
 						List selectedTools = (List) state
 								.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+						
 						// Remove all old contents before importing contents from new site
 						// run thread for copying tool content
-						try
-						{
-							EntityCopyThread n = new EntityCopyThread(selectedTools, importTools, existingSite.getId(), true, false, state, SessionManager.getCurrentSessionUserId());
-							n.start();
-						}
-						catch(Exception e)
-						{
-							M_log.warn(this + " actionForTemplate chef_site-importSites-migrate.vm: problem with import into site id=" + existingSite.getId() + e.getMessage());
-						}
+						startEntityCopyThread(selectedTools, importTools, existingSite.getId(), true, false, state, SessionManager.getCurrentSessionUserId());
 						
 						existingSite = getStateSite(state); // refresh site for
+						
 						// WC and News
-
 						if (state.getAttribute(STATE_MESSAGE) == null) {
 							commitSite(existingSite);
 							state.removeAttribute(STATE_IMPORT_SITE_TOOL);
@@ -7119,16 +7097,8 @@ public class SiteAction extends PagedResourceActionII {
 						
 						String selectedTerm = StringUtil.trimToNull(params.getString("selectTerm"));
 						
-						// run thread
-						try
-						{
-							SiteCopyThread n = new SiteCopyThread(oSiteId, null/*no site id yet*/, true/*create new site*/, selectedTerm, title, true, state, SessionManager.getCurrentSessionUserId());
-							n.start();
-						}
-						catch(Exception e)
-						{
-							M_log.warn(this + " actionForTemplate: problem with duplicating site id=" + oSiteId + e.getMessage());
-						}
+						// run site copy thread
+						startSiteCopyThread(oSiteId, null/*no site id yet*/, true/*create new site*/, selectedTerm, title, true, state, SessionManager.getCurrentSessionUserId());
 					}
 				}
 
@@ -8467,16 +8437,79 @@ public class SiteAction extends PagedResourceActionII {
 		commitSite(site);
 
 		// import
+		startEntityCopyThread(chosenList, importTools, site.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
+		
+	} // saveFeatures
+
+	/**
+	 * start the EntityCopyThread
+	 * @param state
+	 * @param site
+	 * @param chosenList
+	 * @param importTools
+	 */
+	private void startEntityCopyThread(List<String> toolIds, Hashtable<String, List<String>> importTools, String targetSiteId, boolean migrate, boolean byPassSecurity, SessionState state, String userId) {
 		try
 		{
-			EntityCopyThread n = new EntityCopyThread(chosenList, importTools, site.getId(), false, false, state, SessionManager.getCurrentSessionUserId());
+			// first start the 
+			String taskStatusUrl = TaskStatusGetPost.serviceExist() ? TaskStatusGetPost.postTaskStatusStream():null;
+			
+			EntityCopyThread n = new EntityCopyThread(toolIds, importTools, targetSiteId, false, false, state, userId, taskStatusUrl);
 			n.start();
 		}
 		catch(Exception e)
 		{
-			M_log.warn(this + " savefeatures: problem with import tool into site id=" + site.getId() + e.getMessage());
+			M_log.warn(this + " savefeatures: problem with import tool into site id=" + targetSiteId + e.getMessage());
 		}
-	} // saveFeatures
+	}
+	
+	/**
+	 * start site copy thread
+	 * @param sourceSiteId
+	 * @param targetSiteId
+	 * @param createNewSite
+	 * @param selectedTerm
+	 * @param toTitle
+	 * @param byPassSecurity
+	 * @param sessionState
+	 * @param userId
+	 */
+	private void startSiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId)
+	{
+		try
+		{
+			// first start the 
+			String taskStatusUrl = TaskStatusGetPost.serviceExist() ? TaskStatusGetPost.postTaskStatusStream():null;
+			
+			// then start the thread
+			SiteCopyThread n = new SiteCopyThread(sourceSiteId, targetSiteId,  createNewSite, selectedTerm, toTitle, byPassSecurity, sessionState, userId, taskStatusUrl);
+			n.start();
+		}
+		catch(Exception e)
+		{
+			M_log.warn(this + " startSiteCopyThread: problem with copying source site id =" + sourceSiteId + " into target site id = " + targetSiteId + " " + e.getMessage());
+		}
+	}
+	
+	
+	private void putThreadStatusIntoContext(Context context, SessionState state)
+	{
+		String threadStatus = null;
+		if (TaskStatusGetPost.serviceExist())
+		{
+			// if the TaskStatusService exist, get status from there
+			threadStatus = TaskStatusGetPost.getStatus((String) state.getAttribute(TASK_STATUS_ENTRY_URL));
+		}
+		else
+		{
+			// otherwise, get it from state variable
+			threadStatus = state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null? (String) state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS):null;
+		}
+		if (threadStatus != null)
+		{
+			context.put("threadStatus", threadStatus);
+		}
+	}
 
 	/**
 	 * Save configuration values for multiple tool instances

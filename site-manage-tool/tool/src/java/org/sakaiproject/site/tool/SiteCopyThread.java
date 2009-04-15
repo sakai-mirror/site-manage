@@ -1,3 +1,24 @@
+/**********************************************************************************
+ * $URL:$
+ * $Id:$
+ ***********************************************************************************
+ *
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
+ *
+ * Licensed under the Educational Community License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.osedu.org/licenses/ECL-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ **********************************************************************************/
+
 package org.sakaiproject.site.tool;
 
 import java.util.Hashtable;
@@ -73,7 +94,7 @@ public class SiteCopyThread extends Observable implements Runnable
 	private boolean byPassSecurity = false;
 	private SessionState sessionState = null;
 	private String userId = null;
-	
+	private String m_taskStatusStreamUrl = null;
 	
 	public void init(){}
 	
@@ -88,6 +109,7 @@ public class SiteCopyThread extends Observable implements Runnable
 		m_threadStop = false;
 		m_thread.setDaemon(true);
 		m_thread.start();
+		
 		M_log.info(this + " SiteCopy start from site Id = " + sourceSiteId);
 	}
 
@@ -98,11 +120,10 @@ public class SiteCopyThread extends Observable implements Runnable
 	 * @param createNewSite
 	 * @param selectedTerm
 	 * @param toTitle
-	 * @param byPassSecurity
 	 * @param sessionState
 	 * @param userId
 	 */
-	SiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId)
+	SiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId, String taskStatusStreamUrl)
 	{
 		this.sourceSiteId = sourceSiteId;
 		this.targetSiteId = targetSiteId;
@@ -112,6 +133,7 @@ public class SiteCopyThread extends Observable implements Runnable
 		this.byPassSecurity = byPassSecurity;
 		this.sessionState = sessionState;
 		this.userId = userId;
+		this.m_taskStatusStreamUrl = taskStatusStreamUrl;
 	}
 
 	/**
@@ -162,6 +184,7 @@ public class SiteCopyThread extends Observable implements Runnable
 			
 			// running
 			sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
+			TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING, "Worksite Setup", "copying site");
 	        
 			String targetSiteId = this.targetSiteId;
 			
@@ -225,17 +248,21 @@ public class SiteCopyThread extends Observable implements Runnable
 								AuthzGroupService.save(realmEdit);
 							} catch (GroupNotDefinedException gndException) {
 								sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+								TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 								M_log.warn(this + ".run: IdUnusedException, not found, or not an AuthzGroup object "+ realm, gndException);
 							} catch (Exception exception) {
 								sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+								TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 								M_log.warn(this + ".run problem of get realm for site " + site.getId() , exception);
 							}
 						}
 					} catch (IdUnusedException e) {
 						sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 						M_log.warn(this + ".run: IdUnusedException, not able to save site id=" + site.getId() , e);
 					} catch (PermissionException e) {
 						sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 						M_log.warn(this + ".run: PermissionException, not able to save site id=" + site.getId(), e);
 					}
 				}
@@ -252,25 +279,32 @@ public class SiteCopyThread extends Observable implements Runnable
 		
 				    // finished
 					sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
+
+					TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED, "Worksite Setup", "Finished copying site");
 					m_threadStop = true;
 				}
 			    catch(Exception e) {
 			    	// error
 			    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+					TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 			    }
 			    
 			} catch (IdUnusedException e) {
 				M_log.warn(this + ".run: cannot find site with id =" + targetSiteId, e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+				TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 			} catch (IdInvalidException e) {
 				M_log.warn(this + ".run: invalid site id = " + targetSiteId, e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+				TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 			} catch (IdUsedException e) {
 				M_log.warn(this + ".run: site id = " + targetSiteId + " has been used", e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+				TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 			} catch (PermissionException e) {
 				M_log.warn(this + ".run: no right permission for adding or getting site id = " + targetSiteId, e);
 				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+				TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Worksite Setup", "error copying site");
 			}			    
 			finally
 			{

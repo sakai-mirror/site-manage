@@ -43,11 +43,11 @@ public class SiteConstants {
 	
 	public static final String ENTITYCOPY_THREAD_STATUS  = "entity_copy_thread_status";
 	
-	public static final String ENTITYCOPY_THREAD_STATUS_RUNNING="working";
+	public static final String ENTITYCOPY_THREAD_STATUS_RUNNING="RUNNING";
 	
-	public static final String ENTITYCOPY_THREAD_STATUS_ERROR="error";
+	public static final String ENTITYCOPY_THREAD_STATUS_ERROR="ERROR";
 	
-	public static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="finished";
+	public static final  String ENTITYCOPY_THREAD_STATUS_FINISHED="FINISHED";
 	
 	public final static String PROP_SITE_TERM = "term";
 	

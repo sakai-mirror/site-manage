@@ -1,9 +1,9 @@
 /**********************************************************************************
- * $URL:  $
- * $Id:  $
+ * $URL:$
+ * $Id:$
  ***********************************************************************************
  *
- * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008 Sakai Foundation
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
  * limitations under the License.
  *
  **********************************************************************************/
+
 package org.sakaiproject.site.tool;
 
 import java.io.IOException;
@@ -91,11 +92,7 @@ public class SiteInfoToolServlet extends HttpServlet
 		if ((parts.length == 3) && (parts[0].equals("")) && (parts[1].equals("sitecopystatus")))
 		{
 			getSiteCopyStatus(parts[2], res);
-		}
-		else
-		{
-		}
-			
+		}	
 	}
 	
 	/**
@@ -114,7 +111,7 @@ public class SiteInfoToolServlet extends HttpServlet
 
 			try
 			{
-			String status = state.getAttribute("entity_copy_thread_status") != null?(String) state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS):"";
+			String status = state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null?(String) state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS):"";
 			
 			res.setContentType("text/plain; charset=UTF-8");
 	
