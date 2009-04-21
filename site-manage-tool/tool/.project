@@ -8,6 +8,7 @@
     <project>sakai-coursemanagement-api</project>
     <project>sakai-import-api</project>
     <project>sakai-message-api</project>
+    <project>sakai-mock</project>
     <project>sakai-site-manage-api</project>
     <project>sakai-site-manage-util</project>
     <project>sakai-velocity-tool</project>
