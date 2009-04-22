@@ -18,10 +18,10 @@
   <classpathentry kind="var" path="M2_REPO/net/sf/jsr107cache/jsr107cache/1.0/jsr107cache-1.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/javax/transaction/jta/1.0.1B/jta-1.0.1B.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.7-SNAPSHOT/sakai-component-manager-1.0.7-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.6/sakai-component-manager-1.0.6.jar"/>
   <classpathentry kind="src" path="/sakai-coursemanagement-api"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.7-SNAPSHOT/sakai-kernel-api-1.0.7-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.7-SNAPSHOT/sakai-kernel-util-1.0.7-SNAPSHOT.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.6/sakai-kernel-api-1.0.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.6/sakai-kernel-util-1.0.6.jar"/>
   <classpathentry kind="src" path="/sakai-site-manage-api"/>
   <classpathentry kind="src" path="/sakai-site-manage-hbm"/>
   <classpathentry kind="src" path="/sakai-site-manage-util"/>
