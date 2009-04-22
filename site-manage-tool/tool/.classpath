@@ -19,20 +19,20 @@
   <classpathentry kind="var" path="M2_REPO/logkit/logkit/1.2/logkit-1.2.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/objenesis/objenesis/1.0/objenesis-1.0.jar"/>
   <classpathentry kind="var" path="M2_REPO/oro/oro/2.0.8/oro-2.0.8.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-announcement-api/2.7.0-SNAPSHOT/sakai-announcement-api-2.7.0-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-archive-api/2.7.0-SNAPSHOT/sakai-archive-api-2.7.0-SNAPSHOT.jar"/>
+  <classpathentry kind="src" path="/sakai-announcement-api"/>
+  <classpathentry kind="src" path="/sakai-archive-api"/>
   <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.1-SNAPSHOT/sakai-component-manager-1.1-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-courier-api/2.7.0-SNAPSHOT/sakai-courier-api-2.7.0-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-coursemanagement-api/2.7.0-SNAPSHOT/sakai-coursemanagement-api-2.7.0-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-import-api/2.7.0-SNAPSHOT/sakai-import-api-2.7.0-SNAPSHOT.jar"/>
+  <classpathentry kind="src" path="/sakai-courier-api"/>
+  <classpathentry kind="src" path="/sakai-coursemanagement-api"/>
+  <classpathentry kind="src" path="/sakai-import-api"/>
   <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.1-SNAPSHOT/sakai-kernel-api-1.1-SNAPSHOT.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.1-SNAPSHOT/sakai-kernel-util-1.1-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-message-api/2.7.0-SNAPSHOT/sakai-message-api-2.7.0-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-mock/2.7.0-SNAPSHOT/sakai-mock-2.7.0-SNAPSHOT.jar"/>
+  <classpathentry kind="src" path="/sakai-message-api"/>
+  <classpathentry kind="src" path="/sakai-mock"/>
   <classpathentry kind="src" path="/sakai-site-manage-api"/>
   <classpathentry kind="src" path="/sakai-site-manage-util"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-velocity-tool/2.7.0-SNAPSHOT/sakai-velocity-tool-2.7.0-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/sakai-velocity-tool-api/2.7.0-SNAPSHOT/sakai-velocity-tool-api-2.7.0-SNAPSHOT.jar"/>
+  <classpathentry kind="src" path="/sakai-velocity-tool"/>
+  <classpathentry kind="src" path="/sakai-velocity-tool-api"/>
   <classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.4/servlet-api-2.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/springframework/spring/2.0.6/spring-2.0.6.jar"/>
   <classpathentry kind="var" path="M2_REPO/org/springframework/spring-mock/2.0.6/spring-mock-2.0.6.jar"/>

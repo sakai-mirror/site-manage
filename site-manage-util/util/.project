@@ -2,6 +2,7 @@
   <name>sakai-site-manage-util</name>
   <comment/>
   <projects>
+    <project>sakai-coursemanagement-api</project>
     <project>sakai-site-manage-api</project>
   </projects>
   <buildSpec>

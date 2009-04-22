@@ -2,8 +2,10 @@
   <name>sakai-site-manage-participant-helper</name>
   <comment/>
   <projects>
+    <project>entitybroker-api</project>
     <project>sakai-site-manage-api</project>
     <project>sakai-site-manage-util</project>
+    <project>sakai-velocity-tool-api</project>
   </projects>
   <buildSpec>
     <buildCommand>
