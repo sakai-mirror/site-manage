@@ -158,24 +158,8 @@ import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SortedIterator;
 import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
-import org.sakaiproject.util.RequestFilter;
+import org.sakaiproject.util.Web;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-//get pdf
-import org.apache.fop.apps.Driver;
-import org.apache.fop.apps.FOPException;
-import org.apache.fop.apps.Options;
-import org.apache.fop.configuration.Configuration;
-import org.apache.fop.messaging.MessageHandler;
-
-
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.*;
-import javax.xml.transform.stream.StreamResult;
 /**
  * <p>
  * SiteAction controls the interface for worksite setup.
@@ -1242,18 +1226,9 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				// for showing copy thread status
 				site = SiteService.getSite(userSiteId);
-				tool = ToolManager.getCurrentTool();
-				if (tool != null)
-				{
-					// the current tool should be Site Info
-					ToolConfiguration toolConfiguration = site.getToolForCommonId(tool.getId());
-					if (toolConfiguration != null)
-					{
-						String toolId = toolConfiguration.getId();
-						context.put("currentToolId", toolId);
-						context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
-					}
-				}
+				
+				// status url
+				putStatusRequestLinkIntoContext(context, data, site);
 				
 				// thread status into context
 				putThreadStatusIntoContext(context, state);
@@ -1759,18 +1734,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			// for showing site copy thread status
-			tool = ToolManager.getCurrentTool();
-			if (tool != null)
-			{
-				// the current tool should be Site Info
-				ToolConfiguration toolConfiguration = site.getToolForCommonId(tool.getId());
-				if (toolConfiguration != null)
-				{
-					String toolId = toolConfiguration.getId();
-					context.put("currentToolId", toolId);
-					context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
-				}
-			}
+			putStatusRequestLinkIntoContext(context, data, site);
 			
 			// thread status into context
 			putThreadStatusIntoContext(context, state);
@@ -2089,6 +2053,7 @@ public class SiteAction extends PagedResourceActionII {
 			// get the access url for downloading the participants
 			String accessPointUrl = ServerConfigurationService.getAccessUrl().concat(SiteParticipantProvider.REFERENCE_ROOT).concat("/").concat(site.getId());
 			context.put("accessPointUrl", accessPointUrl);
+			
 			return (String) getContext(data).get("template") + TEMPLATE[12];
 
 		case 13:
@@ -3049,6 +3014,31 @@ public class SiteAction extends PagedResourceActionII {
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
+	}
+
+	/**
+	 * put all context variables needed for status url into context
+	 * @param context
+	 * @param data
+	 * @param site
+	 */
+	private void putStatusRequestLinkIntoContext(Context context, RunData data, Site site) {
+		Tool tool;
+		tool = ToolManager.getCurrentTool();
+		if (tool != null)
+		{
+			// the current tool should be Site Info
+			ToolConfiguration toolConfiguration = site.getToolForCommonId(tool.getId());
+			if (toolConfiguration != null)
+			{
+				String toolId = toolConfiguration.getId();
+
+				// the status servlet reqest url
+				String url = Web.serverUrl(data.getRequest()) + "/sakai-site-manage-tool/tool/sitecopystatus/" + toolId;
+				context.put("statusRequestUrl", url);					
+				context.put("workingText", SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
+			}
+		}
 	}
 
 	/**
@@ -8482,7 +8472,7 @@ public class SiteAction extends PagedResourceActionII {
 			String taskStatusUrl = TaskStatusGetPost.serviceExist() ? TaskStatusGetPost.postTaskStatusStream():null;
 			
 			// then start the thread
-			SiteCopyThread n = new SiteCopyThread(sourceSiteId, targetSiteId,  createNewSite, selectedTerm, toTitle, byPassSecurity, sessionState, userId, taskStatusUrl);
+			SiteCopyThread n = new SiteCopyThread(sourceSiteId, targetSiteId,  createNewSite, selectedTerm, toTitle, byPassSecurity, sessionState, userId, taskStatusUrl, ToolManager.getCurrentPlacement().getId(), SessionManager.getCurrentSession().getId());
 			n.start();
 		}
 		catch(Exception e)

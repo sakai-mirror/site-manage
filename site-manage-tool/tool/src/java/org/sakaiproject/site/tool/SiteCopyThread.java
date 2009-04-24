@@ -21,30 +21,17 @@
 
 package org.sakaiproject.site.tool;
 
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Observable;
-import java.util.Vector;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
-import org.sakaiproject.authz.api.SecurityAdvisor;
-import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
 import org.sakaiproject.authz.cover.AuthzGroupService;
-import org.sakaiproject.authz.cover.SecurityService;
+import org.sakaiproject.cheftool.VelocityPortletPaneledAction;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
-import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.coursemanagement.api.AcademicSession;
-import org.sakaiproject.entity.api.EntityProducer;
-import org.sakaiproject.entity.api.EntityTransferrer;
-import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
-import org.sakaiproject.entity.cover.EntityManager;
 import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.exception.IdInvalidException;
 import org.sakaiproject.exception.IdUnusedException;
@@ -55,10 +42,10 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.SiteConstants;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
-import org.sakaiproject.util.ArrayUtil;
 import org.sakaiproject.util.StringUtil;
 
 /**
@@ -66,7 +53,7 @@ import org.sakaiproject.util.StringUtil;
  * @author zqian
  *
  */
-public class SiteCopyThread extends Observable implements Runnable 
+public class SiteCopyThread implements Runnable 
 {
 	private static Log M_log = LogFactory.getLog(SiteCopyThread.class);
 	
@@ -95,6 +82,8 @@ public class SiteCopyThread extends Observable implements Runnable
 	private SessionState sessionState = null;
 	private String userId = null;
 	private String m_taskStatusStreamUrl = null;
+	private String toolPlacementId = null;
+	private String sessionId = null;
 	
 	public void init(){}
 	
@@ -123,7 +112,7 @@ public class SiteCopyThread extends Observable implements Runnable
 	 * @param sessionState
 	 * @param userId
 	 */
-	SiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId, String taskStatusStreamUrl)
+	SiteCopyThread(String sourceSiteId, String targetSiteId, boolean createNewSite, String selectedTerm, String toTitle, boolean byPassSecurity, SessionState sessionState, String userId, String taskStatusStreamUrl, String toolPlacementId, String sessionId)
 	{
 		this.sourceSiteId = sourceSiteId;
 		this.targetSiteId = targetSiteId;
@@ -134,6 +123,8 @@ public class SiteCopyThread extends Observable implements Runnable
 		this.sessionState = sessionState;
 		this.userId = userId;
 		this.m_taskStatusStreamUrl = taskStatusStreamUrl;
+		this.toolPlacementId = toolPlacementId;
+		this.sessionId = sessionId;
 	}
 
 	/**
@@ -160,27 +151,14 @@ public class SiteCopyThread extends Observable implements Runnable
 	
 	public void run()
 	{
-		// since we might be running while the component manager is still being created and populated, such as at server
-		// startup, wait here for a complete component manager
-		ComponentManager.waitTillConfigured();
-
 		if (!m_threadStop)
 		{
-			org.sakaiproject.tool.api.Session s = null;
-			if (s == null)
-			{
-				s = m_sessionManager.startSession();
-				try
-				{
-					User u = m_userDirectoryService.getUser(userId);
-					s.setUserId(u.getId());
-					m_sessionManager.setCurrentSession(s);
-				}
-				catch (Exception e)
-				{
-					M_log.warn(this + ":run cannot find user with id " + userId + e.getMessage());
-				}
-			}
+
+			org.sakaiproject.tool.api.Session session = m_sessionManager.getSession(sessionId);
+			session.setUserId(userId);
+			m_sessionManager.setCurrentSession(session);
+			
+			User u = m_userDirectoryService.getCurrentUser();
 			
 			// running
 			sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
@@ -308,6 +286,15 @@ public class SiteCopyThread extends Observable implements Runnable
 			}			    
 			finally
 			{
+				// schedule screen refresh
+				ToolSession toolSession = session.getToolSession(toolPlacementId);
+
+				// add to (or create) our set of ids to refresh
+				if (toolSession.getAttribute(VelocityPortletPaneledAction.ATTR_TOP_REFRESH) == null)
+				{
+					toolSession.setAttribute(VelocityPortletPaneledAction.ATTR_TOP_REFRESH, Boolean.TRUE);
+				}
+				
 				//clear any current bindings
 				ThreadLocalManager.clear();
 				stop();

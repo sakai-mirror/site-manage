@@ -1,5 +1,24 @@
-##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/sitesetup/chef_site-siteInfo-list.vm,v 1.6 2005/05/28 03:04:36 ggolden.umich.edu Exp $ -->
-<script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery.js"></script>
+#**********************************************************************************
+ * $URL:  $
+ * $Id:  $
+ ***********************************************************************************
+ *
+ * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
+ *
+ * Licensed under the Educational Community License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.osedu.org/licenses/ECL-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ **********************************************************************************#
+ <script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery.js"></script>
 <script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery-ui.js"></script>
 <link type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" rel="stylesheet" media="screen" />
 <script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
@@ -14,20 +33,20 @@
 
 */		
 		//instead of this URL, it would bne pointing to a servlet
-        var completeUrl = $("#urlholder").text().substring(0,$("#urlholder").text().indexOf('/portal')) + "/sakai-site-manage-tool/tool/sitecopystatus/" + trim($("#currentToolId").text());
-     	var workingText = trim($("#workingText").text());
+    	var completeUrl = '$statusRequestUrl';
+     var workingText = '$workingText';
 	    jQuery.get(completeUrl, function(data){
 	    	if (data.length > 0 && data.indexOf(workingText) >= 0) {
 									// store link text in a variable
-									var dupText = ($('ul.navIntraTool li:nth-child(7) span a').text());
+									var dupText = ($('ul.navIntraTool li:nth-child(8) span a').text());
 									// get the span parent of the link position
-									var pos=$('ul.navIntraTool li:nth-child(7) span').position();
+									var pos=$('ul.navIntraTool li:nth-child(8) span').position();
 									// hide the span parent of the "Duplicate Site" link
-									$('ul.navIntraTool li:nth-child(7) span').hide();
+									$('ul.navIntraTool li:nth-child(8) span').hide();
 				 				// append to the parent li a span with the former link text
-				 				$('ul.navIntraTool li:nth-child(7)').append('<span class=\"temp\">' + dupText + '</span>');
+				 				$('ul.navIntraTool li:nth-child(8)').append('<span class=\"temp\">' + dupText + '</span>');
 									// insert after this new span the message bubble div
-				 				$('ul.navIntraTool li:nth-child(7) span').after('<div class=\"bubble\"><div>Site is being copied. This link will become available when done.</div></div>');
+				 				$('ul.navIntraTool li:nth-child(8) span').after('<div class=\"bubble\"><div>$tlang.getString("site.coping")</div></div>');
 									//position the bubble based on position of the span we removed
 									$('.bubble').css('left', (pos.left));
 									$('.bubble').css('top', (pos.top + 15));
@@ -42,7 +61,7 @@
 	 	}
 	  	 function checkStatus(){
 	  	 	var thisStatus = this;
-	  	 	var workingText = trim($("#workingText").text());
+	  	 	var workingText = trim('$workingText');
 	  	    this.queryStatus = function(){
 	  	    jQuery.get(completeUrl, function(data){
 		  	    if (data.length > 0 && data.indexOf(workingText) >= 0) {
@@ -98,15 +117,6 @@ function printPreview(target){
     return false;
 }
 </script>
-<div id="urlholder" class="highlight" style="display:none">
-    $sakai_ActionURL
-</div>
-<div id="currentToolId" class="highlight" style="display:none">
-    $currentToolId
-</div>
-<div id="workingText" class="highlight" style="display:none">
-    $workingText
-</div>
 <div class ="portletBody specialLink">
 	#if($menu)#toolbar($menu)#end
 	#if ($alertMessage)

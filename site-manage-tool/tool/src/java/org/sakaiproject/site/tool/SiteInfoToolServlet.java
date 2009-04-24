@@ -1,6 +1,6 @@
 /**********************************************************************************
- * $URL:$
- * $Id:$
+ * $URL: $
+ * $Id: $
  ***********************************************************************************
  *
  * Copyright (c) 2003, 2004, 2005, 2006, 2007, 2008, 2009 The Sakai Foundation
@@ -87,6 +87,7 @@ public class SiteInfoToolServlet extends HttpServlet
 		basicAuth.doLogin(req);
 		
 		// catch the login helper requests
+		// request url is of format https://server_name/sakai-site-manage-tool/tool/sitecopystatus/toolId
 		String option = req.getPathInfo();
 		String[] parts = option.split("/");
 		if ((parts.length == 3) && (parts[0].equals("")) && (parts[1].equals("sitecopystatus")))
@@ -111,16 +112,17 @@ public class SiteInfoToolServlet extends HttpServlet
 
 			try
 			{
-			String status = state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null?(String) state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS):"";
-			
-			res.setContentType("text/plain; charset=UTF-8");
-	
-			// get the writer
-			PrintWriter out = res.getWriter();
-	
-			// form the head
-			out.println(status);
-			out.flush();
+				// normally the status would be null string. 
+				String status = state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS) != null?(String) state.getAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS):"";
+				
+				res.setContentType("text/plain; charset=UTF-8");
+		
+				// get the writer
+				PrintWriter out = res.getWriter();
+		
+				// form the head
+				out.println(status);
+				out.flush();
 			}
 			catch (IOException e)
 			{
