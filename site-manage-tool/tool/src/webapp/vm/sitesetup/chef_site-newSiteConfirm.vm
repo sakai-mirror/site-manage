@@ -207,14 +207,6 @@
 
 				</td>
 			</tr>
-			<tr>
- 				<th>
- 					$tlang.getString("newsc.url_alias")
- 				</th>
- 				<td>
- 					$validator.escapeHtml($!form_url_alias_full)
- 				</td>
- 			</tr>
  			<tr>
 			<tr>
 					<th colspan="2">
