@@ -7511,7 +7511,6 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_IMPORT_SITES);
 		state.removeAttribute(STATE_CM_REQUESTED_SECTIONS);
 		state.removeAttribute(STATE_CM_SELECTED_SECTIONS);
-		sitePropertiesIntoState(state);
 
 	} // removeAddClassContext
 
@@ -9876,18 +9875,20 @@ public class SiteAction extends PagedResourceActionII {
 		try {
 			Site site = getStateSite(state);
 			SiteInfo siteInfo = new SiteInfo();
-
-			// set from site attributes
-			siteInfo.title = site.getTitle();
-			siteInfo.description = site.getDescription();
-			siteInfo.iconUrl = site.getIconUrl();
-			siteInfo.infoUrl = site.getInfoUrl();
-			siteInfo.joinable = site.isJoinable();
-			siteInfo.joinerRole = site.getJoinerRole();
-			siteInfo.published = site.isPublished();
-			siteInfo.include = site.isPubView();
+			if (site != null)
+			{
+				// set from site attributes
+				siteInfo.title = site.getTitle();
+				siteInfo.description = site.getDescription();
+				siteInfo.iconUrl = site.getIconUrl();
+				siteInfo.infoUrl = site.getInfoUrl();
+				siteInfo.joinable = site.isJoinable();
+				siteInfo.joinerRole = site.getJoinerRole();
+				siteInfo.published = site.isPublished();
+				siteInfo.include = site.isPubView();
+				siteInfo.short_description = site.getShortDescription();
+			}
 			siteInfo.additional = "";
-			siteInfo.short_description = site.getShortDescription();
 			state.setAttribute(STATE_SITE_TYPE, siteInfo.site_type);
 
 			state.setAttribute(STATE_SITE_INFO, siteInfo);
