@@ -18,3 +18,21 @@ toggler needs
     padding: 1em
 }
 
+
+.bubble{
+    position:absolute;
+	padding-top:13px;
+    opacity: .5; 
+	background:transparent url(bubble-arrow.png) 25% 0  no-repeat;
+}
+
+.bubble div{
+    position:relative;
+	width: 150px; 
+    padding: 10px; 
+    background: #00338B; 
+    -webkit-border-radius: 10px; 
+    -moz-border-radius:10px; 
+	font-weight:bold;
+    color: #fff;
+}

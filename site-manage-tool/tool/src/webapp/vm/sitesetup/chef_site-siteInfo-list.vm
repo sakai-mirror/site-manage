@@ -24,70 +24,26 @@
 <script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
 <link type="text/css" href="/sakai-site-manage-tool/css/site-manage.css" rel="stylesheet" media="screen" />
 <div id="dialog">
+	
 </div>
 <script type="text/javascript">
-    $(document).ready(function(){
-/*
-		need to wrap this whole block on a velocity conditional
-		consulting "site being copied or not" status
-
-*/		
-		//instead of this URL, it would bne pointing to a servlet
-    	var completeUrl = '$statusRequestUrl';
-     var workingText = '$workingText';
-	    jQuery.get(completeUrl, function(data){
-	    	if (data.length > 0 && data.indexOf(workingText) >= 0) {
-									// store link text in a variable
-									var dupText = ($('ul.navIntraTool li:nth-child(8) span a').text());
-									// get the span parent of the link position
-									var pos=$('ul.navIntraTool li:nth-child(8) span').position();
-									// hide the span parent of the "Duplicate Site" link
-									$('ul.navIntraTool li:nth-child(8) span').hide();
-				 				// append to the parent li a span with the former link text
-				 				$('ul.navIntraTool li:nth-child(8)').append('<span class=\"temp\">' + dupText + '</span>');
-									// insert after this new span the message bubble div
-				 				$('ul.navIntraTool li:nth-child(8) span').after('<div class=\"bubble\"><div>$tlang.getString("site.coping")</div></div>');
-									//position the bubble based on position of the span we removed
-									$('.bubble').css('left', (pos.left));
-									$('.bubble').css('top', (pos.top + 15));
-									
-									// start a timer that will check the servlet every n seconds	
-	        checkStatus();
-			}
-	  	  });
-	  	function trim(testString)
-	 	{
-	 		return testString.replace(/^\s*/, "").replace(/\s*$/, "");
-	 	}
-	  	 function checkStatus(){
-	  	 	var thisStatus = this;
-	  	 	var workingText = trim('$workingText');
-	  	    this.queryStatus = function(){
-	  	    jQuery.get(completeUrl, function(data){
-		  	    if (data.length > 0 && data.indexOf(workingText) >= 0) {
-
-		  	    }
-		  	    else {
-										// remove bubble
-					 				$('ul.navIntraTool li:nth-child(7) div').remove();
-										// remove span that stood in for the "inactive" link 
- 									$('ul.navIntraTool li:nth-child(7) span.temp').remove();
-										// show the real link
-										$('ul.navIntraTool li:nth-child(7) span').show();
-										// stop the timer
-										window.clearInterval(this.intTimer);
-									}
-	  	    });
-      };
-      this.intTimer = window.setInterval(function(e) {
-      thisStatus.queryStatus();}, 3000);
-    }
-
-		
+    $(document).ready(function(){		
+		/* is there a site duplicate link? */
+		if ($(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']").length ==1){
+		/* setup variables */
+		var completeUrl = '$statusRequestUrl';
+		var workingText = '$workingText';
+		var blockingMessage ='$tlang.getString("sitegen.siteinfolist.copymessage")'; 
+		var linkToBeBlocked = $(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']");
+		var linkToBeBlockedParent = $(linkToBeBlocked).parents('li');
+		/* call function to ping the servlet and repeat ping every 10 secs if copy is still in progress, 
+		 * blocking link if so and displaying a message
+		 */
+		sakai.blockUI (completeUrl,workingText,linkToBeBlocked,linkToBeBlockedParent,blockingMessage,10000);
+	}
 		sakai.getSiteInfo('getSiteDesc','dialog','$tlang.getString("sitegen.siteinfolist.nosd")','$tlang.getString("sitegen.siteinfolist.nold")');
 		sakai.getGroupInfo('moreInfoGroups','dialog','$tlang.getString("sinfo.list.groups.memb")','$tlang.getString("sinfo.list.groups.print")','$tlang.getString("sitegen.siteinfolist.name")','$tlang.getString("sitegen.siteinfolist.role")','&nbsp;');
 		sakai.setupSelectList('siteMembers','selunselallid','selectedSelected');
-//    	sakai.setupToggleAreas('toggleAnchor', 'toggledContent', false, 'fast');
 		$("#accordion").accordion({
 			header: 'h4',
 			active: false,
@@ -98,11 +54,12 @@
 		});
 	  });
 </script>
+
 <script type="text/javascript">
 function printPreview(target){
     var w = window.open('', 'printwindow', 'width=600,height=400,scrollbars=yes,toolbar=yes,resizable=yes');
 	var content=  "";
-	var content=  document.getElementById('groupListContent').innerHTML;
+	content=  document.getElementById('groupListContent').innerHTML;
 	w.document.writeln(
 	'<html><head>'
 	+ '<style type=\"text/css\">.listHier td, .listHier th {text-align:left}</style>'
