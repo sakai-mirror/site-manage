@@ -1,0 +1,38 @@
+<div class ="portletBody">
+
+	<h3>
+		$tlang.getString("sitetype.copysite") 
+	</h3>
+	#if ($alertMessage)<div class="alertMessage">$tlang.getString("sitetype.alert") $validator.escapeHtml($alertMessage)</div>	#end
+	<form name="copyform" id="copyform" action="#toolForm("$action")" method="post">
+		<div class="indnt3">
+			<p class="shorttext">
+			<table cols="2">
+			<tr>
+				<td><label for="selectTemplate">$tlang.getString("sitetype.selecttemplate")</label></td>
+				<td><select id="templateSiteId" name="templateSiteId">
+					#foreach($templateSite in $templateSites)
+						<option value ="$templateSite.id">$templateSite.title</option>
+					#end
+				</select></td>
+			</tr>
+			<tr>
+			<td>$tlang.getString("sitdup.sitti")</td><td><input type="text" name="newSiteTitle"/></td>
+			</tr>
+			<tr>
+			<td>$tlang.getString("sitmansav.sitid")</td><td><input type="text" name="newSiteId"/></td>
+			</tr>
+			</table>
+			<br />
+			<input type="checkbox" id="copyMembers" name="copyMembers" value="true"/><label for="copyMembers">$tlang.getString("sitecopy.copymembers")</label>
+			</p>
+		</div>
+		<input type="hidden" name="back" value="1" />
+		<input type="hidden" name="template-index" value="54" />
+		<div class ="act">
+			<input type="submit" accesskey="s"  class="active" name="eventSubmit_doSite_copy" value="$tlang.getString("sitetype.con")" />
+			<input type="submit" accesskey="x" name="eventSubmit_doCancel" value="$tlang.getString("sitetype.can")" />
+		</div>
+	</form>				
+</div>	
+

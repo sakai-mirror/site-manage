@@ -118,6 +118,11 @@
 						</p>
 					#end
 		#end
+		<p class="checkbox indnt1">
+			<input type="radio" name="itemType" id="copy" value="copy"/>
+			<label for="copy">$tlang.getString("sitetype.fromtemplate")</label>
+			</p>
+		<br />
 		<input type="hidden" name="back" value="$!backIndex" />
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
 		<div class ="act">
