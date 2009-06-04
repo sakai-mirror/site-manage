@@ -10459,8 +10459,8 @@ public class SiteAction extends PagedResourceActionII {
 							+ ". ");
 				}
 			} else if (id.indexOf("sakai.iframe") != -1) {
-				String wcTitle = StringUtil.trimToNull(params
-						.getString("titlefor" + id));
+				String wcTitle = StringUtil.trimToNull(Validator.escapeHtml(params
+						.getString("titlefor" + id)));
 				if (wcTitle == null) {
 					// if there is no input, make the title for Web Content tool
 					// default to WEB_CONTENT_DEFAULT_TITLE
@@ -10468,8 +10468,8 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				wcTitles.put(id, wcTitle);
 
-				String wcUrl = StringUtil.trimToNull(params.getString("urlfor"
-						+ id));
+				String wcUrl = StringUtil.trimToNull(Validator.escapeHtml(params.getString("urlfor"
+						+ id)));
 				if (wcUrl == null) {
 					// if there is no input, make the title for Web Content tool
 					// default to WEB_CONTENT_DEFAULT_URL
