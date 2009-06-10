@@ -167,17 +167,11 @@
 				<strong class="reqStarInline"> * </strong>
 				<select id="templateSiteId" name="templateSiteId">
 					<option value ="0">$tlang.getString("sitetype.selectTemplate")</option>
-					#*
 					#foreach($templateSite in $templateSites)
-						<option value ="$templateSite.id" class="$templateSite.type">$templateSite.title</option>
-					#end
-						these are just examples below - the main thing is that the type of site that the template is should 
-						be added to the <option /> in the class attribute 
-					*#
-					<option value ="$templateSite.id" class="course">Course - Humanities</option>
-						<option value ="$templateSite.id" class="course">Course - Engineering</option>
-					<option value ="$templateSite.id" class="project">Project - Journal</option>						
-					<option value ="$templateSite.id" class="project">Project - Currilum Review</option>						
+						#set($siteType = false)
+						#set($siteType = $!templateSite.type)
+						<option value ="$templateSite.id" class="$templateSite.type">#if ($!siteType) $siteType - #end $templateSite.title</option>
+					#end				
 				</select>
 				#*
 				title length restrictions are copied from template chef_site-siteInfo-editInfo.vm maxlength needs to be set like in that template
@@ -224,8 +218,8 @@
 			 it should be set style="display:none" if user is coming back
 			 ot this template from building own flow
 			 *#
-			<input type="submit" accesskey="s"  id="submitFromTemplate" disabled="disabled" style="display:none" class="active" name="needANewNameForThis" value="$tlang.getString("sitetype.done")" />
-			<input type="submit" accesskey="s"  id="submitFromTemplateCourse" disabled="disabled" style="display:none" class="active" name="needANewNameForThis" value="$tlang.getString("sitetype.donecourse")" />
+			<input type="submit" accesskey="s"  id="submitFromTemplate" disabled="disabled" style="display:none" class="active" name="eventSubmit_doSite_copyFromTemplate" value="$tlang.getString("sitetype.done")" />
+			<input type="submit" accesskey="s"  id="submitFromTemplateCourse" disabled="disabled" style="display:none" class="active" name="eventSubmit_doSite_copyFromCourseTemplate" value="$tlang.getString("sitetype.donecourse")" />
 			## this submit should be ther normal one
 			<input type="submit" accesskey="s"  id="submitBuildOwn" disabled="disabled" class="active" name="eventSubmit_doSite_type" value="$tlang.getString("sitetype.con")" />
 			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />

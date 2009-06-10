@@ -267,8 +267,7 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importSelection",   //58
 			"-siteInfo-importMigrate",    //59
 			"-importSitesMigrate",  //60
-			"-siteInfo-importUser",
-			"-copy" // 62
+			"-siteInfo-importUser"
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -277,7 +276,6 @@ public class SiteAction extends PagedResourceActionII {
 	/** Name of state attribute for Site Information */
 	private static final String STATE_SITE_INFO = "site.info";
 
-	/** Name of state attribute for CHEF site type */
 	private static final String STATE_SITE_TYPE = "site-type";
 
 	/** Name of state attribute for possible site types */
@@ -1417,7 +1415,20 @@ public class SiteAction extends PagedResourceActionII {
 			setSelectedTermForContext(context, state, STATE_TERM_SELECTED);
 			
 			// template site - Denny
-			setTemplateListForContext(context, state);
+			//setTemplateListForContext(context, state);
+			
+			// We're searching for template sites and these are marked by a property
+			// called 'template' with a value of true
+			Map templateCriteria = new HashMap(1);
+			templateCriteria.put("template", "true");
+			
+			List templateSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ANY, null, null, templateCriteria, SortType.TYPE_ASC, null);
+			
+			// If no templates could be found, stick an empty list in the context
+			if(templateSites == null || templateSites.size() <= 0)
+				templateSites = new ArrayList();
+			
+			context.put("templateSites",templateSites);
 			
 			return (String) getContext(data).get("template") + TEMPLATE[1];
 		case 3:
@@ -2987,22 +2998,6 @@ public class SiteAction extends PagedResourceActionII {
 			// only show those sites with same site type
 			putImportSitesInfoIntoContext(context, site, state, true);
 			return (String) getContext(data).get("template") + TEMPLATE[61];
-
-		case 62: 
-			// We're searching for template sites and these are marked by a property
-			// called 'template' with a value of true
-			Map templateCriteria = new HashMap(1);
-			templateCriteria.put("template", "true");
-			
-			List templateSites = SiteService.getSites(org.sakaiproject.site.api.SiteService.SelectionType.ANY, null, null, templateCriteria, SortType.NONE, null);
-			
-			// If no templates could be found, stick an empty list in the context
-			if(templateSites == null || templateSites.size() <= 0)
-				templateSites = new ArrayList();
-			
-			context.put("templateSites",templateSites);
-			
-			return (String) getContext(data).get("template") + TEMPLATE[62];
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
@@ -4249,9 +4244,6 @@ public class SiteAction extends PagedResourceActionII {
 
 				// skip directly to confirm creation of site
 				state.setAttribute(STATE_TEMPLATE_INDEX, "42");
-			} else if(type.equals("copy")) {
-				setNewSiteType(state, "project");
-				state.setAttribute(STATE_TEMPLATE_INDEX, "62");
 			} else {
 				state.setAttribute(STATE_TEMPLATE_INDEX, "13");
 			}
@@ -11451,5 +11443,25 @@ public class SiteAction extends PagedResourceActionII {
 		// the status servlet reqest url
 		String url = Web.serverUrl(data.getRequest()) + "/sakai-site-manage-tool/tool/printparticipant/" + site.getId();
 		context.put("printParticipantUrl", url);
+	}
+	
+	public void doSite_copyFromTemplate(RunData data)
+	{
+		// see whether content or users needed to be copied.
+		ParameterParser params = data.getParameters();
+		
+		boolean copyUsers = params.getBoolean("copyUsers");
+		boolean copyContent = params.getBoolean("copyContent");
+		
+		if (copyUsers)
+		{
+			
+		}
+		
+		if (copyContent)
+		{
+			
+		}
+		
 	}
  }
