@@ -318,6 +318,12 @@ function redirectBasedOnSelection(){
 			#if (!$site)
 				<!-- Add Not Listed Courses -->
 				<a href="#" onclick="javascript:submitFindCourse();">$tlang.getString('nscourse.add_course_not_listed')</a>
+				## if site creation is based on template, this could be the final step!
+				#if ($!basedOnTemplate) 
+					<div class="instruction" id ="nextInstructions">
+						<span id="templateNonCourseInstruction" style="display:block">$tlang.getString("sitetype.templatefinalstepinstruction")</span>
+					</div>
+				#end
 				<p class="act">
 				<input
 					class="active"
@@ -326,7 +332,7 @@ function redirectBasedOnSelection(){
 					accesskey="s"
 					name="Continue" 
 					id="continueButton" 
-					value="$tlang.getString('gen.continue')"
+					#if ($!basedOnTemplate) value="$tlang.getString('sitetype.done')" #else value="$tlang.getString('gen.continue')" #end
 					onclick="document.addCourseForm.option.value='continue'; document.addCourseForm.submit(); return false;"
 					/>
 				<input

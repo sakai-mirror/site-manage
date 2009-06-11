@@ -176,7 +176,11 @@
 				#*
 				title length restrictions are copied from template chef_site-siteInfo-editInfo.vm maxlength needs to be set like in that template
 				*#
-				<span id="siteTitle"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteTitleField">$tlang.getString("sitetype.sitetitle") </label><input type="text" value="" size="20" maxlength="$!titleMaxLength"  id="siteTitleField" name="siteTitle"/></span>
+				<span id="siteTitle"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteTitleField">$tlang.getString("sitetype.sitetitle") </label><input type="text" value="" size="20" maxlength="$!titleMaxLength"  id="siteTitleField" name="siteTitleField"/></span>
+				## input for site id
+				#if ($!allowSetSiteId)
+					<span id="siteId"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteIdField">$tlang.getString("java.siteid") </label><input type="text" value="" size="20" maxlength="99"  id="siteIdField" name="siteIdField"/></span>
+				#end
 				<span id="siteTerms" style="display:none"><strong class="reqStarInline"> * </strong>
 					<select name="selectTermTemplate" id="selectTermTemplate">
 						<option value ="0">$tlang.getString("sitetype.selectTerm")</option>
@@ -199,9 +203,9 @@
 				</span>
 			</div>	 ## end of child of  div#templateSettings
 			<div style="padding:5px 8px;">
-				<input type="checkbox" name="copyUsers" id="copyUsers" value="copyUsers"/>	
+				<input type="checkbox" name="copyUsers" id="copyUsers" value="true"/>	
 				<label for="copyUsers">$tlang.getString("sitetype.copyusers")</label>
-				<input type="checkbox" name="copyContent" id="copyContent" value="copyContent"/>	
+				<input type="checkbox" name="copyContent" id="copyContent" value="true"/>	
 				<label for="copyContent">$tlang.getString("sitetype.copycontent")</label>
 			</div>
 		</div> ## end of div#templateSettings
@@ -210,8 +214,8 @@
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
 
 		<div class="instruction" id ="nextInstructions">
-				<span id="templateCourseInstruction" style="display:none">$tlang.getString("sitetype.templatecourseinstruction")</span>
-				<span id="templateNonCourseInstruction" style="display:none">$tlang.getString("sitetype.templatenoncourseinstruction")</span>
+				<span id="templateCourseInstruction" style="display:none">$tlang.getString("sitetype.templatecourserosterinstruction")</span>
+				<span id="templateNonCourseInstruction" style="display:none">$tlang.getString("sitetype.templatefinalstepinstruction")</span>
 		</div>	
 		<div class ="act" style="padding-top:1em;">
 			#* this submit should create the site from the template and redirect user to site

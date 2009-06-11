@@ -164,6 +164,7 @@ sakai.siteTypeSetup = function(){
         $('#templateSettings').fadeOut('fast');
         $('#templateSettings input:checked').attr('checked', '');
         $('#siteTitleField').attr('value', '');
+        $('#siteIdField').attr('value', '');
         $('input[id="copy"]').attr('checked', '');
         $('#templateSettings select').attr('selectedIndex', 0);
         $('#templateSettings span').fadeOut('fast');
@@ -183,6 +184,22 @@ sakai.siteTypeSetup = function(){
         }
     });
     $('#siteTitleField').blur(function(){
+        if ($(this).attr('value').length >= 1) {
+            $('#submitFromTemplate').attr('disabled', '');
+        }
+        else {
+            $('#submitFromTemplate').attr('disabled', 'disabled');
+        }
+    });
+    $('#siteIdField').keyup(function(e){
+        if ($(this).attr('value').length >= 1) {
+            $('#submitFromTemplate').attr('disabled', '');
+        }
+        else {
+            $('#submitFromTemplate').attr('disabled', 'disabled');
+        }
+    });
+    $('#siteIdField').blur(function(){
         if ($(this).attr('value').length >= 1) {
             $('#submitFromTemplate').attr('disabled', '');
         }
@@ -222,6 +239,7 @@ sakai.siteTypeSetup = function(){
                 $('#siteTerms').fadeIn('fast');
                 $('#siteTerms select').focus();
                 $('#siteTitleField').attr('value', '');
+                $('#siteIdField').attr('value', '');
             }
             else {
                 $('#submitFromTemplate').fadeIn('fast');
