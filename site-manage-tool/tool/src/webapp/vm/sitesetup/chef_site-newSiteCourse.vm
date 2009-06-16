@@ -362,9 +362,9 @@ function redirectBasedOnSelection(){
 					type="button" 
 					accesskey="s"
 					name="AddClass" 
-					id="addClassButton" 
+					id="addClassButton" name="addClassButton"
 					value="$tlang.getString('gen.continue')"
-					onclick="document.getElementById('option').value='add'; document.addCourseForm.submit(); return false;"
+					onclick="showNotif('submitnotif','addClassButton','addCourseForm'); document.getElementById('option').value='add'; document.addCourseForm.submit(); return false;"
 					/>
 				<input
 					type="button" 
@@ -374,7 +374,8 @@ function redirectBasedOnSelection(){
 					value="$tlang.getString('gen.cancel')"
 					onclick="document.getElementById('option').value='cancel_edit'; document.addCourseForm.submit(); return false;"
 				/>
-				</p>
+				<span id="submitnotif" style="visibility:hidden">$tlang.getString("gen.proces")</span>
+			</p>
 			#end
 
 	</form>

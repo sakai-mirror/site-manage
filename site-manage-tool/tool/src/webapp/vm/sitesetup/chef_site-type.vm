@@ -19,54 +19,6 @@
     $(document).ready(function(){
 		sakai.siteTypeSetup()
 	});
-#*
-
- 	function selectSiteType(type)
- 	{
- 		for (var i=0; i<document.typeform.itemType.length; i++)
- 		{
- 			if (document.typeform.itemType[i].value==type)
- 			{
- 				document.typeform.itemType[i].checked=true;
- 			}
- 			else
- 			{
- 				document.typeform.itemType[i].checked=false;
- 			}
- 		}
- 	}
- 	
- 	function toggleTemplateSelectList (type)
- 	{
- 		var selectTemplateType = "selectTemplate" + type;
- 		var templateList = document.getElementById(selectTemplateType);
- 		templateList.disabled = !templateList.disabled;
- 		
- 		var useTemplateType = "useTemplate" + type;
- 		var useTemplateTypeCheckbox = document.getElementById(useTemplateType);
- 		if (useTemplateTypeCheckbox.checked)
- 		{
- 			selectSiteType(type);
- 		}
- 	}
- 	
- 	function selectTemplateSite (type)
- 	{
- 		for (var i=0; i<document.typeform.itemType.length; i++)
- 		{
- 			var templateType = "template" + type;
- 			if (document.typeform.itemType[i].value==templateType)
- 			{
- 				document.typeform.itemType[i].checked=true;
- 			}
- 			else
- 			{
- 				document.typeform.itemType[i].checked=false;
- 			}
- 		}
- 	}
-
-*#
 </script>
 <div class ="portletBody">
 
@@ -212,6 +164,9 @@
 		## end templates enabled
 		<input type="hidden" name="back" value="$!backIndex" />
 		<input type="hidden" name="templateIndex" value="$!templateIndex" />
+		<input type="hidden" name="eventSubmit_doSite_type_option" value="x" />
+		<input type="hidden" name="option" value="cancel" />
+		
 
 		<div class="instruction" id ="nextInstructions">
 				<span id="templateCourseInstruction" style="display:none">$tlang.getString("sitetype.templatecourserosterinstruction")</span>
@@ -222,11 +177,12 @@
 			 it should be set style="display:none" if user is coming back
 			 ot this template from building own flow
 			 *#
-			<input type="submit" accesskey="s"  id="submitFromTemplate" disabled="disabled" style="display:none" class="active" name="eventSubmit_doSite_copyFromTemplate" value="$tlang.getString("sitetype.done")" />
-			<input type="submit" accesskey="s"  id="submitFromTemplateCourse" disabled="disabled" style="display:none" class="active" name="eventSubmit_doSite_copyFromCourseTemplate" value="$tlang.getString("sitetype.donecourse")" />
+			<input type="submit" accesskey="s"  id="submitFromTemplate" disabled="disabled" style="display:none" class="active" name="submitFromTemplate" value="$tlang.getString('sitetype.done')" onclick="showNotif('submitnotif','submitFromTemplate','typeform'); document.typeform.option.value='createOnTemplate'; document.typeform.submit(); return false;" />
+			<input type="submit" accesskey="s"  id="submitFromTemplateCourse" disabled="disabled" style="display:none" class="active" name="submitFromTemplateCourse" value="$tlang.getString('sitetype.donecourse')" onclick="showNotif('submitnotif','submitFromTemplateCourse','typeform'); document.typeform.option.value='createCourseOnTemplate'; document.typeform.submit(); return false;"/>
 			## this submit should be ther normal one
-			<input type="submit" accesskey="s"  id="submitBuildOwn" disabled="disabled" class="active" name="eventSubmit_doSite_type" value="$tlang.getString("sitetype.con")" />
-			<input type="submit" accesskey="x" name="eventSubmit_doCancel_create" value="$tlang.getString("sitetype.can")" />
+			<input type="submit" accesskey="s"  id="submitBuildOwn" disabled="disabled" class="active" name="submitBuildOwn" value="$tlang.getString('sitetype.con')" onclick="showNotif('submitnotif','submitBuildOwn','typeform'); document.typeform.option.value='siteType'; document.typeform.submit(); return false;" />
+			<input type="submit" accesskey="x" id="cancelCreate" name="cancelCreate" value="$tlang.getString('sitetype.can')" onclick="document.typeform.option.value='cancel'; document.typeform.submit(); return false;" />
+			<span id="submitnotif" style="visibility:hidden">$tlang.getString("gen.proces")</span>
 		</div>
 
 	</form>				
