@@ -149,10 +149,6 @@
 						#end
 					</select> 				
 				</span>
-				## input for site id
-				#if ($!allowSetSiteId)
-					<span id="siteId"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteIdField">$tlang.getString("java.siteid") </label><input type="text" value="" size="20" maxlength="99"  id="siteIdField" name="siteIdField"/></span>
-				#end
 			</div>	 ## end of child of  div#templateSettings
 			<div style="padding:5px 8px;">
 				<input type="checkbox" name="copyUsers" id="copyUsers" value="true"/>	

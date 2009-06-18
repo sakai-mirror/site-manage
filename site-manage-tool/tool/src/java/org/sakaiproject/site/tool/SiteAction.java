@@ -414,8 +414,6 @@ public class SiteAction extends PagedResourceActionII {
 	private static final String STATE_TEMPLATE_SITE = "site.templateSite";
 	private static final String STATE_TEMPLATE_SITE_COPY_USERS = "site.templateSiteCopyUsers";
 	private static final String STATE_TEMPLATE_SITE_COPY_CONTENT = "site.templateSiteCopyContent";
-	private static final String STATE_TEMPLATE_SITE_ID = "site.templateSiteId";
-	private static final String STATE_TEMPLATE_SITE_TITLE = "site.templateSiteTitle";
 
 	/** The action for menu */
 	private static final String STATE_ACTION = "site.action";
@@ -8991,10 +8989,6 @@ public class SiteAction extends PagedResourceActionII {
 		
 		context.put("templateSites",templateSites);
 		
-		// configuration about whether to allow site id settable or not
-		boolean allowSetSiteId = ServerConfigurationService.getBoolean("wsetup.allow.setSiteId", false);
-		context.put("allowSetSiteId", Boolean.valueOf(allowSetSiteId));
-		
 	} // setTemplateListForContext
 	
 	/**
@@ -11379,7 +11373,6 @@ public class SiteAction extends PagedResourceActionII {
 			siteInfo.site_type = templateSite.getType();
 			siteInfo.title = StringUtil.trimToNull(params.getString("siteTitleField"));
 			siteInfo.term = StringUtil.trimToNull(params.getString("selectTermTemplate"));
-			siteInfo.site_id = StringUtil.trimToNull(params.getString("siteIdField"));
 			state.setAttribute(STATE_SITE_INFO, siteInfo);
 			
 			// whether to copy users or site content over?
