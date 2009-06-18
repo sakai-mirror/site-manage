@@ -108,13 +108,13 @@
 								</p>
 						 #set($attributeHashtable=false)
 							#set($attributeHashtable=$!multipleToolConfiguration.get($toolId))
-								#foreach ($attribute in $!attributeHashtable.keys())
+							 #foreach ($attribute in $!attributeHashtable.keys())
 									#set($attributeInputName=$attribute.concat("_").concat($toolId))
 									<p class="shorttext">
 										<label for="$attributeInputName">
 											$attribute
 										</label>
-										<input type="text" name="$attributeInputName" id="$attributeInputName" value="$!attributeHashtable.get($attribute)" size="50" />
+										<input type="text" name="$attributeInputName" id="$attributeInputName" value="$validator.escapeHtml($!attributeHashtable.get($attribute))" size="50" />
 								</p>
 								#end
 						#end
