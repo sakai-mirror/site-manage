@@ -4381,8 +4381,7 @@ public class SiteAction extends PagedResourceActionII {
 					if (state.getAttribute(STATE_TEMPLATE_SITE) != null)
 					{
 						// create site based on template
-						createNewSiteBasedOnTemplate(state);
-						state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+						doFinish(data);
 					}
 					else
 					{
@@ -4815,6 +4814,8 @@ public class SiteAction extends PagedResourceActionII {
 
 			Site site = getStateSite(state);
 
+			ResourcePropertiesEdit rp = site.getPropertiesEdit();
+
 			Site templateSite = (Site) state.getAttribute(STATE_TEMPLATE_SITE);
 			if (templateSite == null) 
 			{
@@ -4829,6 +4830,45 @@ public class SiteAction extends PagedResourceActionII {
 					// create based on template: skip add features, and copying all the contents from the tools in template site
 					importToolContent(templateSite.getId(), site, true);
 				}
+				// copy members
+				if(state.getAttribute(STATE_TEMPLATE_SITE_COPY_USERS) != null) 
+				{
+					try
+					{
+						AuthzGroup templateGroup = authzGroupService.getAuthzGroup(templateSite.getReference());
+						AuthzGroup newGroup = authzGroupService.getAuthzGroup(site.getReference());
+						
+						for(Iterator mi = templateGroup.getMembers().iterator();mi.hasNext();) {
+							Member member = (Member) mi.next();
+							if (newGroup.getMember(member.getUserId()) == null)
+							{
+								// only add those user who is not in the new site yet
+								newGroup.addMember(member.getUserId(), member.getRole().getId(), member.isActive(), member.isProvided());
+							}
+						}
+						
+						authzGroupService.save(newGroup);
+					}
+					catch (Exception copyUserException)
+					{
+						M_log.warn(this + "doFinish: copy user exception template site =" + templateSite.getReference() + " new site =" + site.getReference() + " " + copyUserException.getMessage());
+					}
+					
+				}
+				else
+				{
+					// if not bringing user over, remove the provider information
+					try
+					{
+						AuthzGroup newGroup = authzGroupService.getAuthzGroup(site.getReference());
+						newGroup.setProviderGroupId(null);
+						authzGroupService.save(newGroup);
+					}
+					catch (Exception removeProviderException)
+					{
+						M_log.warn(this + "doFinish: remove provider id " + " new site =" + site.getReference() + " " + removeProviderException.getMessage());
+					}
+				}
 				// We don't want the new site to automatically be a template
 				site.getPropertiesEdit().removeProperty("template");
 				
@@ -4842,8 +4882,6 @@ public class SiteAction extends PagedResourceActionII {
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				String siteId = site.getId();
-
-				ResourcePropertiesEdit rp = site.getPropertiesEdit();
 
 				AcademicSession term = null;
 				if (state.getAttribute(STATE_TERM_SELECTED) != null) {
@@ -10739,8 +10777,8 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_MANUAL_ADD_COURSE_NUMBER, new Integer(
 						1));
 
-			} else if (params.getString("findCourse") != null
-					&& ("true").equals(params.getString("findCourse"))) {
+			} else if (params.getString("find_course") != null
+					&& ("true").equals(params.getString("find_course"))) {
 				state.setAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN,
 						providerChosenList);
 				prepFindPage(state);
@@ -11015,8 +11053,7 @@ public class SiteAction extends PagedResourceActionII {
 						{
 							// if creating site using template, stop here and generate the new site
 							// create site based on template
-							createNewSiteBasedOnTemplate(state);
-							state.setAttribute(STATE_TEMPLATE_INDEX, "0");
+							doFinish(data);
 						}
 						else
 						{
@@ -11278,11 +11315,11 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			else if (option.equals("createOnTemplate"))
 			{
-				doSite_copyFromTemplate(params, state);
+				doSite_copyFromTemplate(data);
 			}
 			else if (option.equals("createCourseOnTemplate"))
 			{
-				doSite_copyFromCourseTemplate(params, state);
+				doSite_copyFromCourseTemplate(data);
 			}
 		}
 	}
@@ -11292,13 +11329,16 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param params
 	 * @param state
 	 */
-	private void doSite_copyFromTemplate(ParameterParser params, SessionState state)
+	private void doSite_copyFromTemplate(RunData data)
 	{	
+		ParameterParser params = data.getParameters();
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+	
 		// read template information
 		readCreateSiteTemplateInformation(params, state);
 		
 		// create site
-		createNewSiteBasedOnTemplate(state);
+		doFinish(data);
 	}
 	
 	/**
@@ -11306,8 +11346,11 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param params
 	 * @param state
 	 */
-	private void doSite_copyFromCourseTemplate(ParameterParser params, SessionState state)
+	private void doSite_copyFromCourseTemplate(RunData data)
 	{
+		ParameterParser params = data.getParameters();
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+	
 		// read template information
 		readCreateSiteTemplateInformation(params, state);
 		
@@ -11327,11 +11370,17 @@ public class SiteAction extends PagedResourceActionII {
 		try {
 			Site templateSite = SiteService.getSite(templateSiteId);
 			state.setAttribute(STATE_TEMPLATE_SITE, templateSite);
-			
 			state.setAttribute(STATE_SITE_TYPE, templateSite.getType());
 			
-			// site title
-			state.setAttribute(STATE_TEMPLATE_SITE_TITLE, StringUtil.trimToNull(params.getString("siteTitleField")));
+			SiteInfo siteInfo = new SiteInfo();
+			if (state.getAttribute(STATE_SITE_INFO) != null) {
+				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
+			}
+			siteInfo.site_type = templateSite.getType();
+			siteInfo.title = StringUtil.trimToNull(params.getString("siteTitleField"));
+			siteInfo.term = StringUtil.trimToNull(params.getString("selectTermTemplate"));
+			siteInfo.site_id = StringUtil.trimToNull(params.getString("siteIdField"));
+			state.setAttribute(STATE_SITE_INFO, siteInfo);
 			
 			// whether to copy users or site content over?
 			if (params.getBoolean("copyUsers")) state.setAttribute(STATE_TEMPLATE_SITE_COPY_USERS, Boolean.TRUE); else state.removeAttribute(STATE_TEMPLATE_SITE_COPY_USERS);
@@ -11341,84 +11390,6 @@ public class SiteAction extends PagedResourceActionII {
 		catch(Exception e){
 			M_log.warn(this + "readCreateSiteTemplateInformation: problem of getting template site: " + templateSiteId);
 		}
-	}
-
-	/**
-	 * add site based on template
-	 * @param state
-	 */
-	private void createNewSiteBasedOnTemplate(SessionState state) {
-		
-		Site templateSite = (Site) state.getAttribute(STATE_TEMPLATE_SITE);
-		boolean copyUsers = state.getAttribute(STATE_TEMPLATE_SITE_COPY_USERS) != null ? true : false;
-		boolean copyContent = state.getAttribute(STATE_TEMPLATE_SITE_COPY_CONTENT) != null ? true : false;
-		
-		String newSiteId = state.getAttribute(STATE_TEMPLATE_SITE_ID) != null ? (String) state.getAttribute(STATE_TEMPLATE_SITE_ID) : "";
-		// If no site id has been specified, generate one
-		if(newSiteId == null || newSiteId.length() == 0)
-			newSiteId = UUID.randomUUID().toString();
-		
-		String newSiteTitle = state.getAttribute(STATE_TEMPLATE_SITE_TITLE) != null ? (String) state.getAttribute(STATE_TEMPLATE_SITE_TITLE) : "";
-		if (newSiteTitle == null || newSiteTitle.length() == 0)
-		{
-			// if no user input site title, use the constructed site title
-			SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
-			if (siteInfo != null)
-			{
-				newSiteTitle = siteInfo.getTitle();
-			}
-		}
-		
-		try
-		{
-			Site newSite = SiteService.addSite(newSiteId, templateSite);
-			newSite.setTitle(newSiteTitle);
-			
-			// copy members
-			if(copyUsers) {
-				AuthzGroup templateGroup = authzGroupService.getAuthzGroup(templateSite.getReference());
-				AuthzGroup newGroup = authzGroupService.getAuthzGroup(newSite.getReference());
-				
-				for(Iterator mi = templateGroup.getMembers().iterator();mi.hasNext();) {
-					Member member = (Member) mi.next();
-					if (newGroup.getMember(member.getUserId()) == null)
-					{
-						// only add those user who is not in the new site yet
-						newGroup.addMember(member.getUserId(), member.getRole().getId(), member.isActive(), member.isProvided());
-					}
-				}
-				
-				authzGroupService.save(newGroup);
-			}
-			
-			// copy tool contents
-			if (copyContent)
-			{
-				importToolContent(templateSite.getId(), newSite, true);
-			}
-			
-			// We don't want the new site to automatically be a template
-			newSite.getPropertiesEdit().removeProperty("template");
-			
-			// new site is set to be unpublished
-			newSite.setPublished(false);
-			
-			SiteService.save(newSite);
-			
-			// transfer site content from template site
-			if (templateSite != null) 
-			{
-				sendTemplateUseNotification(newSite, UserDirectoryService.getCurrentUser(), templateSite);					
-			}
-		}
-		catch (Exception e)
-		{
-			M_log.warn(this + "createNwSteBasedOntemplate: Cannot find source site = " + newSiteId + " or create a new site " + e.getMessage());
-		}
-
-		// Now clean context and go back to the default worksite list
-		removeAddClassContext(state);
-		state.setAttribute(STATE_TEMPLATE_INDEX, "0");
 	}
 
 	/**

@@ -176,7 +176,7 @@ sakai.siteTypeSetup = function(){
         utils.resizeFrame('grow');
     });
     $('#siteTitleField').keyup(function(e){
-        if ($(this).attr('value').length >= 1) {
+        if (($(this).attr('value').length >= 1) && ($('#siteIdField').attr('value').length >= 1)) {
             $('#submitFromTemplate').attr('disabled', '');
         }
         else {
@@ -184,7 +184,7 @@ sakai.siteTypeSetup = function(){
         }
     });
     $('#siteTitleField').blur(function(){
-        if ($(this).attr('value').length >= 1) {
+        if (($(this).attr('value').length >= 1) && ($('#siteIdField').attr('value').length >= 1)) {
             $('#submitFromTemplate').attr('disabled', '');
         }
         else {
@@ -192,25 +192,43 @@ sakai.siteTypeSetup = function(){
         }
     });
     $('#siteIdField').keyup(function(e){
-        if ($(this).attr('value').length >= 1) {
+        if (($(this).attr('value').length >= 1) && ($('#siteTitleField').attr('value').length >= 1)) 
+        { 
             $('#submitFromTemplate').attr('disabled', '');
         }
         else {
             $('#submitFromTemplate').attr('disabled', 'disabled');
+        }
+        
+        if (($(this).attr('value').length >= 1) && ($('#selectTermTemplate').attr('selectedIndex') > 0))
+        { 
+            $('#submitFromTemplateCourse').attr('disabled', '');
+        }
+        else {
+            $('#submitFromTemplateCourse').attr('disabled', 'disabled');
         }
     });
     $('#siteIdField').blur(function(){
-        if ($(this).attr('value').length >= 1) {
+        if (($(this).attr('value').length >= 1) && ($('#siteTitleField').attr('value').length >= 1)) 
+        { 
             $('#submitFromTemplate').attr('disabled', '');
         }
         else {
             $('#submitFromTemplate').attr('disabled', 'disabled');
+        }
+        
+        if (($(this).attr('value').length >= 1) && ($('#selectTermTemplate').attr('selectedIndex') > 0))
+        { 
+            $('#submitFromTemplateCourse').attr('disabled', '');
+        }
+        else {
+            $('#submitFromTemplateCourse').attr('disabled', 'disabled');
         }
     });
     
     
     $('#selectTermTemplate').change(function(){
-        if (this.selectedIndex === 0) {
+        if (this.selectedIndex === 0 || ($('#siteTitleField').attr('value').length <=0)) {
             $('#submitFromTemplateCourse').attr('disabled', 'disabled');
         }
         else {
@@ -239,6 +257,7 @@ sakai.siteTypeSetup = function(){
                 $('#siteTerms').fadeIn('fast');
                 $('#siteTerms select').focus();
                 $('#siteTitleField').attr('value', '');
+                $('#siteId').fadeIn('fast');
                 $('#siteIdField').attr('value', '');
             }
             else {
@@ -246,6 +265,7 @@ sakai.siteTypeSetup = function(){
                 $('#submitFromTemplateCourse').fadeOut('fast');
                 $('#templateNonCourseInstruction').fadeIn('fast');
                 $('#siteTitle').fadeIn('fast');
+                $('#siteId').fadeIn('fast');
                 $('#siteTerms select').attr('selectedIndex', 0);
                 $('#siteTitle input').focus();
             }

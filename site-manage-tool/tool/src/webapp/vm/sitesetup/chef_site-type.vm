@@ -129,10 +129,6 @@
 				title length restrictions are copied from template chef_site-siteInfo-editInfo.vm maxlength needs to be set like in that template
 				*#
 				<span id="siteTitle"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteTitleField">$tlang.getString("sitetype.sitetitle") </label><input type="text" value="" size="20" maxlength="$!titleMaxLength"  id="siteTitleField" name="siteTitleField"/></span>
-				## input for site id
-				#if ($!allowSetSiteId)
-					<span id="siteId"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteIdField">$tlang.getString("java.siteid") </label><input type="text" value="" size="20" maxlength="99"  id="siteIdField" name="siteIdField"/></span>
-				#end
 				<span id="siteTerms" style="display:none"><strong class="reqStarInline"> * </strong>
 					<select name="selectTermTemplate" id="selectTermTemplate">
 						<option value ="0">$tlang.getString("sitetype.selectTerm")</option>
@@ -153,6 +149,10 @@
 						#end
 					</select> 				
 				</span>
+				## input for site id
+				#if ($!allowSetSiteId)
+					<span id="siteId"  style="display:none"><strong class="reqStarInline"> * </strong><label style="float:none" for="siteIdField">$tlang.getString("java.siteid") </label><input type="text" value="" size="20" maxlength="99"  id="siteIdField" name="siteIdField"/></span>
+				#end
 			</div>	 ## end of child of  div#templateSettings
 			<div style="padding:5px 8px;">
 				<input type="checkbox" name="copyUsers" id="copyUsers" value="true"/>	
