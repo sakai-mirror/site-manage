@@ -27,34 +27,35 @@
 	
 </div>
 <script type="text/javascript">
-    $(document).ready(function(){		
-		/* is there a site duplicate link? */
-		if ($(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']").length ==1){
-		/* setup variables */
-		var completeUrl = '$statusRequestUrl';
-		var workingText = '$workingText';
-		var blockingMessage ='$tlang.getString("sitegen.siteinfolist.copymessage")'; 
-		var linkToBeBlocked = $(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']");
-		var linkToBeBlockedParent = $(linkToBeBlocked).parents('li');
-		/* call function to ping the servlet and repeat ping every 10 secs if copy is still in progress, 
-		 * blocking link if so and displaying a message
-		 */
-		sakai.blockUI (completeUrl,workingText,linkToBeBlocked,linkToBeBlockedParent,blockingMessage,10000);
-	}
-		sakai.getSiteInfo('getSiteDesc','dialog','$tlang.getString("sitegen.siteinfolist.nosd")','$tlang.getString("sitegen.siteinfolist.nold")');
-		sakai.getGroupInfo('moreInfoGroups','dialog','$tlang.getString("sinfo.list.groups.memb")','$tlang.getString("sinfo.list.groups.print")','$tlang.getString("sitegen.siteinfolist.name")','$tlang.getString("sitegen.siteinfolist.role")','&nbsp;');
-		sakai.setupSelectList('siteMembers','selunselallid','selectedSelected');
-		$("#accordion").accordion({
-			header: 'h4',
-			active: false,
-			collapsible: true,
-			change: function(event, ui){
-				utils.resizeFrame();
-			}
-		});
-	  });
+    $(document).ready(function(){
+        /* is there a site duplicate link? */
+        if ($(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']").length == 1) {
+            /* setup variables */
+            var completeUrl = '$statusRequestUrl';
+            var workingText = '$workingText';
+            var blockingMessage = '$tlang.getString("sitegen.siteinfolist.copymessage")';
+            var linkToBeBlocked = $(".navIntraTool a[onclick*='doMenu_siteInfo_duplicate']");
+            var linkToBeBlockedParent = $(linkToBeBlocked).parents('li');
+            /*
+             call function to ping the servlet and repeat ping every 10 secs if copy is still in progress,
+             blocking link if so and displaying a message
+             args: url to poll, expected string, link to be blocked, its parent, message to display, poll interval, reload or not the top
+             */
+            sakai.blockUI(completeUrl, workingText, linkToBeBlocked, linkToBeBlockedParent, blockingMessage, 10000, 'yes');
+        }
+        sakai.getSiteInfo('getSiteDesc', 'dialog', '$tlang.getString("sitegen.siteinfolist.nosd")', '$tlang.getString("sitegen.siteinfolist.nold")');
+        sakai.getGroupInfo('moreInfoGroups', 'dialog', '$tlang.getString("sinfo.list.groups.memb")', '$tlang.getString("sinfo.list.groups.print")', '$tlang.getString("sitegen.siteinfolist.name")', '$tlang.getString("sitegen.siteinfolist.role")', '&nbsp;');
+        sakai.setupSelectList('siteMembers', 'selunselallid', 'selectedSelected');
+        $("#accordion").accordion({
+            header: 'h4',
+            active: false,
+            collapsible: true,
+            change: function(event, ui){
+                utils.resizeFrame();
+            }
+        });
+    });
 </script>
-
 <script type="text/javascript">
 function printPreview(target){
     var w = window.open('', 'printwindow', 'width=600,height=400,scrollbars=yes,toolbar=yes,resizable=yes');

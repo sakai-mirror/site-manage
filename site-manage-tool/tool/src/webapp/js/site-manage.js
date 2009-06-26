@@ -238,12 +238,9 @@ utils.resizeFrame = function(updown){
     }
 };
 
-sakai.blockUI = function(completeUrl,workingText,linkToBeBlocked,linkToBeBlockedParent,blockingMessage,intervalCheck){
-
-			  jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
-//	      	    jQuery.get(completeUrl, function(data){
-				if (data.indexOf('working') >= 0) {
-//				if (data.length > 0 && data.indexOf(workingText) >= 0) {
+sakai.blockUI = function(completeUrl,workingText,linkToBeBlocked,linkToBeBlockedParent,blockingMessage,intervalCheck,reload){
+	      	    jQuery.get(completeUrl, function(data){
+					if (data.length > 0 && data.indexOf(workingText) >= 0) {
 					// store link text in a variable
 					var dupText = ($(linkToBeBlocked).text());
 					// get the span parent of the link position
@@ -266,32 +263,22 @@ sakai.blockUI = function(completeUrl,workingText,linkToBeBlocked,linkToBeBlocked
 				var intTimer;
 		  	 	var thisStatus = this;
 		  	    this.queryStatus = function(){
-		  	    jQuery.get("http://141.213.113.60:8080/access/content/group/e9524fed-aec4-429a-aab1-807a6370a42f/test.txt", function(data){
-//	      	    jQuery.get(completeUrl, function(data){
-			  	    if (data.indexOf('working') >= 0) {
-//				if (data.length > 0 && data.indexOf(workingText) >= 0) {	
-					// hide the span parent of the "Duplicate Site" link
-					$(linkToBeBlockedParent + ' span').hide();
-					// append to the parent li a span with the former link text
-					 $(linkToBeBlockedParent).append('<span class=\"blockedLink\">' + dupText + '</span>');
-					// insert after this new span the message bubble div
-					 $(linkToBeBlockedParent + ' span.blockedLink').after('<div class=\"bubble\"><div>' + blockingMessage + '</div></div>'); //Site is being copied. This link will become available when done.
-					//position the bubble based on position of the span we removed
-					$('.bubble').css('left', (pos.left));
-					$('.bubble').css('top', (pos.top + 15));
-					$('.bubble').css('opacity','.6');
-	
+	      	    jQuery.get(completeUrl, function(data){
+				if (data.length > 0 && data.indexOf(workingText) >= 0) {	
 			  	    }
 			  	    else {
 						// remove bubble
 						 $('div.bubble').hide();
-	//					 $(linkToBeBlockedParent + ' div').remove();
+						// show the real link parent and the link child
+						$(linkToBeBlocked).parents('span').show();
 						// remove span that stood in for the "inactive" link 
-	 					$(linkToBeBlockedParent + ' span.blockedLink').remove();
-						// show the real link
-						$(linkToBeBlockedParent + ' span').show();
+	 					$('span.blockedLink').remove();
+						
 						// stop the timer
 						window.clearInterval(intTimer);
+						if (reload === 'yes') {
+							top.window.location.reload();
+						}
 					}
 		  	    });
 	             };
