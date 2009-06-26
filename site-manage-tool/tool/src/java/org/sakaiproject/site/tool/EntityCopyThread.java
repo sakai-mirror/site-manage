@@ -43,11 +43,13 @@ import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.util.SiteConstants;
+import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 import org.sakaiproject.util.ArrayUtil;
+import org.sakaiproject.sitemanage.api.TaskStatusService;
 
 /**
  * Thread to run the entity copy task needed when duplicating, copying, and importing site(s).
@@ -66,14 +68,19 @@ public class EntityCopyThread extends Observable implements Runnable
 	
 	private SiteService m_siteService = (SiteService) ComponentManager.get("org.sakaiproject.site.api.SiteService");
 	
+	private TaskStatusService m_taskStatusService = (TaskStatusService) ComponentManager.get(TaskStatusService.class);
+	
 	/** My thread running my timeout checker. */
 	protected Thread m_thread = null;
 
 	/** Signal to the timeout checker to stop. */
 	protected boolean m_threadStop = false;
 	
-	/** the url for post TaskStatusEntry later on **/
-	protected String m_taskStatusStreamUrl = "";
+	/** the entity reference parameter for post thread status later **/
+	protected String m_taskStatus_entityReference = "";
+	
+	/** the user id parameter for post thread status later **/
+	protected String m_taskStatus_userId = "";
 	
 	public void init(){}
 	public void start()
@@ -93,20 +100,17 @@ public class EntityCopyThread extends Observable implements Runnable
 	private String targetSiteId = null;
 	private boolean migrate = false;
 	private boolean byPassSecurity = false;
-	private SessionState sessionState = null;
-	private String userId = null;
 	
 	//constructor
-	public EntityCopyThread(List<String> toolIds, Hashtable<String, List<String>> importTools, String targetSiteId, boolean migrate, boolean byPassSecurity, SessionState sessionState, String userId, String taskStatusStreamUrl)
+	public EntityCopyThread(List<String> toolIds, Hashtable<String, List<String>> importTools, String targetSiteId, boolean migrate, boolean byPassSecurity, String taskStatus_entityReference, String taskStatus_userId)
 	{
 		this.toolIds = toolIds;
 		this.importTools = importTools;
 		this.targetSiteId = targetSiteId;
 		this.migrate = migrate;
 		this.byPassSecurity = byPassSecurity;
-		this.sessionState = sessionState;
-		this.userId = userId;
-		this.m_taskStatusStreamUrl = taskStatusStreamUrl;
+		this.m_taskStatus_entityReference = taskStatus_entityReference;
+		this.m_taskStatus_userId = taskStatus_userId;
 	}
 
 	public void stop()
@@ -136,35 +140,29 @@ public class EntityCopyThread extends Observable implements Runnable
 
 		if (!m_threadStop)
 		{
-			org.sakaiproject.tool.api.Session s = m_sessionManager.startSession();
-			try
-			{
-				User u = m_userDirectoryService.getUser(userId);
-				s.setUserId(u.getId());
-				m_sessionManager.setCurrentSession(s);
-			}
-			catch (Exception e)
-			{
-				M_log.warn(this + ":run cannot find user with id " + userId + e.getMessage());
-			}
-			
+			Session currentSession = m_sessionManager.getCurrentSession();
+        	if (currentSession == null) {
+            	// start a session if none is around
+            	currentSession = m_sessionManager.startSession(m_taskStatus_userId);
+        	}
+	        currentSession.setUserId(m_taskStatus_userId);
+	        currentSession.setActive();
+	        m_sessionManager.setCurrentSession(currentSession);
+	        
 			// running
-			sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
-			TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING, "Site Info", "copying entities");
+			m_taskStatusService.addTaskStatus(m_taskStatus_entityReference, m_taskStatus_userId, SiteConstants.ENTITYCOPY_THREAD_STATUS_RUNNING);
 				
 			try
 			{
 				// import tool content
-				CopyUtil.importToolIntoSite(toolIds, importTools, targetSiteId, true, false, sessionState);
+				CopyUtil.importToolIntoSite(toolIds, importTools, targetSiteId, true, false);
 			    // finished
-				sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
-				TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED, "Site Info", "finished copying entities");
+				m_taskStatusService.postTaskStatus(m_taskStatus_entityReference, m_taskStatus_userId, SiteConstants.ENTITYCOPY_THREAD_STATUS_FINISHED);
 				m_threadStop = true;
 			}
 		    catch(Exception e) {
-		    	// error
-		    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
-		    	TaskStatusGetPost.postStatus(m_taskStatusStreamUrl, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR, "Site Info", "Error copying entities");
+		    	// error 
+		    	m_taskStatusService.postTaskStatus(m_taskStatus_entityReference, m_taskStatus_userId, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 		    }
 		    finally
 		    {

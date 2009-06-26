@@ -82,5 +82,13 @@
 			destroy-method="destroy"
 			singleton="true">
 	</bean>
+	
+	<bean id="org.sakaiproject.sitemanage.api.TaskStatusService" 
+		class="org.sakaiproject.sitemanage.impl.TaskStatusServiceSqlImpl"
+		init-method="init"
+		singleton="true" >
+		<property name="sqlService"><ref bean="org.sakaiproject.db.api.SqlService"/></property>
+		<property name="idManager"><ref bean="org.sakaiproject.id.api.IdManager"/></property>
+	</bean>
 
 </beans>

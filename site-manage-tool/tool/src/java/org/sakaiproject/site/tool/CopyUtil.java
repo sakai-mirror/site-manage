@@ -43,9 +43,11 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.ToolConfiguration;
+import org.sakaiproject.sitemanage.api.TaskStatusService;
 import org.sakaiproject.site.util.SiteConstants;
 import org.sakaiproject.thread_local.cover.ThreadLocalManager;
 import org.sakaiproject.tool.api.Tool;
+import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.ArrayUtil;
 import org.sakaiproject.util.StringUtil;
 
@@ -57,13 +59,15 @@ public class CopyUtil {
 	
 	public static SiteService m_siteService = (SiteService) ComponentManager.get("org.sakaiproject.site.api.SiteService");
 
+	public static TaskStatusService m_taskStatusService = (TaskStatusService) ComponentManager.get("org.sakaiproject.sitemanage.api.TaskStatusService");
+
 	/**
 	 * 
 	 * @param nSiteId
 	 * @param oSiteId
 	 * @param site
 	 */
-	public static void importToolContent(String nSiteId, String oSiteId, boolean bypassSecurity, SessionState state) {
+	public static void importToolContent(String nSiteId, String oSiteId, boolean bypassSecurity) {
 		try
 		{
 			Site site = m_siteService.getSite(nSiteId);
@@ -106,7 +110,7 @@ public class CopyUtil {
 			}
 			
 			// now that we have the tool list, do the copy content
-			importToolIntoSite(toolIds, siteIds, nSiteId, false, true, state);
+			importToolIntoSite(toolIds, siteIds, nSiteId, false, true);
 		}
 		catch (Exception e)
 		{
@@ -167,7 +171,7 @@ public class CopyUtil {
 	}
 	
 	// import tool content into site
-	public static void importToolIntoSite(List<String> toolIds, Hashtable<String, List<String>> importTools, String siteId, boolean migrate, boolean byPassSecurity, SessionState sessionState) {
+	public static void importToolIntoSite(List<String> toolIds, Hashtable<String, List<String>> importTools, String siteId, boolean migrate, boolean byPassSecurity) {
 		if (importTools != null) {
 			try
 			{
@@ -188,7 +192,21 @@ public class CopyUtil {
 							String toSiteCollectionId = m_contentHostingService
 									.getSiteCollection(siteId);
 
-							transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
+							try
+							{
+								transferCopyEntities(toolId, fromSiteCollectionId, toSiteCollectionId, migrate);
+							}
+							catch (Exception e)
+							{
+								M_log.warn("CopyUtil:importToolIntoSite: cannot transferCopyEntities toolId = " + toolId + " fromSiteCollectionId=" + fromSiteCollectionId + " toSiteCollectionId=" + toSiteCollectionId + e.getMessage());
+								
+						    	// error
+						    	if (m_taskStatusService.serviceExist())
+						    	{
+						    		// post status
+						    		m_taskStatusService.postTaskStatus("", UserDirectoryService.getCurrentUser().getId(), SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						    	}
+							}
 							resourcesImported = true;
 						}
 					}
@@ -202,7 +220,20 @@ public class CopyUtil {
 						List importSiteIds = (List) importTools.get(toolId);
 						for (int k = 0; k < importSiteIds.size(); k++) {
 							String fromSiteId = (String) importSiteIds.get(k);
-							transferCopyEntities(toolId, fromSiteId, siteId, migrate);
+							try
+							{
+								transferCopyEntities(toolId, fromSiteId, siteId, migrate);
+							}
+							catch (Exception e)
+							{
+								M_log.warn("CopyUtil:importToolIntoSite: cannot transferCopyEntities toolId = " + toolId + " fromSiteId=" + fromSiteId + " toSiteId=" + siteId + e.getMessage());
+								
+						    	if (m_taskStatusService.serviceExist())
+						    	{
+						    		// post status
+						    		m_taskStatusService.postTaskStatus("", UserDirectoryService.getCurrentUser().getId(), SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
+						    	}
+							}
 						}
 					}
 				}
@@ -214,7 +245,6 @@ public class CopyUtil {
 			}
 		    catch(Exception e) {
 		    	// error
-		    	sessionState.setAttribute(SiteConstants.ENTITYCOPY_THREAD_STATUS, SiteConstants.ENTITYCOPY_THREAD_STATUS_ERROR);
 		    }
 		    finally
 			{
