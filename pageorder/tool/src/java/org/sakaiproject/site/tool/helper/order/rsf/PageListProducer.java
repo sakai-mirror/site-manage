@@ -170,16 +170,16 @@ public class PageListProducer
             UIMessage.make(pageForm, "reset-message", "confirm_reset_message");
 
             UIInput.make(pageForm, "state-init", "#{SitePageEditHandler.state}", state);
-            UICommand.make(pageForm, "save", "#{SitePageEditHandler.savePages}")
+            UICommand.make(pageForm, "save", UIMessage.make("save"), "#{SitePageEditHandler.savePages}")
               .decorate(new UITooltipDecorator(messageLocator
                         .getMessage("save_message")));
 
-            UICommand.make(pageForm, "revert", "#{SitePageEditHandler.cancel}")
+            UICommand.make(pageForm, "revert", UIMessage.make("revert"), "#{SitePageEditHandler.cancel}")
               .decorate(new UITooltipDecorator(messageLocator
                         .getMessage("cancel_message")));
 
             if (handler.isSiteOrdered()) {
-                UICommand.make(pageForm, "reset", "#{SitePageEditHandler.reset}")
+                UICommand.make(pageForm, "reset", UIMessage.make("reset"), "#{SitePageEditHandler.reset}")
                 .decorate(new UITooltipDecorator(messageLocator
                             .getMessage("reset_message")));
             }
