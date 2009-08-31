@@ -1,16 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-  <name>sakai-site-manage-participant-helper</name>
-  <comment/>
-  <projects>
-    <project>sakai-site-manage-api</project>
-    <project>sakai-site-manage-util</project>
-  </projects>
-  <buildSpec>
-    <buildCommand>
-      <name>org.eclipse.jdt.core.javabuilder</name>
-    </buildCommand>
-  </buildSpec>
-  <natures>
-    <nature>org.eclipse.jdt.core.javanature</nature>
-  </natures>
+	<name>sakai-site-manage-participant-helper</name>
+	<comment></comment>
+	<projects>
+		<project>sakai-site-manage-api</project>
+		<project>sakai-site-manage-util</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>edu.umd.cs.findbugs.plugin.eclipse.findbugsBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>edu.umd.cs.findbugs.plugin.eclipse.findbugsNature</nature>
+	</natures>
 </projectDescription>
