@@ -323,7 +323,7 @@ public class SiteAddParticipantHandler {
     
     private void resetTargettedMessageList()
     {
-    	targettedMessageList = new TargettedMessageList();
+    	targettedMessageList.clear();
     }
     
     private void resetUserRolesEntries()
@@ -336,10 +336,10 @@ public class SiteAddParticipantHandler {
      * @return
      */
     public String processSameRoleContinue() {
-
+    	targettedMessageList.clear();
     	if (sameRoleChoice == null)
     	{
-    		targettedMessageList.addMessage(new TargettedMessage("java.pleasechoose", null, TargettedMessage.SEVERITY_INFO));
+    		targettedMessageList.addMessage(new TargettedMessage("java.pleasechoose", null, TargettedMessage.SEVERITY_ERROR));
     		return null;
     	}
     	else
@@ -415,6 +415,7 @@ public class SiteAddParticipantHandler {
      */
     public String processEmailNotiContinue() {
 
+    	resetTargettedMessageList();
         return "continue";
     }
     
@@ -529,9 +530,8 @@ public class SiteAddParticipantHandler {
      * @return
      */
     public String processConfirmContinue() {
-
     	Hashtable<String, String> eIdRoles = new Hashtable<String, String>();
-    	
+    	resetTargettedMessageList();
     	for (UserRoleEntry entry:userRoleEntries) {
 			String eId = entry.userEId;
 
@@ -867,8 +867,8 @@ public class SiteAddParticipantHandler {
 				count++;
 			}
 
-			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.1", new Object[]{accounts}, TargettedMessage.SEVERITY_INFO));
-			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.2", null, TargettedMessage.SEVERITY_INFO));
+			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.1", new Object[]{accounts}, TargettedMessage.SEVERITY_ERROR));
+			targettedMessageList.addMessage(new TargettedMessage("add.existingpart.2", null, TargettedMessage.SEVERITY_ERROR));
 		}
 
 		return;
