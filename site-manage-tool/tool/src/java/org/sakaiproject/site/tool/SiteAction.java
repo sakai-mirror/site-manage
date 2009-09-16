@@ -4365,14 +4365,10 @@ public class SiteAction extends PagedResourceActionII {
 		// check if any section need to be removed
 		removeAnyFlagedSection(state, params);
 		
-		SiteInfo siteInfo = new SiteInfo();
-		if (state.getAttribute(STATE_SITE_INFO) != null) {
-			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
-		}
-
 		List providerChosenList = (List) state
 				.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
-		collectNewSiteInfo(siteInfo, state, params, providerChosenList);
+		
+		collectNewSiteInfo(state, params, providerChosenList);
 		// next step
 		//state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(2));
 	}
@@ -4393,8 +4389,13 @@ public class SiteAction extends PagedResourceActionII {
 			String uniqname = StringUtil.trimToNull(params
 					.getString("uniqname"));
 			state.setAttribute(STATE_SITE_QUEST_UNIQNAME, uniqname);
-
-			updateSiteInfo(params, state);
+			
+			// update site information
+			SiteInfo siteInfo = state.getAttribute(STATE_SITE_INFO) != null? (SiteInfo) state.getAttribute(STATE_SITE_INFO):new SiteInfo();
+			if (params.getString("additional") != null) {
+				siteInfo.additional = params.getString("additional");
+			}
+			state.setAttribute(STATE_SITE_INFO, siteInfo);
 
 			if (option.equalsIgnoreCase("add")) {
 
@@ -7203,8 +7204,7 @@ public class SiteAction extends PagedResourceActionII {
 							state.setAttribute(FORM_ADDITIONAL, additional);
 						}
 					}
-					collectNewSiteInfo(siteInfo, state, params,
-							providerChosenList);
+					collectNewSiteInfo(state, params, providerChosenList);
 				}
 				// next step
 				state.setAttribute(SITE_CREATE_CURRENT_STEP, new Integer(2));
@@ -10845,13 +10845,11 @@ public class SiteAction extends PagedResourceActionII {
 			providerCourseList = null;
 	}
 
-	private void collectNewSiteInfo(SiteInfo siteInfo, SessionState state,
+	private void collectNewSiteInfo(SessionState state,
 			ParameterParser params, List providerChosenList) {
 		if (state.getAttribute(STATE_MESSAGE) == null) {
-			siteInfo = new SiteInfo();
-			if (state.getAttribute(STATE_SITE_INFO) != null) {
-				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
-			}
+			
+			SiteInfo siteInfo = state.getAttribute(STATE_SITE_INFO) != null? (SiteInfo) state.getAttribute(STATE_SITE_INFO): new SiteInfo();
 
 			// site title is the title of the 1st section selected -
 			// daisyf's note
