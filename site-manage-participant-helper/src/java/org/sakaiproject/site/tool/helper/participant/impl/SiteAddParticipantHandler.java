@@ -241,6 +241,10 @@ public class SiteAddParticipantHandler {
     public String getSiteTitle()
     {
     	String rv = "";
+    	
+    	if (site == null)
+    		init();
+    	
     	if (site != null)
     	{
     		rv = site.getTitle();
@@ -257,6 +261,8 @@ public class SiteAddParticipantHandler {
     {
     	boolean rv = false;
 		String courseSiteType = getServerConfigurationString("courseSiteType", "course");
+		if (site == null)
+    		init();
 		if (site != null && courseSiteType.equals(site.getType()))
 		{
 			rv = true;
@@ -454,6 +460,8 @@ public class SiteAddParticipantHandler {
 		List<String> addedUserEIds = new Vector<String>();
 
 		if (userRoleEntries != null && !userRoleEntries.isEmpty()) {
+			if (site == null)
+				init();
 			if (site != null) {
 				// get realm object
 				String realmId = site.getReference();
@@ -532,6 +540,8 @@ public class SiteAddParticipantHandler {
     public String processConfirmContinue() {
     	Hashtable<String, String> eIdRoles = new Hashtable<String, String>();
     	resetTargettedMessageList();
+    	if (site == null)
+    		init();
     	for (UserRoleEntry entry:userRoleEntries) {
 			String eId = entry.userEId;
 
@@ -645,6 +655,8 @@ public class SiteAddParticipantHandler {
     private void checkAddParticipant() {
 		// get the participants to be added
 		int i;
+		if (site == null)
+    		init();
 		Vector<Participant> pList = new Vector<Participant>();
 		HashSet<String> existingUsers = new HashSet<String>();
 
