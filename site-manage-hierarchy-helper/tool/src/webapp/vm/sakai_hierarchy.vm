@@ -1,4 +1,19 @@
-##<!-- $Header: /cvs/sakai2/legacy/tools/src/webapp/vm/web/chef_iframe.vm,v 1.4 2005/05/15 17:05:28 gsilver.umich.edu Exp $ -->
 <div class="portletBody">
-YO YO YO
+#if ($parentId)
+<p>Current Parent ID: $parentId </p>
+        <form action="#toolForm("")" method="post" name="customizeForm" >
+                <p class="act">
+                        <input type="submit" accesskey ="s" class="active" name="$doRemove" value="$tlang.getString('gen.remove')" />
+                        <input type="submit" accesskey ="x" name="$doDone" value="$tlang.getString('gen.done')" />
+                </p>
+        </form>
+#else
+<p>$tlang.getString('java.selectparent')</p>
+        <form action="#toolForm("")" method="post" name="customizeForm" >
+                <p class="act">
+                        <input type="submit" accesskey ="s" class="active" name="$doUpdate" value="$tlang.getString('gen.save')" />
+                        <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.cancel')" />
+                </p>
+        </form>
+#end
 </div>

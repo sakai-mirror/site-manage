@@ -39,6 +39,7 @@ import org.sakaiproject.cheftool.VelocityPortletPaneledAction;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.cover.EntityManager;
+import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.site.api.Site;
@@ -135,6 +136,21 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		// set the resource bundle with our strings
 		context.put("tlang", rb);
 
+                context.put("doCancel", BUTTON + "doCancel");
+                context.put("doRemove", BUTTON + "doRemove");
+		try 
+		{ 
+			String parentId = getSiteProperty("sakai:parent-id");
+	System.out.println("Parent ID="+parentId);
+			if ( parentId != null ) {
+                		context.put("parentId", parentId);
+			}
+		} 
+		catch (Exception e) 
+		{
+			// WTF
+		}
+
 		return "sakai_hierarchy";
 	}
 
@@ -159,6 +175,32 @@ System.out.println(" doConfigure_update");
 		placement.save();
 
 		scheduleTopRefresh();
+	}
+
+	/**
+	 * doRemove - Clear the parent id value
+	 */
+	public void doRemove(RunData data, Context context)
+	{
+		// access the portlet element id to find our state
+		String peid = ((JetspeedRunData) data).getJs_peid();
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
+System.out.println("doRemove");
+
+		try
+		{
+
+		Site site;
+
+		site = SiteService.getSite(getSiteId());
+		ResourcePropertiesEdit rpe = site.getPropertiesEdit();
+		rpe.removeProperty("sakai:parent-id");
+		SiteService.save(site);
+		} 
+		catch (Exception e)
+		{
+			System.out.println("GAAK");
+		}
 	}
 
 	/**
