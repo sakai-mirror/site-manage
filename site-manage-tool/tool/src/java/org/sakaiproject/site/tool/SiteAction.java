@@ -1052,6 +1052,7 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	public String buildMainPanelContext(VelocityPortlet portlet,
 			Context context, RunData data, SessionState state) {
+System.out.println("buildMainPanelContext");
 		rb = new ResourceLoader("sitesetupgeneric");
 		context.put("tlang", rb);
 		// TODO: what is all this doing? if we are in helper mode, we are
@@ -1863,6 +1864,22 @@ public class SiteAction extends PagedResourceActionII {
 						}
 					}
 				}
+
+				if (allowUpdateSite) 
+				{
+System.out.println("kjdskjhdkh");
+					// show add parent sites menu
+					if (!isMyWorkspace) {
+						// if (notStealthOrHiddenTool("sakai-site-manage-hierarchy-helper")) {
+System.out.println("JSJSJSJSJ");
+							// b.add(new MenuEntry(rb.getString("java.hierarchy"),
+							b.add(new MenuEntry(rb.getString("java.hierarchy"),
+									"doHierarchyHelper"));
+						// }
+						
+					}
+				}
+				
 				
 				if (allowUpdateSite) 
 				{
@@ -3179,6 +3196,26 @@ public class SiteAction extends PagedResourceActionII {
 		// launch the helper
 		startHelper(data.getRequest(), (String) state.getAttribute(STATE_GROUP_HELPER_ID));//"sakai-site-manage-group-helper");
 		
+	}
+
+	/**
+	 * Launch the hierarchy Helper Tool -- for setting/clearing parent site
+	 * 
+	 * @see case 12  // TODO
+	 * 
+	 */
+	public void doHierarchyHelper(RunData data) {
+		SessionState state = ((JetspeedRunData) data)
+				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+
+System.out.println("doHierarchyHelper");
+		// pass in the siteId of the site to be ordered (so it can configure
+		// sites other then the current site)
+		SessionManager.getCurrentToolSession().setAttribute(
+				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
+
+		// launch the helper
+		startHelper(data.getRequest(), "sakai-site-manage-hierarchy-helper");
 	}
 	
 	public boolean setHelper(String helperName, String defaultHelperId, SessionState state, String stateHelperString)

@@ -44,6 +44,7 @@ import org.sakaiproject.event.api.SessionState;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
+import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.tool.api.Placement;
@@ -140,10 +141,18 @@ public class HierarchyAction extends VelocityPortletPaneledAction
                 context.put("doRemove", BUTTON + "doRemove");
 		try 
 		{ 
-			String parentId = getSiteProperty("sakai:parent-id");
-	System.out.println("Parent ID="+parentId);
+			Site site;
+
+			site = SiteService.getSite(getSiteId());
+			String parentId = site.getProperties().getProperty("sakai:parent-id");
+			// String parentId = getSiteProperty("sakai:parent-id");
+                        context.put("currentSite", site);
 			if ( parentId != null ) {
                 		context.put("parentId", parentId);
+			} else {
+				context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
 			}
 		} 
 		catch (Exception e) 

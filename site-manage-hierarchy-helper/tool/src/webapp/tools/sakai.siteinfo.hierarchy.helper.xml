@@ -3,7 +3,7 @@
 <registration>
 
 	<tool
-			id="sakai.siteinfo.hierarchy.helper"
+			id="sakai-site-manage-hierarchy-helper"
 			title="Hierarchy Helper"
 			description="For setting parent/child relationships between sites.">
 

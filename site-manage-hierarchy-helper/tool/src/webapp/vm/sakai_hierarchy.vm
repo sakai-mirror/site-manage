@@ -9,11 +9,22 @@
         </form>
 #else
 <p>$tlang.getString('java.selectparent')</p>
-        <form action="#toolForm("")" method="post" name="customizeForm" >
-                <p class="act">
-                        <input type="submit" accesskey ="s" class="active" name="$doUpdate" value="$tlang.getString('gen.save')" />
-                        <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.cancel')" />
-                </p>
-        </form>
+<form action="#toolForm("")" method="post" name="customizeForm" >
+#foreach($site in $sites)
+    #if ($!currentSite && ($site.Id != $!currentSite.Id))
+        #set ($siteIDCounter = $siteIDCounter + 1)
+        <p class="radio indnt3">
+            <input type="radio" name="parentSite" id="site_$siteIDCounter" value="$site.getId()" />
+            <label for="site_$siteIDCounter">
+                $validator.escapeHtml($site.getTitle())
+            </label>
+        </p>
+    #end
+#end
+<p class="act">
+  <input type="submit" accesskey ="s" class="active" name="$doUpdate" value="$tlang.getString('gen.save')" />
+  <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.cancel')" />
+</p>
+</form>
 #end
 </div>
