@@ -12,10 +12,7 @@
 
 		<configuration name="reset.button" value="true"/>
 
-		<category name="course" />
-		<category name="project" />
-      		<category name="portfolio" />
-		<category name="myworkspace" />
+		<category name="sakai.helper" />
 
 		<!-- Allow this to be set -->
 		<configuration name="functions.require" /> 
