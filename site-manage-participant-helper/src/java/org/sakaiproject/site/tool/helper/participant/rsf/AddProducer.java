@@ -63,6 +63,7 @@ import uk.org.ponder.rsf.viewstate.ViewParameters;
 import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
 import uk.org.ponder.stringutil.StringList;
 
+import org.sakaiproject.util.ResourceLoader;
 /**
  * 
  * @author
@@ -72,6 +73,8 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
 
 	/** Our log (commons). */
 	private static Log M_log = LogFactory.getLog(AddProducer.class);
+
+    private static ResourceLoader rl = new ResourceLoader("org.sakaiproject.site.tool.participant.bundle.sitesetupgeneric");
 	
     public SiteAddParticipantHandler handler;
     public static final String VIEW_ID = "Add";
@@ -117,9 +120,9 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	
     	// official participant
     	UIInput.make(participantForm, "officialAccountParticipant", "#{siteAddParticipantHandler.officialAccountParticipant}", handler.officialAccountParticipant);
-    	UIOutput.make(participantForm, "officialAccountSectionTitle", handler.getServerConfigurationString("officialAccountSectionTitle"));
-    	UIOutput.make(participantForm, "officialAccountName", handler.getServerConfigurationString("officialAccountName"));
-    	UIOutput.make(participantForm, "officialAccountLabel", handler.getServerConfigurationString("officialAccountLabel"));
+    	UIOutput.make(participantForm, "officialAccountSectionTitle", rl.getString("officialAccountSectionTitle"));
+    	UIOutput.make(participantForm, "officialAccountName", rl.getString("officialAccountName"));
+    	UIOutput.make(participantForm, "officialAccountLabel", rl.getString("officialAccountLabel"));
     	
     	String pickerAction = handler.getServerConfigurationString("officialAccountPickerAction");
 		if (pickerAction != null && !"".equals(pickerAction))
@@ -133,9 +136,9 @@ public class AddProducer implements ViewComponentProducer, NavigationCaseReporte
     	if (allowAddNonOfficialParticipant.equalsIgnoreCase("true"))
     	{
     		UIInput.make(participantForm, "nonOfficialAccountParticipant", "#{siteAddParticipantHandler.nonOfficialAccountParticipant}", handler.nonOfficialAccountParticipant);
-	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", handler.getServerConfigurationString("nonOfficialAccountSectionTitle"));
-	    	UIOutput.make(participantForm, "nonOfficialAccountName", handler.getServerConfigurationString("nonOfficialAccountName"));
-	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", handler.getServerConfigurationString("nonOfficialAccountLabel"));
+	    	UIOutput.make(participantForm, "nonOfficialAccountSectionTitle", rl.getString("nonOfficialAccountSectionTitle"));
+	    	UIOutput.make(participantForm, "nonOfficialAccountName", rl.getString("nonOfficialAccountName"));
+	    	UIOutput.make(participantForm, "nonOfficialAccountLabel", rl.getString("nonOfficialAccountLabel"));
     	}
     	
     	// role choice
