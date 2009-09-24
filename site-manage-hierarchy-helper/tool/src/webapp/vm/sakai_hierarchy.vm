@@ -7,7 +7,7 @@
         <form action="#toolForm("")" method="post" name="customizeForm" >
                 <p class="act">
                         <input type="submit" accesskey ="s" class="active" name="$doRemove" value="$tlang.getString('gen.remove')" />
-                        <input type="submit" accesskey ="x" name="$doDone" value="$tlang.getString('gen.done')" />
+                        <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.done')" />
                 </p>
         </form>
 #else

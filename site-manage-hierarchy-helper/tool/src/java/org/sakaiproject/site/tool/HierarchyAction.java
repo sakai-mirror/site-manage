@@ -219,7 +219,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		} 
 		catch (Exception e)
 		{
-			addAlert(rb.getString("error.cannot.remove"));
+			addAlert(state,rb.getString("error.cannot.remove"));
 		}
 	}
 
