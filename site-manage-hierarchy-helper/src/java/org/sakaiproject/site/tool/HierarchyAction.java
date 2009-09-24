@@ -192,6 +192,8 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
 			rpe.addProperty("sakai:parent-id", parentId);
 			SiteService.save(site);
+			SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+                	scheduleTopRefresh();
 		} 
 		catch (Exception e)
 		{
@@ -216,6 +218,8 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
 			rpe.removeProperty("sakai:parent-id");
 			SiteService.save(site);
+			SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+                	scheduleTopRefresh();
 		} 
 		catch (Exception e)
 		{
@@ -232,6 +236,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		String peid = ((JetspeedRunData) data).getJs_peid();
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
 		SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+                scheduleTopRefresh();
 	}
 
 	/**
