@@ -21,12 +21,16 @@
 
 package org.sakaiproject.site.tool;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.io.IOException;
+
 import java.util.Properties;
 import java.util.Collections;
-import java.net.URLEncoder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.GroupNotDefinedException;
 import org.sakaiproject.authz.api.Role;
@@ -47,6 +51,9 @@ import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.cover.SiteService;
+import org.sakaiproject.tool.api.Tool;
+import org.sakaiproject.tool.api.ToolException;
+import org.sakaiproject.tool.api.ToolSession;
 import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.ToolSession;
@@ -54,30 +61,26 @@ import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
 import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.StringUtil;
+import org.sakaiproject.util.ParameterParser;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.cover.UserDirectoryService;
 
 /**
  * <p>
- * IFrameAction is the Sakai tool to place any web content in an IFrame on the page.
+ * HierarchyAction allows site owners to connect a site to a parent.
  * </p>
- * <p>
- * Three special modes are supported - these pick the URL content from special places:
- * </p>
- * <ul>
- * <li>"site" - to show the services "server.info.url" configuration URL setting</li>
- * <li>"workspace" - to show the configured "myworkspace.info.url" URL, introducing a my workspace to users</li>
- * <li>"worksite" - to show the current site's "getInfoUrlFull()" setting</li>
- * </ul>
  */
 public class HierarchyAction extends VelocityPortletPaneledAction
 {
-
-
 	/** Resource bundle using current language locale */
 	protected static ResourceLoader rb = new ResourceLoader("hierarchy");
-	
+
+	private static final Log logger = LogFactory.getLog(HierarchyAction.class);
+
+        private static final String HIERARCHY_MODE = "hierarchy_mode";
+        private static final String MODE_DONE = "helper.done";
+
 	/**
 	 * Get the current site page our current tool is placed on.
 	 * 
@@ -137,6 +140,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		// set the resource bundle with our strings
 		context.put("tlang", rb);
 
+                context.put("doSave", BUTTON + "doSave");
                 context.put("doCancel", BUTTON + "doCancel");
                 context.put("doRemove", BUTTON + "doRemove");
 		try 
@@ -166,24 +170,34 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 	/**
 	 * Handle the configure context's update button
 	 */
-	public void doConfigure_update(RunData data, Context context)
+	public void doSave(RunData data, Context context)
 	{
 		// TODO: if we do limit the initState() calls, we need to make sure we get a new one after this call -ggolden
 
 		String peid = ((JetspeedRunData) data).getJs_peid();
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
+                ParameterParser params = data.getParameters();
+		String parentId = params.getString("parentSite");
 
-		Placement placement = ToolManager.getCurrentPlacement();
+		if ( ! SiteService.allowUpdateSite(parentId) ) 
+		{
+			addAlert(state,rb.getString("error.cannot.update"));
+			return;
+		}
 
-		// get the site toolConfiguration, if this is part of a site.
-		ToolConfiguration toolConfig = SiteService.findTool(placement.getId());
-System.out.println(" doConfigure_update");
+		try
+		{
+			Site site;
+			site = SiteService.getSite(getSiteId());
+			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
+			rpe.addProperty("sakai:parent-id", parentId);
+			SiteService.save(site);
+		} 
+		catch (Exception e)
+		{
+			addAlert(state,rb.getString("error.cannot.update"));
+		}
 
-		// save
-		// TODO: we might have just saved the entire site, so this would not be needed -ggolden
-		placement.save();
-
-		scheduleTopRefresh();
 	}
 
 	/**
@@ -194,21 +208,18 @@ System.out.println(" doConfigure_update");
 		// access the portlet element id to find our state
 		String peid = ((JetspeedRunData) data).getJs_peid();
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
-System.out.println("doRemove");
 
 		try
 		{
-
-		Site site;
-
-		site = SiteService.getSite(getSiteId());
-		ResourcePropertiesEdit rpe = site.getPropertiesEdit();
-		rpe.removeProperty("sakai:parent-id");
-		SiteService.save(site);
+			Site site;
+			site = SiteService.getSite(getSiteId());
+			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
+			rpe.removeProperty("sakai:parent-id");
+			SiteService.save(site);
 		} 
 		catch (Exception e)
 		{
-			System.out.println("GAAK");
+			addAlert(rb.getString("error.cannot.remove"));
 		}
 	}
 
@@ -220,7 +231,7 @@ System.out.println("doRemove");
 		// access the portlet element id to find our state
 		String peid = ((JetspeedRunData) data).getJs_peid();
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
-System.out.println("doCancel");
+		SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
 	}
 
 	/**
@@ -231,6 +242,46 @@ System.out.println("doCancel");
 		public SessionDataException(String text)
 		{
 			super(text);
+		}
+	}
+
+
+	/* (non-Javadoc)
+	 * @see org.sakaiproject.cheftool.VelocityPortletPaneledAction#toolModeDispatch(java.lang.String, java.lang.String, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+	 */
+	protected void toolModeDispatch(String methodBase, String methodExt, HttpServletRequest req, HttpServletResponse res)
+			throws ToolException
+	{
+		ToolSession toolSession = SessionManager.getCurrentToolSession();
+		SessionState state = getState(req);
+
+		if (MODE_DONE.equals(toolSession.getAttribute(HIERARCHY_MODE)))
+		{
+
+			Tool tool = ToolManager.getCurrentTool();
+
+			String url = (String) SessionManager.getCurrentToolSession().getAttribute(tool.getId() + Tool.HELPER_DONE_URL);
+
+			SessionManager.getCurrentToolSession().removeAttribute(tool.getId() + Tool.HELPER_DONE_URL);
+			SessionManager.getCurrentToolSession().removeAttribute(HIERARCHY_MODE);
+
+			try
+			{
+				res.sendRedirect(url);
+			}
+			catch (IOException e)
+			{
+				logger.warn("IOException: ", e);
+			}
+			return;
+		}
+		else if(sendToHelper(req, res, req.getPathInfo()))
+		{
+			return;
+		}
+		else
+		{
+			super.toolModeDispatch(methodBase, methodExt, req, res);
 		}
 	}
 }

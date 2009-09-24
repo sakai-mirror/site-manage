@@ -1,4 +1,7 @@
 <div class="portletBody">
+#if ($alertMessage)
+    <div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div><div style="display:block;clear:both" ></div>
+#end
 #if ($parentId)
 <p>Current Parent ID: $parentId </p>
         <form action="#toolForm("")" method="post" name="customizeForm" >
@@ -22,7 +25,7 @@
     #end
 #end
 <p class="act">
-  <input type="submit" accesskey ="s" class="active" name="$doUpdate" value="$tlang.getString('gen.save')" />
+  <input type="submit" accesskey ="s" class="active" name="$doSave" value="$tlang.getString('gen.save')" />
   <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.cancel')" />
 </p>
 </form>
