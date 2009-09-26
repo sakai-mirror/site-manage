@@ -24,7 +24,9 @@ package org.sakaiproject.site.tool;
 import java.io.IOException;
 
 import java.util.Properties;
-import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -146,22 +148,46 @@ public class LinkAction extends VelocityPortletPaneledAction
 		try 
 		{ 
 			Site site;
+			String siteId = getSiteId();
 
-			site = SiteService.getSite(getSiteId());
+			site = SiteService.getSite(siteId);
 			String parentId = site.getProperties().getProperty("sakai:parent-id");
-			// String parentId = getSiteProperty("sakai:parent-id");
                         context.put("currentSite", site);
 			if ( parentId != null ) {
-                		context.put("parentId", parentId);
-			} else {
-				context.put("sites", SiteService.getSites(
-					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
-					null, null, null, SortType.TITLE_ASC, null));
+				// Make sure parent site exists before we show it.
+				// If the parent site does not exist, clear the property
+				try {
+					Site parentSite = SiteService.getSite(parentId);
+                			context.put("parentId", parentId);
+					return "sakai_link";
+				} catch (Exception e) {
+					addAlert(state,rb.getString("alert.parent.removed")+" "+parentId);
+					ResourcePropertiesEdit rpe = site.getPropertiesEdit();
+					rpe.removeProperty("sakai:parent-id");
+					SiteService.save(site);
+				}
 			}
+
+			// Give the user a list of sites to select as parent
+			List<Site> sites = SiteService.getSites(
+				org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+				null, null, null, SortType.TITLE_ASC, null);
+
+			List<Site> goodSites = new ArrayList<Site> ();
+			// Do not include any sites which point to us as a parent
+			// Do not include ourself in the candidate list
+                       	for (Iterator i = sites.iterator(); i.hasNext(); ) {
+				Site thisSite = (Site) i.next();
+				String pid = thisSite.getProperties().getProperty("sakai:parent-id");
+				if ( siteId.equals(pid) ) continue;
+				if ( siteId.equals(thisSite.getId()) ) continue;
+				goodSites.add(thisSite);
+			}
+			context.put("sites", goodSites);
 		} 
 		catch (Exception e) 
 		{
-			// WTF
+			addAlert(state,rb.getString("error.cannot.access"));
 		}
 
 		return "sakai_link";
