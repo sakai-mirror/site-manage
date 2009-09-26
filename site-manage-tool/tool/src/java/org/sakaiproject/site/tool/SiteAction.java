@@ -1868,9 +1868,9 @@ public class SiteAction extends PagedResourceActionII {
 				{
 					// show add parent sites menu
 					if (!isMyWorkspace) {
-						if (notStealthOrHiddenTool("sakai-site-manage-hierarchy-helper")) {
-							b.add(new MenuEntry(rb.getString("java.hierarchy"),
-									"doHierarchyHelper"));
+						if (notStealthOrHiddenTool("sakai-site-manage-link-helper")) {
+							b.add(new MenuEntry(rb.getString("java.link"),
+									"doLinkHelper"));
 						}
 						
 					}
@@ -3195,12 +3195,12 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	/**
-	 * Launch the hierarchy Helper Tool -- for setting/clearing parent site
+	 * Launch the Link Helper Tool -- for setting/clearing parent site
 	 * 
 	 * @see case 12  // TODO
 	 * 
 	 */
-	public void doHierarchyHelper(RunData data) {
+	public void doLinkHelper(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
@@ -3210,7 +3210,7 @@ public class SiteAction extends PagedResourceActionII {
 				HELPER_ID + ".siteId", ((Site) getStateSite(state)).getId());
 
 		// launch the helper
-		startHelper(data.getRequest(), "sakai-site-manage-hierarchy-helper");
+		startHelper(data.getRequest(), "sakai-site-manage-link-helper");
 	}
 	
 	public boolean setHelper(String helperName, String defaultHelperId, SessionState state, String stateHelperString)
