@@ -159,6 +159,7 @@ public class LinkAction extends VelocityPortletPaneledAction
 				try {
 					Site parentSite = SiteService.getSite(parentId);
                 			context.put("parentId", parentId);
+                			context.put("parentTitle", parentSite.getTitle());
 					return "sakai_link";
 				} catch (Exception e) {
 					addAlert(state,rb.getString("alert.parent.removed")+" "+parentId);
@@ -183,7 +184,7 @@ public class LinkAction extends VelocityPortletPaneledAction
 				if ( siteId.equals(thisSite.getId()) ) continue;
 				goodSites.add(thisSite);
 			}
-			context.put("sites", goodSites);
+			if ( goodSites.size() > 0 ) context.put("sites", goodSites);
 		} 
 		catch (Exception e) 
 		{

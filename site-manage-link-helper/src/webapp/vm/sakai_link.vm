@@ -3,7 +3,7 @@
     <div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div><div style="display:block;clear:both" ></div>
 #end
 #if ($parentId)
-<p>Current Parent ID: $parentId </p>
+<p>Current Parent Site: $parentTitle ($parentId) </p>
         <form action="#toolForm("")" method="post" name="customizeForm" >
                 <p class="act">
                         <input type="submit" accesskey ="s" class="active" name="$doRemove" value="$tlang.getString('gen.remove')" />
@@ -13,7 +13,7 @@
 #else
 <p>$tlang.getString('java.selectparent')</p>
 <form action="#toolForm("")" method="post" name="customizeForm" >
-#if ( $sites.size > 0 ) 
+#if ( $sites ) 
 <select name="parentSite">
 <option id="nothingselcted" value="" />$tlang.getString("java.please.select")</option>
 #foreach($site in $sites)
@@ -32,7 +32,7 @@
 </p>
 #end
 <p class="act">
-#if ( $sites.size > 0 ) 
+#if ( $sites ) 
   <input type="submit" accesskey ="s" class="active" name="$doSave" value="$tlang.getString('gen.save')" />
 #end
   <input type="submit" accesskey ="x" name="$doCancel" value="$tlang.getString('gen.cancel')" />
