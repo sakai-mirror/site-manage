@@ -7,9 +7,9 @@
     <version>2.7.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
-  <name>sakai-site-manage-hierarchy-helper</name>
+  <name>sakai-site-manage-link-helper</name>
   <groupId>org.sakaiproject</groupId>
-  <artifactId>sakai-site-manage-hierarchy-helper</artifactId>
+  <artifactId>sakai-site-manage-link-helper</artifactId>
   <organization>
     <name>The Sakai Foundation</name>
     <url>http://sakaiproject.org/</url>
