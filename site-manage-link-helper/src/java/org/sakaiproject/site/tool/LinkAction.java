@@ -68,17 +68,17 @@ import org.sakaiproject.user.cover.UserDirectoryService;
 
 /**
  * <p>
- * HierarchyAction allows site owners to connect a site to a parent.
+ * LinkAction allows site owners to link a site to a parent.
  * </p>
  */
-public class HierarchyAction extends VelocityPortletPaneledAction
+public class LinkAction extends VelocityPortletPaneledAction
 {
 	/** Resource bundle using current language locale */
-	protected static ResourceLoader rb = new ResourceLoader("hierarchy");
+	protected static ResourceLoader rb = new ResourceLoader("link");
 
-	private static final Log logger = LogFactory.getLog(HierarchyAction.class);
+	private static final Log logger = LogFactory.getLog(LinkAction.class);
 
-        private static final String HIERARCHY_MODE = "hierarchy_mode";
+        private static final String LINK_MODE = "link_mode";
         private static final String MODE_DONE = "helper.done";
 
 	/**
@@ -164,7 +164,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			// WTF
 		}
 
-		return "sakai_hierarchy";
+		return "sakai_link";
 	}
 
 	/**
@@ -192,7 +192,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
 			rpe.addProperty("sakai:parent-id", parentId);
 			SiteService.save(site);
-			SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+			SessionManager.getCurrentToolSession().setAttribute(LINK_MODE, MODE_DONE);
                 	scheduleTopRefresh();
 		} 
 		catch (Exception e)
@@ -218,7 +218,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			ResourcePropertiesEdit rpe = site.getPropertiesEdit();
 			rpe.removeProperty("sakai:parent-id");
 			SiteService.save(site);
-			SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+			SessionManager.getCurrentToolSession().setAttribute(LINK_MODE, MODE_DONE);
                 	scheduleTopRefresh();
 		} 
 		catch (Exception e)
@@ -235,7 +235,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		// access the portlet element id to find our state
 		String peid = ((JetspeedRunData) data).getJs_peid();
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(peid);
-		SessionManager.getCurrentToolSession().setAttribute(HIERARCHY_MODE, MODE_DONE);
+		SessionManager.getCurrentToolSession().setAttribute(LINK_MODE, MODE_DONE);
                 scheduleTopRefresh();
 	}
 
@@ -260,7 +260,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 		ToolSession toolSession = SessionManager.getCurrentToolSession();
 		SessionState state = getState(req);
 
-		if (MODE_DONE.equals(toolSession.getAttribute(HIERARCHY_MODE)))
+		if (MODE_DONE.equals(toolSession.getAttribute(LINK_MODE)))
 		{
 
 			Tool tool = ToolManager.getCurrentTool();
@@ -268,7 +268,7 @@ public class HierarchyAction extends VelocityPortletPaneledAction
 			String url = (String) SessionManager.getCurrentToolSession().getAttribute(tool.getId() + Tool.HELPER_DONE_URL);
 
 			SessionManager.getCurrentToolSession().removeAttribute(tool.getId() + Tool.HELPER_DONE_URL);
-			SessionManager.getCurrentToolSession().removeAttribute(HIERARCHY_MODE);
+			SessionManager.getCurrentToolSession().removeAttribute(LINK_MODE);
 
 			try
 			{
