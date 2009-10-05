@@ -1,9 +1,8 @@
 <projectDescription>
-  <name>sakai-site-manage-group-section-role-helper-pack</name>
+  <name>site-manage-group-section-role-helper-pack</name>
   <comment/>
   <projects>
-    <project>sakai-site-manage-group-section-role-helper</project>
-    <project>sakai-site-manage-util</project>
+    <project>site-manage-util</project>
   </projects>
   <buildSpec>
     <buildCommand>

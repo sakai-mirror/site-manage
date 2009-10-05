@@ -1,10 +1,9 @@
 <projectDescription>
-  <name>sakai-site-manage-impl</name>
+  <name>site-manage-impl</name>
   <comment/>
   <projects>
-    <project>sakai-site-manage-api</project>
-    <project>sakai-site-manage-hbm</project>
-    <project>sakai-site-manage-util</project>
+    <project>site-manage-api</project>
+    <project>site-manage-hbm</project>
   </projects>
   <buildSpec>
     <buildCommand>

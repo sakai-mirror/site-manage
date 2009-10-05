@@ -1,8 +1,8 @@
 <projectDescription>
-  <name>sakai-site-manage-util</name>
+  <name>site-manage-util</name>
   <comment/>
   <projects>
-    <project>sakai-site-manage-api</project>
+    <project>site-manage-api</project>
   </projects>
   <buildSpec>
     <buildCommand>

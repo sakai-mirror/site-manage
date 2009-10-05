@@ -1,8 +1,8 @@
 <projectDescription>
-  <name>sakai-site-manage-hbm</name>
+  <name>site-manage-hbm</name>
   <comment/>
   <projects>
-    <project>sakai-site-manage-api</project>
+    <project>site-manage-api</project>
   </projects>
   <buildSpec>
     <buildCommand>
