@@ -1,9 +1,9 @@
 <projectDescription>
-  <name>site-manage-participant-helper</name>
+  <name>sakai-site-manage-participant-helper</name>
   <comment/>
   <projects>
-    <project>site-manage-api</project>
-    <project>site-manage-util</project>
+    <project>sakai-site-manage-api</project>
+    <project>sakai-site-manage-util</project>
   </projects>
   <buildSpec>
     <buildCommand>
