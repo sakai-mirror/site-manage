@@ -12,9 +12,9 @@
   <artifactId>sitemanage</artifactId>
   <packaging>pom</packaging>
   <scm>
-    <connection>scm:svn:https://source.sakaiproject.org/svn/site-manage/trunk</connection>
-    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/site-manage/trunk</developerConnection>
-    <url>https://source.sakaiproject.org/svn/site-manage/trunk</url>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.7.x</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.7.x</developerConnection>
+    <url>https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.7.x</url>
   </scm>
   <profiles>
     <profile>
