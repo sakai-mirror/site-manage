@@ -6479,8 +6479,20 @@ public class SiteAction extends PagedResourceActionII {
 						try {
 							User user = UserDirectoryService.getUser(rId);
 							// save role for permission check
-							roles.add(realmEdit.getUserRole(user.getId()).getId());
-							realmEdit.removeMember(user.getId());
+							if (user != null)
+							{
+								String userId = user.getId();
+								Member userMember = realmEdit.getMember(userId);
+								if (userMember != null)
+								{
+									Role role = userMember.getRole();
+									if (role != null)
+									{
+										roles.add(role.getId());
+									}
+									realmEdit.removeMember(userId);
+								}
+							}
 						} catch (UserNotDefinedException e) {
 							M_log.warn(this + ".doUpdate_participant: IdUnusedException " + rId + ". ", e);
 						}
@@ -6493,12 +6505,12 @@ public class SiteAction extends PagedResourceActionII {
 				if (!AuthzGroupService.allowUpdate(realmId)) {
 				    // see if any changed have site.upd
 				    for (String rolename: roles) {
-					Role role = realmEdit.getRole(rolename);
-					if (role != null && role.isAllowed("site.upd")) {
-					    addAlert(state, rb.getFormattedMessage("java.roleperm", new Object[]{rolename}));
-					    return;
-					}
-				    }
+						Role role = realmEdit.getRole(rolename);
+						if (role != null && role.isAllowed("site.upd")) {
+						    addAlert(state, rb.getFormattedMessage("java.roleperm", new Object[]{rolename}));
+						    return;
+							}
+					    }
 				}
 
 				if (hadMaintainUser
@@ -6544,45 +6556,49 @@ public class SiteAction extends PagedResourceActionII {
 				for (Iterator iGroups = groups.iterator(); iGroups.hasNext();)
 				{
 					Group g = (Group) iGroups.next();
-					try
+					if (g != null)
 					{
-						Set gMembers = g.getMembers();
-						for (Iterator iGMembers = gMembers.iterator(); iGMembers.hasNext();)
+						try
 						{
-							Member gMember = (Member) iGMembers.next();
-							String gMemberId = gMember.getUserId();
-							Member siteMember = s.getMember(gMemberId);
-							if ( siteMember  == null)
+							Set gMembers = g.getMembers();
+							for (Iterator iGMembers = gMembers.iterator(); iGMembers.hasNext();)
 							{
-								// user has been removed from the site
-								g.removeMember(gMemberId);
-							}
-							else
-							{
-								// check for Site Info-managed groups: don't change roles for other groups (e.g. section-managed groups)
-								String gProp = g.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
-								
-								// if there is a difference between the role setting, remove the entry from group and add it back with correct role, all are marked "not provided"
-								if (gProp != null && gProp.equals(Boolean.TRUE.toString()) &&
-										!g.getUserRole(gMemberId).equals(siteMember.getRole()))
+								Member gMember = (Member) iGMembers.next();
+								String gMemberId = gMember.getUserId();
+								Member siteMember = s.getMember(gMemberId);
+								if ( siteMember  == null)
 								{
-									Role siteRole = siteMember.getRole();
-									if (g.getRole(siteRole.getId()) == null)
-									{
-										// in case there is no matching role as that in the site, create such role and add it to the user
-										g.addRole(siteRole.getId(), siteRole);
-									}
+									// user has been removed from the site
 									g.removeMember(gMemberId);
-									g.addMember(gMemberId, siteRole.getId(), siteMember.isActive(), false);
+								}
+								else
+								{
+									// check for Site Info-managed groups: don't change roles for other groups (e.g. section-managed groups)
+									String gProp = g.getProperties().getProperty(SiteConstants.GROUP_PROP_WSETUP_CREATED);
+									
+									// if there is a difference between the role setting, remove the entry from group and add it back with correct role, all are marked "not provided"
+									Role groupRole = g.getUserRole(gMemberId);
+									Role siteRole = siteMember.getRole();
+									if (gProp != null && gProp.equals(Boolean.TRUE.toString()) &&
+											groupRole != null && siteRole != null && !groupRole.equals(siteRole))
+									{
+										if (g.getRole(siteRole.getId()) == null)
+										{
+											// in case there is no matching role as that in the site, create such role and add it to the user
+											g.addRole(siteRole.getId(), siteRole);
+										}
+										g.removeMember(gMemberId);
+										g.addMember(gMemberId, siteRole.getId(), siteMember.isActive(), false);
+									}
 								}
 							}
+							// post event about the participant update
+							EventTrackingService.post(EventTrackingService.newEvent(SiteService.SECURE_UPDATE_GROUP_MEMBERSHIP, g.getId(),false));
 						}
-						// post event about the participant update
-						EventTrackingService.post(EventTrackingService.newEvent(SiteService.SECURE_UPDATE_GROUP_MEMBERSHIP, g.getId(),false));
-					}
-					catch (Exception ee)
-					{
-						M_log.warn(this + ".doUpdate_related_group_participants: " + ee.getMessage() + g.getId(), ee);
+						catch (Exception ee)
+						{
+							M_log.warn(this + ".doUpdate_related_group_participants: " + ee.getMessage() + g.getId(), ee);
+						}
 					}
 					
 				}
