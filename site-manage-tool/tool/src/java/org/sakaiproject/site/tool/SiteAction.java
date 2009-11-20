@@ -3042,7 +3042,10 @@ public class SiteAction extends PagedResourceActionII {
 					try
 					{
 						Section s = cms.getSection(providerSectionId);
-						providerSectionListTitles.add(s.getTitle()); 
+						if (s != null)
+						{
+							providerSectionListTitles.add(s.getTitle()); 
+						}
 					}
 					catch (Exception e)
 					{
@@ -3473,7 +3476,10 @@ public class SiteAction extends PagedResourceActionII {
 				try
 				{
 					Section s = cms.getSection(sectionId);
-					sectionTitles.put(sectionId, s.getTitle());
+					if (s != null)
+					{
+						sectionTitles.put(sectionId, s.getTitle());
+					}
 				}
 				catch (Exception e)
 				{
@@ -3512,9 +3518,11 @@ public class SiteAction extends PagedResourceActionII {
 					
 					try
 					{
-					Section s = cms.getSection(courseEid);
-					if (s!=null)
-						soList.add(new SectionObject(s));
+						Section s = cms.getSection(courseEid);
+						if (s!=null)
+						{
+							soList.add(new SectionObject(s));
+						}
 					}
 					catch (Exception e)
 					{
@@ -4607,7 +4615,8 @@ public class SiteAction extends PagedResourceActionII {
 			// default title
 			String title = sectionFieldProvider.getSectionTitle(t.getEid(), (List) multiCourseInputs.get(0));
 			try {
-				title = cms.getSection(sectionEid).getTitle();
+				Section s = cms.getSection(sectionEid);
+				title = s != null?s.getTitle():title;
 			} catch (IdNotFoundException e) {
 				// cannot find section, use the default title 
 				M_log.warn(this + ":readCourseSectionInfo: cannot find section with eid=" + sectionEid);
@@ -11064,9 +11073,12 @@ public class SiteAction extends PagedResourceActionII {
 			if (selections != null && selections.size() == lvlSz) {
 				Section sect = cms.getSection((String) selections.get(selections
 						.size() - 1));
-				SectionObject so = new SectionObject(sect);
-		
-				state.setAttribute(STATE_CM_SELECTED_SECTION, so);
+				if (sect != null)
+				{
+					SectionObject so = new SectionObject(sect);
+			
+					state.setAttribute(STATE_CM_SELECTED_SECTION, so);
+				}
 			} else
 				state.removeAttribute(STATE_CM_SELECTED_SECTION);
 		
@@ -11323,9 +11335,12 @@ public class SiteAction extends PagedResourceActionII {
 			for (int i = 0; i < sectionList.size(); i++) {
 				String sectionEid = (String) sectionList.get(i);
 				Section s = cms.getSection(sectionEid);
-				SectionObject so = new SectionObject(s);
-				so.setAuthorizer(userId);
-				list.add(so);
+				if (s != null)
+				{
+					SectionObject so = new SectionObject(s);
+					so.setAuthorizer(userId);
+					list.add(so);
+				}
 			}
 		}
 		return list;
