@@ -4275,6 +4275,7 @@ public class SiteAction extends PagedResourceActionII {
 				// should never happened, as the list of templates are generated
 				// from existing sites
 				M_log.warn(this + ".doSite_type" + e.getClass().getName(), e);
+				state.removeAttribute(STATE_TEMPLATE_SITE);
 			}
 			
 			// grab site info from template
@@ -4311,6 +4312,11 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolIdsSelected);
 			state.setAttribute(STATE_SITE_INFO, siteInfo);
+		}
+		else
+		{
+			// no template selected
+			state.removeAttribute(STATE_TEMPLATE_SITE);
 		}
 	}
 
