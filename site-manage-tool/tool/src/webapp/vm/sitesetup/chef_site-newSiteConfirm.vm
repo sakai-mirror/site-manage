@@ -83,27 +83,32 @@
 				$tlang.getString("newsc.tools")
 				</th>
 				<td>
-					#if ($check_home)
-						$tlang.getString("java.home")<br />
-					#end
-					#foreach($tool in $toolRegistrationList)
-						#set($toolId = $tool.Id)
-						#if ($toolRegistrationSelectedList.contains($tool.Id))
-							#if ($toolId.equals("sakai.mailbox"))
-								$tool.Title: $emailId@$serverName <br />
-							#elseif ($toolId.indexOf("sakai.news") != -1)
-								$tool.Title: $validator.escapeHtml($!newsTitles.get($toolId)) <br />
-							#elseif ($toolId.indexOf("sakai.iframe") != -1)
-								$tool.Title: $validator.escapeHtml($!wcTitles.get($toolId)) <br />
-							#else
-								$tool.Title
-								#foreach ($tId in $!importSiteTools.keys())
-								#if ($tId == $toolId)
-									(
-										#set($importSiteIds = $importSiteTools.get($toolId))
-										#foreach($importSiteId in $importSiteIds)
-											#set($importSite = $siteService.getSite($importSiteId))
-											$validator.escapeHtml($importSite.getTitle()),
+					<ul class="attachList" style="margin:0">
+						#if ($check_home)
+							<li><span class="home">$tlang.getString("java.home")</span></li>
+						#end
+						
+						#foreach($tool in $toolRegistrationList)
+							#set($toolId = $tool.Id)
+								#if ($toolRegistrationSelectedList.contains($tool.Id))
+									<li>
+										#if ($toolId.equals("sakai.mailbox"))
+											$tool.Title: $emailId@$serverName <br />
+										#elseif ($!multipleToolIdTitleMap.containsKey($toolId))
+											$validator.escapeHtml($!multipleToolIdTitleMap.get($toolId))
+										#else
+											$tool.Title
+											#foreach ($tId in $!importSiteTools.keys())
+												#if ($tId == $toolId)
+													(
+														#set($importSiteIds = $importSiteTools.get($toolId))
+														#foreach($importSiteId in $importSiteIds)
+															#set($importSite = $siteService.getSite($importSiteId))
+															$validator.escapeHtml($importSite.getTitle()),
+														#end
+													)
+												#end
+											#end
 										#end
 									)
 								#end
