@@ -2,16 +2,21 @@
 <emailTemplates>
 <emailTemplate>
  <subject>${localSakaiName} New User Notification </subject>
- <message>${userName}:
-
- You have been added to  ${localSakaiName} (${localSakaiURL}) by ${currentUserDisplayName}. 
-
+ <message>
  
- Your password is: ${newPassword} 
- You can later go to the Account tool in your My Workspace site to reset it.
+ Dear ${userName},
 
+ An account on ${localSakaiName} (${localSakaiURL}) has been created for you by ${currentUserDisplayName}. To access your account:
 
-
+	1) Go to:
+		${localSakaiURL}
+	
+	2) Login using:
+		User Id: 	${userEid}
+		password: 	${newPassword} 
+ You can change your password after you have logged  in, using the Account tool in your MyWorksace.
+ 
+ (This is an automated message from ${localSakaiName}.)
 </message>
  <locale></locale>
 </emailTemplate>
@@ -133,6 +138,19 @@ Vous pouvez aller dans l'outil Compte dans le site ma Zone de Travail pour le r\
 </message>
  <locale>fr_CA</locale>
 </emailTemplate>
+<emailTemplate>
+ <subject>${localSakaiName} Nouvelle notification utilisateur</subject>
+ <message>${userName}:
+
+Vous avez \u00E9t\u00E9 ajout\u00E9 \u00E0 ${localSakaiName} (${localSakaiURL})par ${currentUserDisplayName}. 
+
+Votre mot de passe est 
+ ${newPassword} 
+
+Vous pouvez aller dans l'outil Compte dans le site mon Espace de Travail pour le r\u00E9initialiser.
+
+</message>
+ <locale>fr_FR</locale>
 <emailTemplate>
  <subject>${localSakaiName} </subject>
  <message>${userName}:
