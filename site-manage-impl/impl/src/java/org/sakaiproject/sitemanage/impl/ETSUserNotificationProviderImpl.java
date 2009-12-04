@@ -1,20 +1,56 @@
+/**********************************************************************************
+ * $URL$
+ * $Id$
+ ***********************************************************************************
+ *
+ * Copyright (c) 2008, 2009 The Sakai Foundation
+ *
+ * Licensed under the Educational Community License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.osedu.org/licenses/ECL-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ **********************************************************************************/
+
 package org.sakaiproject.sitemanage.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.output.XMLOutputter;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.email.api.EmailService;
 import org.sakaiproject.emailtemplateservice.model.EmailTemplate;
@@ -25,8 +61,14 @@ import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
+import org.sakaiproject.util.ResourceLoader;
+//import org.w3c.dom.Document;
+//import org.w3c.dom.Element;
+//import org.w3c.dom.Node;
+//import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-
+import org.apache.xerces.util.DOMUtil;
 
 public class ETSUserNotificationProviderImpl implements UserNotificationProvider {
 	
@@ -73,37 +115,29 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		
 		//do we need to load data?
 		Map<String, String> replacementValues = new HashMap<String, String>();
-		
-		// put placeholders for replacement values 
-		replacementValues.put("userName", "");
-        replacementValues.put("userEid", "");
-        replacementValues.put("localSakaiName", "");
-        replacementValues.put("currentUserName", "");
-        replacementValues.put("currentUserDisplayName", "");
-        replacementValues.put("localSakaiURL", "");
-        replacementValues.put("siteName", "");
-        replacementValues.put("productionSiteName", "");
-        replacementValues.put("newNonOfficialAccount", "false");
-        replacementValues.put("newPassword", "");
-        replacementValues.put("productionSiteName", "");
-        
-		if (emailTemplateService.getRenderedTemplateForUser(NOTIFY_ADDED_PARTICIPANT, "/user/admin", replacementValues) == null) 
+		if (emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_ADDED_PARTICIPANT, "/user/admin", replacementValues) == null) 
 			loadAddedParticipantMail();
 		else 
 			M_log.info("templates for " + NOTIFY_ADDED_PARTICIPANT + " exist");
 		
-		if (emailTemplateService.getRenderedTemplateForUser(NOTIFY_NEW_USER, "/user/admin", replacementValues) == null) 
-			loadNewUserMail();
-		else 
-			M_log.info("templates for " + NOTIFY_NEW_USER + " exist");
+		if (serverConfigurationService.getBoolean("auto.ddl", false)) {
+			if (emailTemplateService.getRenderedTemplateForUser(NOTIFY_NEW_USER, "/user/admin", replacementValues) == null) 
+				loadNewUserMail();
+			else 
+				M_log.info("templates for " + NOTIFY_NEW_USER + " exist");
 			
+			if (emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_ADDED_PARTICIPANT, "/user/admin", replacementValues) == null) 
+				loadAddedParticipantMail();
+			else 
+				M_log.info("templates for " + NOTIFY_NEW_USER + " exist");
+			
+		}
 	}
 	
 	public void notifyAddedParticipant(boolean newNonOfficialAccount,
 			User user, String siteTitle) {
 		
-		String from = serverConfigurationService.getBoolean(NOTIFY_FROM_CURRENT_USER, false)?
-				getCurrentUserEmailAddress():getSetupRequestEmailAddress();
+		String from = getSetupRequestEmailAddress();
 		//we need to get the template
 		
 
@@ -111,6 +145,10 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		if (from != null) {
 			String productionSiteName = serverConfigurationService.getString(
 					"ui.service", "");
+			String productionSiteUrl = serverConfigurationService
+					.getPortalUrl();
+			String nonOfficialAccountUrl = serverConfigurationService.getString(
+					"nonOfficialAccount.url", null);
 			String emailId = user.getEmail();
 			String to = emailId;
 			String headerTo = emailId;
@@ -135,7 +173,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 	            replacementValues.put("siteName", siteTitle);
 	            replacementValues.put("productionSiteName", productionSiteName);
-	            replacementValues.put("newNonOfficialAccount", Boolean.valueOf(newNonOfficialAccount).toString().toLowerCase());
+	            replacementValues.put("newNonOfficialAccount", new Boolean(newNonOfficialAccount).toString());
 	         
 	            M_log.debug("getting template: sitemange.notifyAddedParticipant");
 	            RenderedTemplate template = null;
@@ -146,9 +184,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	           }
 	           catch (Exception e) {
 	        	   e.printStackTrace();
-	        	   return;
 	           }
-			List<String> headers = new ArrayList<String>();
+			List headers = new ArrayList();
 			headers.add("Precedence: bulk");
 			
 			content = template.getRenderedMessage();	
@@ -166,6 +203,8 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		String from = getSetupRequestEmailAddress();
 		String productionSiteName = serverConfigurationService.getString(
 				"ui.service", "");
+		String productionSiteUrl = serverConfigurationService.getPortalUrl();
+		
 		String newUserEmail = user.getEmail();
 		String to = newUserEmail;
 		String headerTo = newUserEmail;
@@ -192,18 +231,17 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	            replacementValues.put("localSakaiName",serverConfigurationService.getString(
 	    				"ui.service", ""));
 	            replacementValues.put("currentUserName",userDirectoryService.getCurrentUser().getDisplayName());
-	            replacementValues.put("userEid", user.getEid());
 	            replacementValues.put("localSakaiUrl", serverConfigurationService.getPortalUrl());
 	            replacementValues.put("newPassword",newUserPassword);
 	            replacementValues.put("siteName", siteTitle);
 	            replacementValues.put("productionSiteName", productionSiteName);
-	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser(NOTIFY_NEW_USER, user.getReference(), replacementValues);    		
+	        RenderedTemplate template = emailTemplateService.getRenderedTemplateForUser(this.NOTIFY_NEW_USER, user.getReference(), replacementValues);    		
 	    	if (template == null)
 				return;
 	        content = template.getRenderedMessage();
 			
 			String message_subject = template.getRenderedSubject();
-			List<String> headers = new ArrayList<String>();
+			List headers = new ArrayList();
 			headers.add("Precedence: bulk");
 			emailService.send(from, to, message_subject, content, headerTo,
 					replyTo, headers);
@@ -226,7 +264,7 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 	}
 
 
-	@SuppressWarnings("unchecked")
+
 	private void loadAddedParticipantMail() {
 		try {
 			//we need a user session to avoind potential NPE's
@@ -235,11 +273,11 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		    sakaiSession.setUserEid(ADMIN);
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
 			Document document = new SAXBuilder(  ).build(in);
-			List<Element> it = document.getRootElement().getChildren("emailTemplate");
+			List it = document.getRootElement().getChildren("emailTemplate");
 			
 			for (int i =0; i < it.size(); i++) {
 				Element xmlTemplate = (Element)it.get(i);
-				xmlToTemplate(xmlTemplate, NOTIFY_ADDED_PARTICIPANT);
+				xmlToTemplate(xmlTemplate, this.NOTIFY_ADDED_PARTICIPANT);
 			}
 			sakaiSession.setUserId(null);
 		    sakaiSession.setUserEid(null);
@@ -256,7 +294,6 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		} 
 	}
 
-	@SuppressWarnings("unchecked")
 	private void loadNewUserMail() {
 		try {
 			//we need a user session to avoind potential NPE's
@@ -265,11 +302,11 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		    sakaiSession.setUserEid(ADMIN);
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyNewuser.xml");
 			Document document = new SAXBuilder(  ).build(in);
-			List<Element> it = document.getRootElement().getChildren("emailTemplate");
+			List it = document.getRootElement().getChildren("emailTemplate");
 			
 			for (int i =0; i < it.size(); i++) {
 				Element xmlTemplate = (Element)it.get(i);
-				xmlToTemplate(xmlTemplate, NOTIFY_NEW_USER);
+				xmlToTemplate(xmlTemplate, this.NOTIFY_NEW_USER);
 			}
 			sakaiSession.setUserId(null);
 		    sakaiSession.setUserEid(null);
@@ -303,14 +340,6 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 		this.emailTemplateService.saveTemplate(template);
 	}
 
-	private String getCurrentUserEmailAddress() {
-		User currentUser = userDirectoryService.getCurrentUser();
-		String email = currentUser != null ? currentUser.getEmail():null;
-		if (email == null || email.length() == 0) {
-			email = getSetupRequestEmailAddress();
-		}
-		return email;
-	}
 
 
 	
