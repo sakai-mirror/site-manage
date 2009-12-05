@@ -4889,8 +4889,6 @@ public class SiteAction extends PagedResourceActionII {
 
 			addNewSite(params, state);
 
-			addFeatures(state);
-
 			Site site = getStateSite(state);
 
 			// normal site creation: add the features.
