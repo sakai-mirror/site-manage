@@ -62,8 +62,7 @@
 				#if(!$toolExist)
 					#set($originToolId = false)
 					#foreach ($tId in $!multipleToolIdSet)
-						#if ($toolId!=$!homeToolId && $toolId.indexOf($tId) != -1)
-							## exclue Home tool
+						#if ($toolId.indexOf($tId) != -1)
 							#set($originToolId=$tId)
 						#end
 					#end
