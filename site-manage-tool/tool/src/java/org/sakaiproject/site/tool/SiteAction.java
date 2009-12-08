@@ -171,8 +171,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-list",// 0
 			"-type",
 			"-newSiteInformation",
-			"-editFeatures",
-			"",
+			"-newSiteFeatures",
+			"-addRemoveFeature",
 			"-addParticipant",
 			"-removeParticipants",
 			"-changeRoles",
@@ -1187,54 +1187,49 @@ public class SiteAction extends PagedResourceActionII {
 			return (String) getContext(data).get("template") + TEMPLATE[2];
 		case 3:
 			/*
-			 * buildContextForTemplate chef_site-editFeatures.vm
+			 * buildContextForTemplate chef_site-newSiteFeatures.vm
 			 * 
 			 */
-			String type = (String) state.getAttribute(STATE_SITE_TYPE);
-			if (type != null && type.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
+			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("isProjectSite", Boolean.FALSE);
 			} else {
 				context.put("isCourseSite", Boolean.FALSE);
-				if (type.equalsIgnoreCase("project")) {
+				if (siteType.equalsIgnoreCase("project")) {
 					context.put("isProjectSite", Boolean.TRUE);
 				}
 			}
 			context.put("defaultTools", ServerConfigurationService
-					.getToolsRequired(type));
+					.getToolsRequired(siteType));
 
-			toolRegistrationSelectedList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+			toolRegistrationSelectedList = (List) state
+					.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+
 			// If this is the first time through, check for tools
 			// which should be selected by default.
 			List defaultSelectedTools = ServerConfigurationService
-					.getDefaultTools(type);
+					.getDefaultTools(siteType);
 			if (toolRegistrationSelectedList == null) {
 				toolRegistrationSelectedList = new Vector(defaultSelectedTools);
 			}
-			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolRegistrationSelectedList);
-			
-			boolean myworkspace_site = false;
-			// Put up tool lists filtered by category
-			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
-			if (siteTypes.contains(type)) {
-				myworkspace_site = false;
-			}
-			if (site != null && SiteService.isUserSite(site.getId())
-					|| (type != null && type.equalsIgnoreCase("myworkspace"))) {
-				myworkspace_site = true;
-				type = "myworkspace";
-			}
-			context.put("myworkspace_site", new Boolean(myworkspace_site));
-			
-			context.put(STATE_TOOL_REGISTRATION_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_LIST));
-			
-			// titles for multiple tool instances
-			context.put(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP ));
 
-			// The Home tool checkbox needs special treatment to be selected
+			// String toolId's
+			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolRegistrationSelectedList);
+			// use ToolRegistrations for template list titles for multiple tool instances
+			context.put(STATE_TOOL_REGISTRATION_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_LIST)); 
+			context.put(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP ));
+			context
+					.put("emailId", state
+							.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
+			context.put("serverName", ServerConfigurationService
+					.getServerName());
+
+			// The "Home" tool checkbox needs special treatment to be selected
 			// by
 			// default.
-			Boolean checkHome = (Boolean) state.getAttribute(STATE_TOOL_HOME_SELECTED);
+			Boolean checkHome = (Boolean) state
+					.getAttribute(STATE_TOOL_HOME_SELECTED);
 			if (checkHome == null) {
 				if ((defaultSelectedTools != null)
 						&& defaultSelectedTools.contains(HOME_TOOL_ID)) {
@@ -1243,8 +1238,51 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			context.put("check_home", checkHome);
 			
+			context.put("sites", SiteService.getSites(
+					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
+					null, null, null, SortType.TITLE_ASC, null));
+			context.put("import", state.getAttribute(STATE_IMPORT));
+			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
+
+			return (String) getContext(data).get("template") + TEMPLATE[3];
+		case 4:
+			/*
+			 * buildContextForTemplate chef_site-addRemoveFeatures.vm
+			 * 
+			 */
+			context.put("SiteTitle", site.getTitle());
+			String type = (String) state.getAttribute(STATE_SITE_TYPE);
+			context.put("defaultTools", ServerConfigurationService
+					.getToolsRequired(type));
+
+			boolean myworkspace_site = false;
+			// Put up tool lists filtered by category
+			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
+			if (siteTypes.contains(type)) {
+				myworkspace_site = false;
+			}
+
+			if (SiteService.isUserSite(site.getId())
+					|| (type != null && type.equalsIgnoreCase("myworkspace"))) {
+				myworkspace_site = true;
+				type = "myworkspace";
+			}
+
+			context.put("myworkspace_site", new Boolean(myworkspace_site));
+
+			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST, state
+					.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST));
+
+			context.put(STATE_TOOL_REGISTRATION_LIST, state
+					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			context.put("check_home", state
+					.getAttribute(STATE_TOOL_HOME_SELECTED));
+			
+			// titles for multiple tool instances
+			context.put(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP ));
+
 			// get the email alias when an Email Archive tool has been selected
-			String channelReference = site!=null?mailArchiveChannelReference(site.getId()):"";
+			String channelReference = mailArchiveChannelReference(site.getId());
 			List aliases = AliasService.getAliases(channelReference, 1, 1);
 			if (aliases.size() > 0) {
 				state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, ((Alias) aliases
@@ -1258,26 +1296,10 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			context.put("serverName", ServerConfigurationService
 					.getServerName());
-			
-			context.put("sites", SiteService.getSites(
-					org.sakaiproject.site.api.SiteService.SelectionType.UPDATE,
-					null, null, null, SortType.TITLE_ASC, null));
-			context.put("import", state.getAttribute(STATE_IMPORT));
-			context.put("importSites", state.getAttribute(STATE_IMPORT_SITES));
-			
-			if (site != null)
-			{
-				context.put("SiteTitle", site.getTitle());
-				context.put("existSite", Boolean.TRUE);
-				context.put("backIndex", "12");	// back to site info list page
-			}
-			else
-			{
-				context.put("existSite", Boolean.FALSE);
-				context.put("backIndex", "2");	// back to new site information page
-			}
 
-			return (String) getContext(data).get("template") + TEMPLATE[3];
+			context.put("backIndex", "12");
+
+			return (String) getContext(data).get("template") + TEMPLATE[4];
 		case 5:
 			/*
 			 * buildContextForTemplate chef_site-addParticipant.vm
@@ -2229,9 +2251,11 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("existingSite", Boolean.TRUE);
 				context.put("back", "4");
 				context.put("continue", "15");
+				context.put("function", "eventSubmit_doAdd_remove_features");
 			} else {
 				// new site
 				context.put("existingSite", Boolean.FALSE);
+				context.put("function", "eventSubmit_doAdd_features");
 				if (state.getAttribute(STATE_IMPORT) != null) {
 					context.put("back", "27");
 				} else {
@@ -2240,8 +2264,6 @@ public class SiteAction extends PagedResourceActionII {
 				}
 				context.put("continue", "18");
 			}
-
-			context.put("function", "eventSubmit_doAdd_features");
 
 			context.put(STATE_TOOL_REGISTRATION_LIST, state
 					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
@@ -4846,9 +4868,6 @@ public class SiteAction extends PagedResourceActionII {
 
 			Site site = getStateSite(state);
 
-			// normal site creation: add the features.
-			saveFeatures(params, state, site);
-			
 			// for course sites
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
@@ -5475,7 +5494,7 @@ public class SiteAction extends PagedResourceActionII {
 		String backIndex = params.getString("back");
 		state.setAttribute(STATE_TEMPLATE_INDEX, backIndex);
 
-		if (currentIndex.equals("3")) {
+		if (currentIndex.equals("4")) {
 			state.removeAttribute(STATE_TOOL_EMAIL_ADDRESS);
 			state.removeAttribute(STATE_MESSAGE);
 			removeEditToolState(state);
@@ -5644,6 +5663,47 @@ public class SiteAction extends PagedResourceActionII {
 	} // doAdd_custom_link
 
 	/**
+	 * doAdd_remove_features is called when Make These Changes is clicked in
+	 * chef_site-addRemoveFeatures
+	 */
+	public void doAdd_remove_features(RunData data) {
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		ParameterParser params = data.getParameters();
+		String option = params.getString("option");
+		
+		// dispatch
+		if (option.startsWith("add_")) {
+			// this could be format of originalToolId plus number of multiplication
+			String addToolId = option.substring("add_".length(), option.length());
+
+			// find the original tool id
+			String originToolId = findOriginalToolId(state, addToolId);
+			if (originToolId != null)
+			{
+				Tool tool = ToolManager.getTool(originToolId);
+				if (tool != null)
+				{
+					updateSelectedToolList(state, params, false);
+					insertTool(state, originToolId, tool.getTitle(), tool.getDescription(), Integer.parseInt(params.getString("num_"+ addToolId)));
+					state.setAttribute(STATE_TEMPLATE_INDEX, "26");
+				}
+			}
+		} else if (option.equalsIgnoreCase("save")) {
+			getFeatures(params, state, "15");
+		} else if (option.equalsIgnoreCase("continue")) {
+			updateSelectedToolList(state, params, false);
+			// continue
+			doContinue(data);
+		} else if (option.equalsIgnoreCase("Back")) {
+			// back
+			doBack(data);
+		} else if (option.equalsIgnoreCase("Cancel")) {
+			// cancel
+			doCancel(data);
+		}
+	} // doAdd_remove_features
+
+	/**
 	 * toolId might be of form original tool id concatenated with number
 	 * find whether there is an counterpart in the the multipleToolIdSet
 	 * @param state
@@ -5701,11 +5761,9 @@ public class SiteAction extends PagedResourceActionII {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		ParameterParser params = data.getParameters();
-		
+		getRevisedFeatures(params, state);
+
 		Site site = getStateSite(state);
-		
-		saveFeatures(params, state, site);
-		
 		String id = site.getId();
 
 		// now that the site exists, we can set the email alias when an Email
@@ -6016,7 +6074,7 @@ public class SiteAction extends PagedResourceActionII {
 		siteToolsIntoState(state);
 
 		if (state.getAttribute(STATE_MESSAGE) == null) {
-			state.setAttribute(STATE_TEMPLATE_INDEX, "3");
+			state.setAttribute(STATE_TEMPLATE_INDEX, "4");
 		}
 
 	} // doMenu_edit_site_tools
@@ -6649,18 +6707,22 @@ public class SiteAction extends PagedResourceActionII {
 			break;
 		case 3:
 			/*
-			 * actionForTemplate chef_site-editFeatures.vm
+			 * actionForTemplate chef_site-newSiteFeatures.vm
 			 * 
 			 */
 			if (forward) {
-				// editing existing site or creating a new one?
-				Site site = getStateSite(state);
-				getFeatures(params, state, site==null?"18":"15");
-				
-				if (state.getAttribute(STATE_MESSAGE) == null && site==null) {
-					updateCurrentStep(state, forward);
-				}
+				getFeatures(params, state, "18");
 			}
+			if (state.getAttribute(STATE_MESSAGE) == null) {
+				updateCurrentStep(state, forward);
+			}
+			break;
+
+		case 4:
+			/*
+			 * actionForTemplate chef_site-addRemoveFeature.vm
+			 * 
+			 */
 			break;
 		case 5:
 			/*
@@ -8145,26 +8207,26 @@ public class SiteAction extends PagedResourceActionII {
 		tool.setLayoutHints(layoutHint);
 	}
 
-	private void saveFeatures(ParameterParser params, SessionState state, Site site) {
-		
+	private void getRevisedFeatures(ParameterParser params, SessionState state) {
+		Site site = getStateSite(state);
 		// get the list of Worksite Setup configured pages
-		List wSetupPageList = state.getAttribute(STATE_WORKSITE_SETUP_PAGE_LIST)!=null?(List) state.getAttribute(STATE_WORKSITE_SETUP_PAGE_LIST):new Vector();
+		List wSetupPageList = (List) state
+				.getAttribute(STATE_WORKSITE_SETUP_PAGE_LIST);
 
-		Set multipleToolIdSet = (Set) state.getAttribute(STATE_MULTIPLE_TOOL_ID_SET);
 		// get the map of titles of multiple tool instances
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
 		
 		WorksiteSetupPage wSetupPage = new WorksiteSetupPage();
 		WorksiteSetupPage wSetupHome = new WorksiteSetupPage();
-		
-		
 		List pageList = new Vector();
+
 		// declare some flags used in making decisions about Home, whether to
 		// add, remove, or do nothing
-		boolean hasHome = false;
+		boolean homeInChosenList = false;
 		boolean homeInWSetupPageList = false;
 
-		List chosenList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+		List chosenList = (List) state
+				.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 		// if features were selected, diff wSetupPageList and chosenList to get
 		// page adds and removes
 		// boolean values for adding synoptic views
@@ -8173,30 +8235,17 @@ public class SiteAction extends PagedResourceActionII {
 		boolean hasChat = false;
 		boolean hasDiscussion = false;
 		boolean hasEmail = false;
-		boolean hasSiteInfo = false;
+		boolean hasNewSiteInfo = false;
 		boolean hasMessageCenter = false;
-		
-		// tools to be imported from other sites?
-		Hashtable importTools = null;
-		if (state.getAttribute(STATE_IMPORT_SITE_TOOL) != null) {
-			importTools = (Hashtable) state.getAttribute(STATE_IMPORT_SITE_TOOL);
-		}
-		
-		// Home tool chosen?
-		if (chosenList.contains(HOME_TOOL_ID)) {
-			// add home tool later
-			hasHome = true;
-		}
-		
-		// order the id list
-		chosenList = orderToolIds(state, site.getType(), chosenList);
-		
+
 		// Special case - Worksite Setup Home comes from a hardcoded checkbox on
 		// the vm template rather than toolRegistrationList
 		// see if Home was chosen
 		for (ListIterator j = chosenList.listIterator(); j.hasNext();) {
 			String choice = (String) j.next();
-			if (choice.equals("sakai.mailbox")) {
+			if (choice.equalsIgnoreCase(HOME_TOOL_ID)) {
+				homeInChosenList = true;
+			} else if (choice.equals("sakai.mailbox")) {
 				hasEmail = true;
 				String alias = StringUtil.trimToNull((String) state
 						.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
@@ -8248,10 +8297,7 @@ public class SiteAction extends PagedResourceActionII {
 				hasDiscussion = true;
 			}  else if (choice.equals("sakai.messages") || choice.equals("sakai.forums") || choice.equals("sakai.messagecenter")) {
 				hasMessageCenter = true;
-			}  else if (choice.equals("sakai.siteinfo")) {
-				hasSiteInfo = true;
 			}
-			
 		}
 
 		// see if Home and/or Help in the wSetupPageList (can just check title
@@ -8263,7 +8309,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		}
 
-		if (hasHome) {
+		if (homeInChosenList) {
 			SitePage page = null;
 			// Were the synoptic views of Announcement, Discussioin, Chat
 			// existing before the editing
@@ -8403,14 +8449,14 @@ public class SiteAction extends PagedResourceActionII {
 					}
 
 				} catch (Exception e) {
-					M_log.warn(this + ".saveFeatures: " + e.getMessage() + " site id = " + site.getId(), e);
+					M_log.warn(this + ".getRevisedFeatures: " + e.getMessage() + " site id = " + site.getId(), e);
 				}
 			}
 		} // add Home
 
 		// if Home is in wSetupPageList and not chosen, remove Home feature from
 		// wSetupPageList and site
-		if (!hasHome && homeInWSetupPageList) {
+		if (!homeInChosenList && homeInWSetupPageList) {
 			// remove Home from wSetupPageList
 			WorksiteSetupPage removePage = new WorksiteSetupPage();
 			for (ListIterator i = wSetupPageList.listIterator(); i.hasNext();) {
@@ -8432,7 +8478,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		Set categories = new HashSet();
 		categories.add((String) state.getAttribute(STATE_SITE_TYPE));
-		Set toolRegistrationSet = ToolManager.findTools(categories, null);
+		Set toolRegistrationList = ToolManager.findTools(categories, null);
 
 		// first looking for any tool for removal
 		Vector removePageIds = new Vector();
@@ -8519,10 +8565,19 @@ public class SiteAction extends PagedResourceActionII {
 			} else {
 				// if in chosen list but not in wSetupPageList, add it to the
 				// site (one tool on a page)
+
+				// if Site Info tool is being newly added
+				if (toolId.equals("sakai.siteinfo")) {
+					hasNewSiteInfo = true;
+				}
+
 				Tool toolRegFound = null;
-				for (Iterator i = toolRegistrationSet.iterator(); i.hasNext();) {
+				for (Iterator i = toolRegistrationList.iterator(); i.hasNext();) {
 					Tool toolReg = (Tool) i.next();
-					if (toolId.indexOf(toolReg.getId()) != -1) {
+					if ((toolId.indexOf("assignment") != -1 && toolId
+							.equals(toolReg.getId()))
+							|| (toolId.indexOf("assignment") == -1 && toolId
+									.indexOf(toolReg.getId()) != -1)) {
 						toolRegFound = toolReg;
 					}
 				}
@@ -8556,11 +8611,9 @@ public class SiteAction extends PagedResourceActionII {
 			}
 		} // for
 
-		// the steps for moving page within the list
-		int moves = 0;
-		if (hasHome) {
-			SitePage homePage = null;
+		if (homeInChosenList) {
 			// Order tools - move Home to the top - first find it
+			SitePage homePage = null;
 			pageList = site.getPages();
 			if (pageList != null && pageList.size() != 0) {
 				for (ListIterator i = pageList.listIterator(); i.hasNext();) {
@@ -8573,17 +8626,19 @@ public class SiteAction extends PagedResourceActionII {
 					}
 				}
 			}
-			if (homePage != null)
-			{
-				moves = pageList.indexOf(homePage);
-				for (int n = 0; n < moves; n++) {
+
+			// if found, move it
+			if (homePage != null) {
+				// move home from it's index to the first position
+				int homePosition = pageList.indexOf(homePage);
+				for (int n = 0; n < homePosition; n++) {
 					homePage.moveUp();
 				}
 			}
 		}
 
 		// if Site Info is newly added, more it to the last
-		if (hasSiteInfo) {
+		if (hasNewSiteInfo) {
 			SitePage siteInfoPage = null;
 			pageList = site.getPages();
 			String[] toolIds = { "sakai.siteinfo" };
@@ -8594,16 +8649,16 @@ public class SiteAction extends PagedResourceActionII {
 					int s = page.getTools(toolIds).size();
 					if (s > 0) {
 						siteInfoPage = page;
-						break;
 					}
 				}
-				if (siteInfoPage != null)
-				{
-					// move home from it's index to the first position
-					moves = pageList.indexOf(siteInfoPage);
-					for (int n = moves; n < pageList.size(); n++) {
-						siteInfoPage.moveDown();
-					}
+			}
+
+			// if found, move it
+			if (siteInfoPage != null) {
+				// move home from it's index to the first position
+				int siteInfoPosition = pageList.indexOf(siteInfoPage);
+				for (int n = siteInfoPosition; n < pageList.size(); n++) {
+					siteInfoPage.moveDown();
 				}
 			}
 		}
@@ -8616,10 +8671,7 @@ public class SiteAction extends PagedResourceActionII {
 		// commit
 		commitSite(site);
 
-		// import
-		importToolIntoSite(chosenList, importTools, site);
-		
-	} // saveFeatures
+	} // getRevisedFeatures
 
 	/**
 	 * Is the tool stealthed or hidden
@@ -10157,9 +10209,6 @@ public class SiteAction extends PagedResourceActionII {
 		// get the map of titles of multiple tool instances
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
 		
-		// editing existing site or creating a new one?
-		Site site = getStateSite(state);
-		
 		// dispatch
 		if (option.startsWith("add_")) {
 			// this could be format of originalToolId plus number of multiplication
@@ -10200,16 +10249,8 @@ public class SiteAction extends PagedResourceActionII {
 			// back
 			doBack(data);
 		} else if (option.equalsIgnoreCase("cancel")) {
-			if (site == null)
-			{
-				// cancel
-				doCancel_create(data);
-			}
-			else
-			{
-				// cancel editing
-				doCancel(data);
-			}
+			// cancel
+			doCancel_create(data);
 		}
 
 	} // doAdd_features
