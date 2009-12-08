@@ -174,7 +174,7 @@ public class PageListProducer
               .decorate(new UITooltipDecorator(messageLocator
                         .getMessage("save_message")));
 
-            UICommand.make(pageForm, "revert", UIMessage.make("cancel"), "#{SitePageEditHandler.cancel}")
+            UICommand.make(pageForm, "revert", UIMessage.make("revert"), "#{SitePageEditHandler.cancel}")
               .decorate(new UITooltipDecorator(messageLocator
                         .getMessage("cancel_message")));
 
