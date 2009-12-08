@@ -110,10 +110,13 @@
 												#end
 											#end
 										#end
-									</li>
+									)
 								#end
+							#end
+							<br />
+							#end
 						#end
-					</ul>
+					#end
 				</td>
 			</tr>
 			<tr> 
