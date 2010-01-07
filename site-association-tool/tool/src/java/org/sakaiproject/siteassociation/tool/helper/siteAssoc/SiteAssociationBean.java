@@ -577,7 +577,7 @@ public class SiteAssociationBean extends BaseBean {
 		
 		int i = (first + results > assocSites.size()) ? assocSites.size() - 1 : first + results - 1;
 		
-		for(int i = i; i >= first; i--){
+		for(i = i; i >= first; i--){
 			Site removedS = assocSites.get(i);
 			assocSites.remove(i);
 			if(searchSitesCompleteCopy.contains(removedS)){
