@@ -1455,7 +1455,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("isProjectSite", Boolean.FALSE);
 			} else {
 				context.put("isCourseSite", Boolean.FALSE);
-				if (type != null && type.equalsIgnoreCase("project")) {
+				if (type.equalsIgnoreCase("project")) {
 					context.put("isProjectSite", Boolean.TRUE);
 				}
 			}
@@ -2325,7 +2325,7 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("isProjectSite", Boolean.FALSE);
 				} else {
 					context.put("isCourseSite", Boolean.FALSE);
-					if (siteType != null && siteType.equalsIgnoreCase("project")) {
+					if (siteType.equalsIgnoreCase("project")) {
 						context.put("isProjectSite", Boolean.TRUE);
 					}
 				}
@@ -3055,9 +3055,9 @@ public class SiteAction extends PagedResourceActionII {
 						M_log.warn(this + ".putSelectedProviderCourseIntoContext " + e.getMessage() + " sectionId=" + providerSectionId, e);
 					}
 				}
-				context.put("size", new Integer(providerSectionList.size() - 1));
 			}
-			context.put("selectedProviderCourseTitles", providerSectionListTitles);			
+			context.put("selectedProviderCourseTitles", providerSectionListTitles);
+			context.put("size", new Integer(providerSectionList.size() - 1));
 		}
 	}
 
@@ -7724,17 +7724,17 @@ public class SiteAction extends PagedResourceActionII {
 	private void setSiteSectionProperty(List courseSectionList, Site site, String propertyName) {
 		if ((courseSectionList != null) && (courseSectionList.size() != 0)) {
 			// store the requested sections in one site property
-			StringBuffer sections = new StringBuffer(); 
-			sections.append("");
+			String sections = "";
 			for (int j = 0; j < courseSectionList.size();) {
-				sections = sections.append(courseSectionList.get(j));
+				sections = sections
+						+ (String) courseSectionList.get(j);
 				j++;
 				if (j < courseSectionList.size()) {
-					sections = sections.append("+");
+					sections = sections + "+";
 				}
 			}
 			ResourcePropertiesEdit rp = site.getPropertiesEdit();
-			rp.addProperty(propertyName, sections.toString());
+			rp.addProperty(propertyName, sections);
 		} else {
 			ResourcePropertiesEdit rp = site.getPropertiesEdit();
 			rp.removeProperty(propertyName);
@@ -9062,7 +9062,7 @@ public class SiteAction extends PagedResourceActionII {
 		{
 			if (ServerConfigurationService.getStrings("wsetup.enableSiteTemplate.userType") != null) {
 				List<String> userTypes = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("wsetup.enableSiteTemplate.userType")));
-				if (userTypes != null && userTypes.size() > 0)
+				if (userTypes != null & userTypes.size() > 0)
 				{
 					User u = UserDirectoryService.getCurrentUser();
 					if (!(u != null && (SecurityService.isSuperUser() || userTypes.contains(u.getType()))))
