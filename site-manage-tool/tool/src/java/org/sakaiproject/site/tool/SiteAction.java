@@ -630,7 +630,7 @@ public class SiteAction extends PagedResourceActionII {
 	/** the web content tool id **/
 	private final static String WEB_CONTENT_TOOL_ID = "sakai.iframe";
 	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG = "source";
-	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE = "http://www.sakaiproject.org/news-rss-feed";
+	private final static String WEB_CONTENT_TOOL_SOURCE_CONFIG_VALUE = "http://sakaiproject.org/feed";
 
 	/** the news tool **/
 	private final static String NEWS_TOOL_ID = "sakai.news";
