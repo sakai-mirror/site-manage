@@ -1,0 +1,37 @@
+<projectDescription>
+  <name>sakai-site-manage-tool</name>
+  <comment/>
+  <projects>
+    <project>sakai-alias-api</project>
+    <project>sakai-announcement-api</project>
+    <project>sakai-archive-api</project>
+    <project>sakai-authz-api</project>
+    <project>sakai-component</project>
+    <project>sakai-component-api</project>
+    <project>sakai-content-api</project>
+    <project>sakai-courier-api</project>
+    <project>sakai-coursemanagement-api</project>
+    <project>sakai-email-api</project>
+    <project>sakai-entity-api</project>
+    <project>sakai-event-api</project>
+    <project>sakai-import-api</project>
+    <project>sakai-message-api</project>
+    <project>sakai-site-api</project>
+    <project>sakai-site-manage-api</project>
+    <project>sakai-site-manage-util</project>
+    <project>sakai-tool-api</project>
+    <project>sakai-user-api</project>
+    <project>sakai-util</project>
+    <project>sakai-util-api</project>
+    <project>sakai-velocity-tool</project>
+    <project>sakai-velocity-tool-api</project>
+  </projects>
+  <buildSpec>
+    <buildCommand>
+      <name>org.eclipse.jdt.core.javabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+</projectDescription>
