@@ -10,9 +10,9 @@
   <classpathentry kind="var" path="M2_REPO/uk/org/ponder/ponderutilcore/1.2.4/ponderutilcore-1.2.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/uk/org/ponder/rsfutil/RSFComponents-evolvers/0.7.4/RSFComponents-evolvers-0.7.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/uk/org/ponder/rsfutil/rsfutil/0.7.4/rsfutil-0.7.4.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.12/sakai-component-manager-1.0.12.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.12/sakai-kernel-api-1.0.12.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.12/sakai-kernel-util-1.0.12.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-component-manager/1.0.13/sakai-component-manager-1.0.13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-api/1.0.13/sakai-kernel-api-1.0.13.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/sakaiproject/kernel/sakai-kernel-util/1.0.13/sakai-kernel-util-1.0.13.jar"/>
   <classpathentry kind="src" path="/sakai-site-manage-util"/>
   <classpathentry kind="var" path="M2_REPO/uk/org/ponder/sakairsf/sakairsf/0.7.4-sakai_2.2.x/sakairsf-0.7.4-sakai_2.2.x.jar"/>
   <classpathentry kind="var" path="M2_REPO/uk/org/ponder/sakairsf/SakaiRSFComponents-evolvers/0.7.4-sakai_2.2.x/SakaiRSFComponents-evolvers-0.7.4-sakai_2.2.x.jar"/>
