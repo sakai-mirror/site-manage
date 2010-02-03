@@ -144,6 +144,11 @@ public class SiteComparator implements Comparator {
 			}
 
 			result = compareString(s1, s2);
+
+			// secondary sort based on user name if necessary
+			if (result == 0)
+				result = compareParticipantName((Participant) o1, (Participant) o2);
+			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_PARTICIPANT_ROLE)) {
 			String s1 = "";
 			if (o1.getClass().equals(Participant.class)) {
@@ -156,10 +161,10 @@ public class SiteComparator implements Comparator {
 			}
 
 			result = compareString(s1, s2);
-			
-			// sort by name if previous sort result is equal
+
+			// secondary sort based on user name if necessary
 			if (result == 0)
-				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+				result = compareParticipantName((Participant) o1, (Participant) o2);
 			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_PARTICIPANT_COURSE)) {
 			// sort by whether the site is joinable or not
@@ -175,9 +180,9 @@ public class SiteComparator implements Comparator {
 
 			result = compareString(s1, s2);
 			
-			// sort by name if previous sort result is equal
+			// secondary sort based on user name if necessary
 			if (result == 0)
-				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+				result = compareParticipantName((Participant) o1, (Participant) o2);
 			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_PARTICIPANT_ID)) {
 			String s1 = null;
@@ -191,10 +196,10 @@ public class SiteComparator implements Comparator {
 			}
 
 			result = compareString(s1, s2);
-			
-			// sort by name if previous sort result is equal
+
+			// secondary sort based on user name if necessary
 			if (result == 0)
-				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+				result = compareParticipantName((Participant) o1, (Participant) o2);
 			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_PARTICIPANT_CREDITS)) {
 			String s1 = null;
@@ -208,10 +213,10 @@ public class SiteComparator implements Comparator {
 			}
 
 			result = compareString(s1, s2);
-			
-			// sort by name if previous sort result is equal
+
+			// secondary sort based on user name if necessary
 			if (result == 0)
-				result = compareString(((Participant) o1).getName(), ((Participant) o2).getName());
+				result = compareParticipantName((Participant) o1, (Participant) o2);
 			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_PARTICIPANT_STATUS)) {
 			boolean a1 = true;
@@ -225,6 +230,11 @@ public class SiteComparator implements Comparator {
 			}
 			// let the active users show first when sort ascendingly
 			result = -compareBoolean(a1, a2);
+			
+			// secondary sort based on user name if necessary
+			if (result == 0)
+				result = compareParticipantName((Participant) o1, (Participant) o2);
+			
 		} else if (m_criterion.equals(SiteConstants.SORTED_BY_CREATION_DATE)) {
 			// sort by the site's creation date
 			Time t1 = null;
@@ -295,6 +305,16 @@ public class SiteComparator implements Comparator {
 		return result;
 
 	} // compare
+
+	/**
+	 * Serves as secondary sort by participant name if other criteria returns equal value
+	 * @param o1
+	 * @param o2
+	 * @return
+	 */
+	private int compareParticipantName(Participant  o1, Participant o2) {
+		return compareString(o1.getName(), o2.getName());
+	}
 
 	private int compareBoolean(boolean b1, boolean b2) {
 		int result;
