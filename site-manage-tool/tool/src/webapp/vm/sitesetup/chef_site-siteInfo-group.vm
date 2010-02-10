@@ -54,14 +54,14 @@
 						</td>
 						<td headers="revise">
 							<span class="itemAction">
-								<a href="#toolLinkParam("$action" "doGroup_edit" "groupId=$group.Id")" title ="$tlang.getString("editgroup.revise") $group.Title">$tlang.getString("editgroup.revise")</a>
+								<a href="#toolLinkParam("$action" "doGroup_edit" "groupId=$group.Id")" title ="$tlang.getString("editgroup.revise") $validator.escapeHtml($group.Title)">$tlang.getString("editgroup.revise")</a>
 							</span>	
 						</td>
 						<td headers="count">
 							$!group.getMembers().size()
 						</td>
 						<td headers="remove" class="screenOnly">
-							<label class="skip" for="remove_$group.Id">$tlang.getString("editgroup.selectremovechecked")  $group.Title</label> 
+							<label class="skip" for="remove_$group.Id">$tlang.getString("editgroup.selectremovechecked")  $validator.escapeHtml($group.Title)</label> 
 							<input type="checkbox" name="removeGroups" value="$group.Id" id="remove_$group.Id" onclick="adjustCount(this, 'removeCount', 'removeButton');"  />
 						</td>
 					</tr>
