@@ -123,7 +123,7 @@ public class SiteParticipantHelper {
 						    }
 						}
 						
-						if (member != null && member.isProvided())
+						if (member != null)
 						{
 							try
 							{
@@ -143,7 +143,11 @@ public class SiteParticipantHelper {
 								participant = new Participant();
 								participant.credits = e.getCredits();
 								participant.name = user.getSortName();
-								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+								if (member.isProvided())
+								{
+									participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+									participant.removeable = false;
+								}
 								participant.regId = "";
 								participant.removeable = false;
 								participant.role = member.getRole()!=null?member.getRole().getId():"";
@@ -241,7 +245,7 @@ public class SiteParticipantHelper {
 					    }
 					}
 					
-					if (member != null && member.isProvided())
+					if (member != null)
 					{
 						// get or add provided participant
 						Participant participant;
@@ -254,9 +258,12 @@ public class SiteParticipantHelper {
 							participant = new Participant();
 							participant.credits = "";
 							participant.name = user.getSortName();
-							participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+							if (member.isProvided())
+							{
+								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+								participant.removeable = false;
+							}
 							participant.regId = "";
-							participant.removeable = false;
 							participant.role = member.getRole()!=null?member.getRole().getId():"";
 							participant.addSectionEidToList(sectionTitle);
 							participant.uniqname = userId;
@@ -465,7 +472,7 @@ public class SiteParticipantHelper {
 						User user = UserDirectoryService.getUserByEid(userEid);
 						String userId = user.getId();
 						Member member = realm.getMember(userId);
-						if (member != null && member.isProvided())
+						if (member != null)
 						{
 							// get or add provided participant
 							Participant participant;
@@ -482,7 +489,11 @@ public class SiteParticipantHelper {
 								participant = new Participant();
 								participant.credits = "";
 								participant.name = user.getSortName();
-								participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+								if (member.isProvided())
+								{
+									participant.providerRole = member.getRole()!=null?member.getRole().getId():"";
+									participant.removeable = false;
+								}
 								participant.regId = "";
 								participant.removeable = false;
 								participant.role = member.getRole()!=null?member.getRole().getId():"";
