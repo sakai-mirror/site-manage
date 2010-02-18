@@ -23,6 +23,7 @@ package org.sakaiproject.site.tool.helper.managegroupsectionrole.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,6 +80,7 @@ public class SiteManageGroupSectionRoleHandler {
 	private static Log M_log = LogFactory.getLog(SiteManageGroupSectionRoleHandler.class);
 	
 	private List<Member> groupMembers;
+    private GroupComparator groupComparator = new GroupComparator();
 	
     public Site site = null;
     public SiteService siteService = null;
@@ -207,6 +209,7 @@ public class SiteManageGroupSectionRoleHandler {
     			}
             }
         }
+        Collections.sort(groups, groupComparator);
         return groups;
     }
     
@@ -996,6 +999,15 @@ public class SiteManageGroupSectionRoleHandler {
     	}
 		
     	return rv;
+    }
+    
+    /** 
+     ** Comparator for sorting Group objects
+     **/
+    private class GroupComparator implements Comparator {
+       public int compare(Object o1, Object o2) {
+          return ((Group)o1).getTitle().compareToIgnoreCase( ((Group)o2).getTitle() );
+       }
     }
    
 }
