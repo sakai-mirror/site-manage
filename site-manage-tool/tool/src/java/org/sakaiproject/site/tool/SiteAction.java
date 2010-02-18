@@ -1910,7 +1910,7 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(FORM_SITEINFO_ICON_URL));
 				}
 			}
-			String sDescription = state.getAttribute(FORM_SITEINFO_DESCRIPTION) != null?state.getAttribute(FORM_SITEINFO_DESCRIPTION):"";
+			String sDescription = state.getAttribute(FORM_SITEINFO_DESCRIPTION) != null?(String) state.getAttribute(FORM_SITEINFO_DESCRIPTION):"";
 			if (sDescription.indexOf("\n") != -1 && sDescription.indexOf("<br />") == -1 && sDescription.indexOf("<br/>") == -1)
 			{
 				// replace the old style line break before WYSIWYG editor "\n" with the current line break <br />
