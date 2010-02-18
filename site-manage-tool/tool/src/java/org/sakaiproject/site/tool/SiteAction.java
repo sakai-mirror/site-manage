@@ -1910,8 +1910,17 @@ public class SiteAction extends PagedResourceActionII {
 							.getAttribute(FORM_SITEINFO_ICON_URL));
 				}
 			}
-			context.put("description", state
-					.getAttribute(FORM_SITEINFO_DESCRIPTION));
+			String sDescription = state.getAttribute(FORM_SITEINFO_DESCRIPTION) != null?state.getAttribute(FORM_SITEINFO_DESCRIPTION):"";
+			if (sDescription.indexOf("\n") != -1 && sDescription.indexOf("<br />") == -1 && sDescription.indexOf("<br/>") == -1)
+			{
+				// replace the old style line break before WYSIWYG editor "\n" with the current line break <br />
+				context.put("description", sDescription.replaceAll("\n", "<br />"));
+				addAlert(state, rb.getString("description.linebreak"));
+			}
+			else 
+			{
+				context.put("description", sDescription);
+			}
 			context.put("short_description", state
 					.getAttribute(FORM_SITEINFO_SHORT_DESCRIPTION));
 			context.put("form_site_contact_name", state
