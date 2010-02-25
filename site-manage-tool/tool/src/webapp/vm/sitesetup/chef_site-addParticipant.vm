@@ -35,19 +35,20 @@
 				$tlang.getString("add.multiple")
 			</span>
 		</div>
-		<p class="instruction">
-			<h4>$!nonOfficialAccountSectionTitle</h4>
-		</p>
-		<div class="indnt1">
-			<label for="nonOfficialAccount" class="block">
-				$!nonOfficialAccountLabel
-			</label>
-			<textarea  id="nonOfficialAccount" name="nonOfficialAccount"  cols="35" rows="4" wrap="virtual">$!validator.escapeHtmlTextarea($!nonOfficialAccountValue)</textarea>
-			<br /><span class="instruction">
-				$tlang.getString("add.multiple")
-			</span>
-		</div>
-		
+		#if (!$disallowGuestUsers.equals("true"))
+			<p class="instruction">
+				<h4>$!nonOfficialAccountSectionTitle</h4>
+			</p>
+			<div class="indnt1">
+				<label for="nonOfficialAccount" class="block">
+					$!nonOfficialAccountLabel
+				</label>
+				<textarea  id="nonOfficialAccount" name="nonOfficialAccount"  cols="35" rows="4" wrap="virtual">$!validator.escapeHtmlTextarea($!nonOfficialAccountValue)</textarea>
+				<br /><span class="instruction">
+					$tlang.getString("add.multiple")
+				</span>
+			</div>
+		#end
 		<h4>
 			$tlang.getString("add.participants")
 		</h4>

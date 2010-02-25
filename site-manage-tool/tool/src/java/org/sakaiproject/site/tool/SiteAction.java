@@ -1356,6 +1356,7 @@ public class SiteAction extends PagedResourceActionII {
 					.getString("officialAccountName"));
 			context.put("officialAccountLabel", ServerConfigurationService
 					.getString("officialAccountLabel"));
+			context.put("disallowGuestUsers", ServerConfigurationService.getString("disallowNonOfficialUsers", "false"));
 			context.put("nonOfficialAccountSectionTitle", ServerConfigurationService
 					.getString("nonOfficialAccountSectionTitle"));
 			context.put("nonOfficialAccountName", ServerConfigurationService
