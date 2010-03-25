@@ -12,6 +12,7 @@
 		sakai.getGroupInfo('moreInfoGroups','dialog','$tlang.getString("sinfo.list.groups.memb")','$tlang.getString("sinfo.list.groups.print")','$tlang.getString("sitegen.siteinfolist.name")','$tlang.getString("sitegen.siteinfolist.role")','&nbsp;');
 		sakai.setupSelectList('siteMembers','selunselallid','selectedSelected');
 //    	sakai.setupToggleAreas('toggleAnchor', 'toggledContent', false, 'fast');
+		sakai.manageGroupsMember('manageGroupsMember','dialog','$tlang.getString("java.group.membership")','$tlang.getString("java.group.membership")');
 		$("#accordion").accordion({
 			header: 'h4',
 			active: false,
@@ -205,7 +206,7 @@ function printPreview(target){
 		#if ($!groups.size() > 0)
 		<div id="accordion">
 		<h4 class="toggleAnchor specialLink">
-			<span  style="padding-left:1.5em">#if ($!viewRoster) $tlang.getString("sinfo.list.groups")#else $tlang.getString("sinfo.list.groups.student") #end</span>
+			<span  style="padding-left:1.5em">#if ($!viewRoster) $tlang.getString("sinfo.list.groups") <a class="manageGroupsMember" style="display:inline" href="#" id="$!siteId">$tlang.getString("java.group.membership")</a> #else $tlang.getString("sinfo.list.groups.student") #end </span>
 		</h4>		
 		<div class="toggledContent">
 		<dl class="defList" id="accordion">

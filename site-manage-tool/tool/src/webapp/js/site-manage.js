@@ -47,6 +47,34 @@ sakai.getSiteInfo = function(trigger, dialogTarget, nosd, nold){
     });
 };
 
+/*
+calling template has dom placeholder for dialog,
+args:class of trigger, id of dialog, message strings
+*/
+sakai.manageGroupsMember = function(trigger, dialogTarget, nosd, nold){
+   utils.startDialog(dialogTarget);
+   $("." + trigger).click(function(e){
+       e.preventDefault();
+		var $this = $(this);
+		var horizontalPadding = 30;
+		var verticalPadding = 30;
+       $('<iframe id="manageGroupsMember" class="externalSite" src="/library/groupHelper/adhoc_group_selector.html?site=' + $(this).attr('id') + '" />').dialog({
+           title: 'Manage Group Membership',
+           autoOpen: true,
+           width: 800,
+           height: 500,
+           modal: true,
+           resizable: true,
+		   autoResize: true,
+		   position: 'top',
+           overlay: {
+               opacity: 0.5,
+               background: "black"
+           }
+       }).width(800 - horizontalPadding).height(500 - verticalPadding);	        
+	});
+};
+
 
 /*
  calling template has dom placeholder for dialog,
