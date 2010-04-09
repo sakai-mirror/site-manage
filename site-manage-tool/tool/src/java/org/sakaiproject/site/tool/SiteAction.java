@@ -121,6 +121,7 @@ import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.site.api.SiteService.SortType;
 import org.sakaiproject.site.cover.SiteService;
 import org.sakaiproject.sitemanage.api.model.*;
+import org.sakaiproject.site.util.ActionLinkItem;
 import org.sakaiproject.site.util.SiteSetupQuestionFileParser;
 import org.sakaiproject.site.util.Participant;
 import org.sakaiproject.site.util.SiteParticipantHelper;
@@ -1372,18 +1373,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("sortby_publish", SortType.PUBLISHED_ASC.toString());
 			context.put("sortby_createdon", SortType.CREATED_ON_ASC.toString());
 
-			// top menu bar
-			Menu bar = new MenuImpl(portlet, data, (String) state
-					.getAttribute(STATE_ACTION));
-			if (SiteService.allowAddSite(null)) {
-				bar.add(new MenuEntry(rb.getString("java.new"), "doNew_site"));
-			}
-			bar.add(new MenuEntry(rb.getString("java.revise"), null, true,
-					MenuItem.CHECKED_NA, "doGet_site", "sitesForm"));
-			bar.add(new MenuEntry(rb.getString("java.delete"), null, true,
-					MenuItem.CHECKED_NA, "doMenu_site_delete", "sitesForm"));
-			context.put("menu", bar);
-			// default to be no pageing
+			// default to be no paging
 			context.put("paged", Boolean.FALSE);
 
 			Menu bar2 = new MenuImpl(portlet, data, (String) state
@@ -2753,7 +2743,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * buildContextForTemplate chef_siteInfo-editClass.vm
 			 * 
 			 */
-			bar = new MenuImpl(portlet, data, (String) state
+			Menu bar = new MenuImpl(portlet, data, (String) state
 					.getAttribute(STATE_ACTION));
 			if (SiteService.allowAddSite(null)) {
 				bar.add(new MenuEntry(rb.getString("java.addclasses"),
@@ -11707,4 +11697,6 @@ public class SiteAction extends PagedResourceActionII {
 			doContinue(data);
 		}
 	}
+	
 }
+
