@@ -1384,6 +1384,8 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("menu2", bar2);
 
 			pagingInfoToContext(state, context);
+			
+			context.put("allowAddSite",Boolean.valueOf(SiteService.allowAddSite(null)));
 			return (String) getContext(data).get("template") + TEMPLATE[0];
 		case 1:
 			/*
