@@ -266,9 +266,9 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 
 
 	private void loadAddedParticipantMail() {
+		//we need a user session to avoid potential NPE's
+		Session sakaiSession = sessionManager.getCurrentSession();
 		try {
-			//we need a user session to avoind potential NPE's
-			Session sakaiSession = sessionManager.getCurrentSession();
 			sakaiSession.setUserId(ADMIN);
 		    sakaiSession.setUserEid(ADMIN);
 			InputStream in = ETSUserNotificationProviderImpl.class.getClassLoader().getResourceAsStream("notifyAddedParticipants.xml");
@@ -279,9 +279,6 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 				Element xmlTemplate = (Element)it.get(i);
 				xmlToTemplate(xmlTemplate, this.NOTIFY_ADDED_PARTICIPANT);
 			}
-			sakaiSession.setUserId(null);
-		    sakaiSession.setUserEid(null);
-
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -292,6 +289,11 @@ public class ETSUserNotificationProviderImpl implements UserNotificationProvider
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
+		finally
+		{
+			sakaiSession.setUserId(null);
+		    sakaiSession.setUserEid(null);
+		}
 	}
 
 	private void loadNewUserMail() {
