@@ -11820,6 +11820,11 @@ public class SiteAction extends PagedResourceActionII {
 			// continue with site information edit
 			doContinue(data);
 		}
+		else if ("cancel".equals(option))
+		{
+			// cancel
+			doCancel(data);
+		}
 	}
 	
 }
