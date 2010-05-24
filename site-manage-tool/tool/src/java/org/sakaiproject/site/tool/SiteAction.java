@@ -2170,7 +2170,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 			
-			if (siteInfo.description.indexOf("\n") != -1 && siteInfo.description.indexOf("<br />") == -1 && siteInfo.description.indexOf("<br/>") == -1)
+			if (siteInfo.description!=null && siteInfo.description.indexOf("\n") != -1 && siteInfo.description.indexOf("<br />") == -1 && siteInfo.description.indexOf("<br/>") == -1)
 			{
 				// replace the old style line break before WYSIWYG editor "\n" with the current line break <br />
 				context.put("description", siteInfo.description.replaceAll("\n", "<br />"));
