@@ -1,0 +1,22 @@
+<div class="portletBody">
+	<h3>
+		$tlang.getString("siteinfo.view.participant.options")
+	</h3>
+	#if ($alertMessage)<div class="alertMessage">$tlang.getString("gen.alert") $validator.escapeHtml($alertMessage)</div><div class="clear"></div>#end	
+	<form action="#toolForm("$action")" method="post" name="optionsForm">
+		<h4>
+			$tlang.getString("siteinfo.view.participant.options.instruction") 
+		</h4>
+		<div class="checkbox  indnt2"	
+			<input type="radio" id="participant_list_option_default" name="participant_list_option" #if(!$participant_list_option_search_only)checked#end value="false"/>
+			<label for="participant_list_option_default">$tlang.getString("siteinfo.view.participant.options.default")</label>
+			<br/>
+			<input type="radio" id="participant_list_option_searchonly" name="participant_list_option" #if($participant_list_option_search_only)checked#end value="true"/>
+			<label for="participant_list_option_searchonly">$tlang.getString("siteinfo.view.participant.options.searchonly")</label>
+		</div>
+		<p class="act">
+			<input type="submit" class="active" name="eventSubmit_doUpdate_options" id = "eventSubmit_doUpdate_option_default" value="$tlang.getString("gen.update")"  accesskey="s" />
+			<input type="submit" name="eventSubmit_doCancel_options" value="$tlang.getString("gen.cancel")"  accesskey="x" />
+		</p>
+	</form>
+</div>

@@ -1,5 +1,4 @@
 /**********************************************************************************
- * $URL$
  * $Id$
  ***********************************************************************************
  *
@@ -265,7 +264,8 @@ public class SiteAction extends PagedResourceActionII {
 			"-siteInfo-importSelection",   //58
 			"-siteInfo-importMigrate",    //59
 			"-importSitesMigrate",  //60
-			"-siteInfo-importUser"
+			"-siteInfo-importUser",
+			"-siteInfo-options"	// 62
 	};
 
 	/** Name of state attribute for Site instance id */
@@ -668,6 +668,17 @@ public class SiteAction extends PagedResourceActionII {
 	/** the course set definition from CourseManagementService **/
 	private final static String STATE_COURSE_SET = "state_course_set";
 	
+	/************** view filter and search  ******************/
+	// view all or group/search filtered submission list
+	private static final String VIEW_PARTICIPANT_OPTION = "view_participant_option";
+	
+	// filter string for submission list
+	private static final String VIEW_PARTICIPANT_FILTER = "view_participant_filter";
+	
+	// search string for submission list
+	private static final String VIEW_PARTICIPANT_SEARCH = "view_participant_search";
+	
+	
 	/**
 	 * what are the tool ids within Home page?
 	 * If this is for a newly added Home tool, get the tool ids from template site or system set default
@@ -985,7 +996,13 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_SITE_MODE, site_mode);
 			}
 
-
+		if (state.getAttribute(VIEW_PARTICIPANT_OPTION) == null)
+		{
+			// get the view option setting. 
+			// It is true by default, so that the Options link will be shown, all participants will be listed.
+			boolean viewOption = ServerConfigurationService.getBoolean("siteinfo.show.options", true);
+			state.setAttribute(VIEW_PARTICIPANT_OPTION, Boolean.valueOf(viewOption));
+		}
 		
 	} // initState
 	
@@ -1224,7 +1241,7 @@ public class SiteAction extends PagedResourceActionII {
 		// Lists used in more than one template
 
 		// Access
-		List roles = new Vector();
+		List<Role> roles = new ArrayList<Role>();
 
 		// the hashtables for News and Web Content tools
 		Hashtable newsTitles = new Hashtable();
@@ -1899,6 +1916,11 @@ public class SiteAction extends PagedResourceActionII {
 							}
 						}
 					}
+					
+					if (state.getAttribute(VIEW_PARTICIPANT_OPTION) != null && ((Boolean) state.getAttribute(VIEW_PARTICIPANT_OPTION)).booleanValue())
+					{
+						b.add(new MenuEntry(rb.getString("siteinfo.view.participant.options"), "doMenu_siteInfo_options"));
+					}
 				}
 				
 				if (b.size() > 0)
@@ -1950,6 +1972,11 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("participantListSize", Integer.valueOf(participantsCollection.size()));
 					context.put("participantList", prepPage(state));
 					pagingInfoToContext(state, context);
+					
+					// view filter and search
+					context.put("view", state.getAttribute(VIEW_PARTICIPANT_OPTION));
+					context.put("filterString", state.getAttribute(VIEW_PARTICIPANT_FILTER));
+					context.put("searchString", state.getAttribute(VIEW_PARTICIPANT_SEARCH));
 				}
 
 				context.put("include", Boolean.valueOf(site.isPubView()));
@@ -2003,7 +2030,10 @@ public class SiteAction extends PagedResourceActionII {
 
 			roles = getRoles(state);
 			context.put("roles", roles);
-
+			
+			// construct the filter list 
+			putParticipantListFilterOptionsIntoContext(context, SiteParticipantHelper.getProviderCourseList(site.getId()), site.getGroups(), roles);
+			
 			// will have the choice to active/inactive user or not
 			String activeInactiveUser = ServerConfigurationService.getString(
 					"activeInactiveUser", Boolean.FALSE.toString());
@@ -2995,10 +3025,54 @@ public class SiteAction extends PagedResourceActionII {
 			// only show those sites with same site type
 			putImportSitesInfoIntoContext(context, site, state, true);
 			return (String) getContext(data).get("template") + TEMPLATE[61];
+		case 62:
+			/*
+			 * build context for chef_site-siteInfo-options.vm
+			 */
+			context.put("toIndex", "12");
+			// only show those sites with same site type
+			return (String) getContext(data).get("template") + TEMPLATE[62];
 		}
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
+	}
+
+	/**
+	 * construct the filter options for site participant list view. The choices are in the sequence of provider ids, group ids, role ids and status(active, inactive)
+	 * @param context
+	 * @param providerCourseList
+	 * @param groups
+	 * @param roles
+	 */
+	private void putParticipantListFilterOptionsIntoContext(Context context, List<String> providerCourseList, Collection<Group> groups, List<Role> roles) {
+		List<String> filterOptions = new ArrayList<String>();
+		if (providerCourseList != null && providerCourseList.size() > 0)
+		{
+			for(String providerCourseId : providerCourseList)
+			{
+				filterOptions.add(providerCourseId);
+			}
+		}
+		if (groups != null && groups.size() > 0)
+		{
+			for(Group group : groups)
+			{
+				filterOptions.add(group.getId());
+			}
+		}
+		if (roles != null && roles.size() > 0)
+		{
+			for(Role role : roles)
+			{
+				filterOptions.add(role.getId());
+			}
+		}
+		filterOptions.add(rb.getString("sitegen.siteinfolist.active"));
+		filterOptions.add(rb.getString("sitegen.siteinfolist.inactive"));
+		context.put("filterOptions", filterOptions);
+		
+		context.put("searchPrompt", "Search");
 	}
 
 	private String getSelectionString(List selections, int numSelections) {
@@ -6303,6 +6377,16 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // doMenu_edit_site_access
 
+	public void doMenu_siteInfo_options(RunData data)
+	{
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		Site site = getStateSite(state);
+		if (site != null && SiteService.allowUpdateSite(site.getId()))
+		{
+			state.setAttribute(STATE_TEMPLATE_INDEX, "62");
+		}
+	}
+	
 	/**
 	 * Back to worksite setup's list view
 	 * 
@@ -7457,7 +7541,13 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 			break;
+		case 62:
+			// the participant list view options page
+			if (forward) {
+			}
+			break;
 		}
+		
 
 	}// actionFor Template
 
@@ -8166,13 +8256,12 @@ public class SiteAction extends PagedResourceActionII {
 		List members = new Vector();
 		String siteId = (String) state.getAttribute(STATE_SITE_INSTANCE_ID);
 
-		List providerCourseList = null;
-		providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
+		List providerCourseList = SiteParticipantHelper.getProviderCourseList(siteId);
 		if (providerCourseList != null && providerCourseList.size() > 0) {
 			state.setAttribute(SITE_PROVIDER_COURSE_LIST, providerCourseList);
 		}
 
-		Collection participants = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList);
+		Collection participants = SiteParticipantHelper.prepareParticipants(siteId, providerCourseList, (String) state.getAttribute(VIEW_PARTICIPANT_FILTER), (String) state.getAttribute(VIEW_PARTICIPANT_SEARCH));
 		state.setAttribute(STATE_PARTICIPANT_LIST, participants);
 
 		return participants;
@@ -8183,8 +8272,8 @@ public class SiteAction extends PagedResourceActionII {
 	 * getRoles
 	 * 
 	 */
-	private List getRoles(SessionState state) {
-		List roles = new Vector();
+	private List<Role> getRoles(SessionState state) {
+		List<Role> roles = new ArrayList<Role>();
 		String realmId = SiteService.siteReference((String) state
 				.getAttribute(STATE_SITE_INSTANCE_ID));
 		try {

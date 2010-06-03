@@ -230,7 +230,32 @@ function printPreview(target){
 		#if ($participantList.size() > 0)
 		 <div class="navPanel">
 		 	<div class="viewNav">
-			 	<h4>
+				#if ($!filterOptions.size() > 0)
+					<div class="instruction">
+						$tlang.getString("siteinfo.view.participant.filter.instruction") 
+					</div>
+					<span class="skip">$tlang.getString("newassig.selectmessage")</span>
+					<select id="view" name="view" size="1" tabindex="3" onchange="javascript:blur();document.getElementById('option').value='changeView';document.viewForm.submit();return false;">
+						<option value="" >$tlang.getString('siteinfo.view.participant.filter.group')</option>
+						#foreach($choice in $!filterOptions)
+							<option value="$choice" #if($!view.equals($!choice))selected="selected"#end >$validator.escapeHtml($choice)</option>
+						#end
+					</select>
+				#end
+				<div class="instruction">
+					$searchPrompt
+				</div>
+				<input type="hidden" name="eventSubmit_doSubmission_search_option" value="null" />
+				<input type="hidden" name="option" id="option" value="" />
+				<label for="$form_search" class="skip">$tlang.getString("search")</label>
+				<input value="$validator.escapeHtml($searchString)" name="search" id="search" type="text" class="searchField"  size="30" />
+				<input type="button" value="$tlang.getString('list.search')" 
+					onclick="blur();document.getElementById('option').value='search';document.viewForm.submit();return false;" />
+				#if (($!searchString) && (!$searchString.equals("")))
+					<input type="button" class="button" value="$tlang.getString("list.cls")" 
+						onclick="blur();document.getElementById('option').value='clearSearch';document.viewForm.submit();return false;" />
+				#end
+				<h4>
 					$validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") (# $!participantListSize)		 		
 			 	</h4>
 			</div>

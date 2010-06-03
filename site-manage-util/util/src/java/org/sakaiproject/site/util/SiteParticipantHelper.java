@@ -378,7 +378,19 @@ public class SiteParticipantHelper {
 
 	} // getProviderCourseList
 	
+	/**
+	 * 
+	 * @param siteId
+	 * @param providerCourseList
+	 * @return
+	 */
 	public static Collection<Participant> prepareParticipants(String siteId, List<String> providerCourseList) {
+		// return the complete list of site participants
+		return prepareParticipants(siteId, providerCourseList, null, null);
+	}
+
+	
+	public static Collection<Participant> prepareParticipants(String siteId, List<String> providerCourseList, String filter, String search) {
 		String realmId = SiteService.siteReference(siteId);
 		Map<String, Participant> participantsMap = new ConcurrentHashMap<String, Participant>();
 		try {
@@ -389,73 +401,80 @@ public class SiteParticipantHelper {
 			for (Iterator<String> i=providerCourseList.iterator(); i.hasNext();)
 			{
 				String providerCourseEid = (String) i.next();
-				try
+				
+				if (filter == null || filter != null && filter.equals(providerCourseEid))
 				{
-					Section section = cms.getSection(providerCourseEid);
-					
-					if (section != null)
+					try
 					{
-						String sectionTitle = section.getTitle();
-					
-						// in case of Section eid
-						EnrollmentSet enrollmentSet = section.getEnrollmentSet();
-						addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, sectionTitle);
+						Section section = cms.getSection(providerCourseEid);
 						
-						// Include official instructors of record for the enrollment set.
-						addOfficialInstructorOfRecord(participantsMap, realm, sectionTitle, enrollmentSet);
-						
-						// add memberships
-						Set memberships = cms.getSectionMemberships(providerCourseEid);
-						if (memberships != null && memberships.size() > 0)
+						if (section != null)
 						{
-							addParticipantsFromMemberships(participantsMap, realm, memberships, sectionTitle);
-						}
+							String sectionTitle = section.getTitle();
 						
-						// now look or the not-included member from CourseOffering object
-						CourseOffering co = cms.getCourseOffering(section.getCourseOfferingEid());
-						if (co != null)
-						{
+							// in case of Section eid
+							EnrollmentSet enrollmentSet = section.getEnrollmentSet();
+							addParticipantsFromEnrollmentSet(participantsMap, realm, providerCourseEid, enrollmentSet, sectionTitle);
 							
-							Set<Membership> coMemberships = cms.getCourseOfferingMemberships(section.getCourseOfferingEid());
-							if (coMemberships != null && coMemberships.size() > 0)
+							// Include official instructors of record for the enrollment set.
+							addOfficialInstructorOfRecord(participantsMap, realm, sectionTitle, enrollmentSet);
+							
+							// add memberships
+							Set memberships = cms.getSectionMemberships(providerCourseEid);
+							if (memberships != null && memberships.size() > 0)
 							{
-								addParticipantsFromMemberships(participantsMap, realm, coMemberships, co.getTitle());
+								addParticipantsFromMemberships(participantsMap, realm, memberships, sectionTitle);
 							}
 							
-							// now look or the not-included member from CourseSet object
-							Set<String> cSetEids = co.getCourseSetEids();
-							if (cSetEids != null)
+							// now look or the not-included member from CourseOffering object
+							CourseOffering co = cms.getCourseOffering(section.getCourseOfferingEid());
+							if (co != null)
 							{
-								for(Iterator<String> cSetEidsIterator = cSetEids.iterator(); cSetEidsIterator.hasNext();)
+								
+								Set<Membership> coMemberships = cms.getCourseOfferingMemberships(section.getCourseOfferingEid());
+								if (coMemberships != null && coMemberships.size() > 0)
 								{
-									String cSetEid = cSetEidsIterator.next();
-									CourseSet cSet = cms.getCourseSet(cSetEid);
-									if (cSet != null)
+									addParticipantsFromMemberships(participantsMap, realm, coMemberships, co.getTitle());
+								}
+								
+								// now look or the not-included member from CourseSet object
+								Set<String> cSetEids = co.getCourseSetEids();
+								if (cSetEids != null)
+								{
+									for(Iterator<String> cSetEidsIterator = cSetEids.iterator(); cSetEidsIterator.hasNext();)
 									{
-										Set<Membership> cSetMemberships = cms.getCourseSetMemberships(cSetEid);
-										if (cSetMemberships != null && cSetMemberships.size() > 0)
+										String cSetEid = cSetEidsIterator.next();
+										CourseSet cSet = cms.getCourseSet(cSetEid);
+										if (cSet != null)
 										{
-											addParticipantsFromMemberships(participantsMap, realm, cSetMemberships, cSet.getTitle());
+											Set<Membership> cSetMemberships = cms.getCourseSetMemberships(cSetEid);
+											if (cSetMemberships != null && cSetMemberships.size() > 0)
+											{
+												addParticipantsFromMemberships(participantsMap, realm, cSetMemberships, cSet.getTitle());
+											}
 										}
 									}
 								}
 							}
 						}
+						
 					}
-					
-				}
-				catch (IdNotFoundException e)
-				{
-					M_log.warn("SiteParticipantHelper.prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid);
+					catch (IdNotFoundException e)
+					{
+						M_log.warn("SiteParticipantHelper.prepareParticipants: "+ e.getMessage() + " sectionId=" + providerCourseEid);
+					}
 				}
 			}
 			
-			// now for those not provided users
-			Set<Member> grants = realm.getMembers();
-			if (grants != null && !grants.isEmpty())
+			if (filter == null)
 			{
-				// add participant from member defined in realm
-				addParticipantsFromMembers(participantsMap, grants, realmId);
+				// now for those not provided users
+				Set<Member> grants = realm.getMembers();
+				if (grants != null && !grants.isEmpty())
+				{
+					// add participant from member defined in realm
+					addParticipantsFromMembers(participantsMap, grants, realmId);
+				}
 			}
 
 		} catch (GroupNotDefinedException ee) {
