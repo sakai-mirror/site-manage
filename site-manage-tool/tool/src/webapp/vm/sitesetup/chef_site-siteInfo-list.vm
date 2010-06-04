@@ -227,39 +227,66 @@ function printPreview(target){
 		#end
 		
 	#if ($!viewRoster)
-		#if ($participantList.size() > 0)
-		 <div class="navPanel">
-		 	<div class="viewNav">
-				#if ($!filterOptions.size() > 0)
+		<div class="navPanel">
+			<form name="viewForm" id="viewForm" class="inlineForm" method="post" action="#toolForm("AssignmentAction")">
+				<input type="hidden" name="participantOption" id="participantOption" value="x" />
+				<input type="hidden" name="eventSubmit_doParticipant_options" value="x" />
+			 	<div class="viewNav">
 					<div class="instruction">
 						$tlang.getString("siteinfo.view.participant.filter.instruction") 
 					</div>
 					<span class="skip">$tlang.getString("newassig.selectmessage")</span>
-					<select id="view" name="view" size="1" tabindex="3" onchange="javascript:blur();document.getElementById('option').value='changeView';document.viewForm.submit();return false;">
+					<select id="view" name="view" size="1" tabindex="3" onchange="javascript:blur();document.getElementById('participantOption').value='changeView';document.viewForm.submit();return false;">
 						<option value="" >$tlang.getString('siteinfo.view.participant.filter.group')</option>
-						#foreach($choice in $!filterOptions)
-							<option value="$choice" #if($!view.equals($!choice))selected="selected"#end >$validator.escapeHtml($choice)</option>
+						#foreach($choice in $!filterOptions.keySet())
+							<option value="$filterOptions.get($!choice)" #if($!filterString.equals($filterOptions.get($!choice)))selected="selected"#end >$validator.escapeHtml($choice)</option>
 						#end
+						## filter based on rosters
+						$filterRosters#if($filterRosters)
+							<option value="">-- $tlang.getString('siteinfo.view.participant.filter.label.roster') --</option>
+							#foreach($choice in $filterRosters)
+								<option value="$choice" #if($!filterString.equals($choice))selected="selected"#end >$validator.escapeHtml($choice)</option>
+							#end
+						#end
+						## filter based on groups
+						$filterGroups#if($filterGroups)
+							<option value="">-- $tlang.getString('siteinfo.view.participant.filter.label.group') --</option>
+							#foreach($choice in $filterGroups)
+								<option value="$choice.getId()" #if($!filterString.equals($choice.getId()))selected="selected"#end >$validator.escapeHtml($choice.getTitle())</option>
+							#end
+						#end
+						## filter based on roles
+						$filterRoles#if($filterRoles)
+							<option value="">-- $tlang.getString('siteinfo.view.participant.filter.label.role') --</option>
+							#foreach($choice in $filterRoles)
+								<option value="$choice.getId()" #if($!filterString.equals($choice.getId()))selected="selected"#end >$validator.escapeHtml($choice.getId())</option>
+							#end
+						#end
+						## filter based on status
+						<option value="">-- $tlang.getString('siteinfo.view.participant.filter.label.status') --</option>
+						<option value="active" #if($!filterString.equals("active"))selected="selected"#end >$tlang.getString('sitegen.siteinfolist.active')</option>
+						<option value="inactive" #if($!filterString.equals("inactive"))selected="selected"#end >$tlang.getString('sitegen.siteinfolist.inactive')</option>
 					</select>
-				#end
-				<div class="instruction">
-					$searchPrompt
+					<div class="instruction">
+						$searchPrompt
+					</div>
+					<input type="hidden" name="eventSubmit_doSubmission_search_option" value="null" />
+					<input type="hidden" name="option" id="option" value="" />
+					<label for="$form_search" class="skip">$tlang.getString("search")</label>
+					<input value="$validator.escapeHtml($searchString)" name="search" id="search" type="text" class="searchField"  size="30" />
+					<input type="button" value="$tlang.getString('list.search')" 
+						onclick="blur();document.getElementById('option').value='search';document.viewForm.submit();return false;" />
+					#if (($!searchString) && (!$searchString.equals("")))
+						<input type="button" class="button" value="$tlang.getString("list.cls")" 
+							onclick="blur();document.getElementById('option').value='clearSearch';document.viewForm.submit();return false;" />
+					#end
+					<h4>
+						$validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") (# $!participantListSize)		 		
+				 	</h4>
 				</div>
-				<input type="hidden" name="eventSubmit_doSubmission_search_option" value="null" />
-				<input type="hidden" name="option" id="option" value="" />
-				<label for="$form_search" class="skip">$tlang.getString("search")</label>
-				<input value="$validator.escapeHtml($searchString)" name="search" id="search" type="text" class="searchField"  size="30" />
-				<input type="button" value="$tlang.getString('list.search')" 
-					onclick="blur();document.getElementById('option').value='search';document.viewForm.submit();return false;" />
-				#if (($!searchString) && (!$searchString.equals("")))
-					<input type="button" class="button" value="$tlang.getString("list.cls")" 
-						onclick="blur();document.getElementById('option').value='clearSearch';document.viewForm.submit();return false;" />
-				#end
-				<h4>
-					$validator.escapeHtml($!siteTitle) $tlang.getString("sitegen.siteinfolist.part") (# $!participantListSize)		 		
-			 	</h4>
-			</div>
-			<div class="listNav">
+			</form>
+			#if ($participantList.size() > 0)
+				<div class="listNav">
 					<div class="instruction">$tlang.getString("sitegen.siteinfolist.view") $topMsgPos - $btmMsgPos $tlang.getString("sitegen.siteinfolist.of") $allMsgNumber $tlang.getString("sitegen.siteinfolist.items")</div>
 					#if ($pagesize != 0)
 						#if ($goFPButton == "true")
@@ -311,8 +338,8 @@ function printPreview(target){
 						#end
 					#end
 				</div>
-			</div>
-		#end
+			#end
+		</div>
 		## download link for print out participant list
 		<a href="$printParticipantUrl" title="$!tlang.getString('print')">$!tlang.getString('print')</a>
 		<hr />

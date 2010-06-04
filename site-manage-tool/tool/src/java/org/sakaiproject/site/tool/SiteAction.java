@@ -3046,32 +3046,18 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param roles
 	 */
 	private void putParticipantListFilterOptionsIntoContext(Context context, List<String> providerCourseList, Collection<Group> groups, List<Role> roles) {
-		List<String> filterOptions = new ArrayList<String>();
 		if (providerCourseList != null && providerCourseList.size() > 0)
 		{
-			for(String providerCourseId : providerCourseList)
-			{
-				filterOptions.add(providerCourseId);
-			}
+			context.put("filterRosters", providerCourseList);
 		}
 		if (groups != null && groups.size() > 0)
 		{
-			for(Group group : groups)
-			{
-				filterOptions.add(group.getId());
-			}
+			context.put("filterGroups", groups);
 		}
 		if (roles != null && roles.size() > 0)
 		{
-			for(Role role : roles)
-			{
-				filterOptions.add(role.getId());
-			}
+			context.put("filterRoles", roles);
 		}
-		filterOptions.add(rb.getString("sitegen.siteinfolist.active"));
-		filterOptions.add(rb.getString("sitegen.siteinfolist.inactive"));
-		context.put("filterOptions", filterOptions);
-		
 		context.put("searchPrompt", "Search");
 	}
 
@@ -6638,6 +6624,16 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // getReviseSite
 
+	public void doParticipant_options(RunData data) {
+		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
+		ParameterParser params = data.getParameters();
+		String option = params.getString("participantOption");
+		if ("changeView".equals(option))
+		{
+			// adjust participant list according to view filter
+			state.setAttribute(VIEW_PARTICIPANT_FILTER, params.getString("view"));
+		}
+	}
 	/**
 	 * doUpdate_participant
 	 * 

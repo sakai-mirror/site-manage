@@ -395,7 +395,10 @@ public class SiteParticipantHelper {
 		Map<String, Participant> participantsMap = new ConcurrentHashMap<String, Participant>();
 		try {
 			AuthzGroup realm = authzGroupService.getAuthzGroup(realmId);
-			realm.getProviderGroupId();
+			
+			/***** case 0: no filter or there is a filter on provider id ****/
+			// dealt with filtering
+			boolean doneFiltering = filter == null ? true : false;
 			
 			// iterate through the provider list first
 			for (Iterator<String> i=providerCourseList.iterator(); i.hasNext();)
@@ -404,6 +407,9 @@ public class SiteParticipantHelper {
 				
 				if (filter == null || filter != null && filter.equals(providerCourseEid))
 				{
+					// filter based on provider id
+					doneFiltering = true;
+					
 					try
 					{
 						Section section = cms.getSection(providerCourseEid);
@@ -466,7 +472,7 @@ public class SiteParticipantHelper {
 				}
 			}
 			
-			if (filter == null)
+			if (filter == null || doneFiltering)
 			{
 				// now for those not provided users
 				Set<Member> grants = realm.getMembers();
@@ -476,6 +482,31 @@ public class SiteParticipantHelper {
 					addParticipantsFromMembers(participantsMap, grants, realmId);
 				}
 			}
+			
+			if (filter != null && !doneFiltering)
+			{
+				/****** case 1: filter on role id 	*************/
+				if (realm.getRole(filter) != null)
+				{
+					Set<String> userIds = realm.getUsersHasRole(filter);
+					
+				}
+				/****** case 2: filter on status 	*************/
+				else if (filter.equals("active"))
+				{
+					// active users
+				}
+				else if (filter.equals("inactive"))
+				{
+					// inactive users
+				}
+				/****** case 3: filter on status (active/inactive) *******/
+				else
+				{
+					
+				}
+			}
+			
 
 		} catch (GroupNotDefinedException ee) {
 			M_log.warn("SiteParticipantHelper.prepareParticipants:  IdUnusedException " + realmId);
