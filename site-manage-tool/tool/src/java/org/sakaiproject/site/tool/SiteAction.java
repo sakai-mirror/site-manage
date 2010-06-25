@@ -7870,7 +7870,7 @@ public class SiteAction extends PagedResourceActionII {
 			siteInfo.additional = params.getString("additional");
 		}
 		if (params.getString("iconUrl") != null) {
-			siteInfo.iconUrl = params.getString("iconUrl");
+			siteInfo.iconUrl = Validator.escapeHtml(params.getString("iconUrl"));
 		} else {
 			siteInfo.iconUrl = params.getString("skin");
 		}
