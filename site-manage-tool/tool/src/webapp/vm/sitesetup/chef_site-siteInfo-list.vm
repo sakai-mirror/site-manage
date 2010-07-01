@@ -151,16 +151,12 @@
 		<dl class="indnt1">
 			#foreach ($g in $!groupsWithMember)
 				<dt>
-					$g.Title
+					$validator.escapeHtml($g.Title)
 				</dt>
 
 				<dd>
 					#if ($g.Description)
-						<span class="textPanelFooter">
-							#set($description = "")
-							#set($description = $g.Description)
-							$!description
-						</span>			
+						$validator.escapeHtml($g.Description)
 					#end					
 				</dd>				
 			#end
