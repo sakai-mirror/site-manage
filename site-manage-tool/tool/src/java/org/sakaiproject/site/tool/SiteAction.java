@@ -563,6 +563,8 @@ public class SiteAction extends PagedResourceActionII {
 
 	private static final String STATE_CM_LEVELS = "site.cm.levels";
 
+	private static final String STATE_CM_LEVEL_OPTS = "site.cm.level_opts";
+
 	private static final String STATE_CM_LEVEL_SELECTIONS = "site.cm.level.selections";
 
 	private static final String STATE_CM_SELECTED_SECTION = "site.cm.selectedSection";
@@ -593,6 +595,9 @@ public class SiteAction extends PagedResourceActionII {
 	
 	// the site group title character limit
 	public static final int SITE_GROUP_TITLE_LIMIT = 99;
+	
+	/** the course set definition from CourseManagementService **/
+	private final static String STATE_COURSE_SET = "state_course_set";
 	
 	/**
 	 * Populate the state object, if needed.
@@ -2866,34 +2871,51 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("cmsAvailable", new Boolean(true));
 			}
 
+			int cmLevelSize = 0;
+
 			if (cms == null || !courseManagementIsImplemented()
 					|| cmLevels == null || cmLevels.size() < 1) {
 				// TODO: redirect to manual entry: case #37
 			} else {
-				Object levelOpts[] = new Object[cmLevels.size()];
+				cmLevelSize = cmLevels.size();
+				Object levelOpts[] = state.getAttribute(STATE_CM_LEVEL_OPTS) == null?new Object[cmLevelSize]:(Object[])state.getAttribute(STATE_CM_LEVEL_OPTS);
 				int numSelections = 0;
 
 				if (selections != null)
+				{
 					numSelections = selections.size();
+				}
 
-				// populate options for dropdown lists
-				switch (numSelections) {
-				/*
-				 * execution will fall through these statements based on number
-				 * of selections already made
-				 */
-				case 3:
-					// intentionally blank
-				case 2:
-					levelOpts[2] = getCMSections((String) selections.get(1));
-				case 1:
-					levelOpts[1] = getCMCourseOfferings((String) selections
-							.get(0), t.getEid());
-				default:
-					levelOpts[0] = getCMSubjects();
+				if (numSelections != 0)
+				{
+					// execution will fall through these statements based on number of selections already made
+					if (numSelections == cmLevelSize - 1)
+					{
+						levelOpts[numSelections] = getCMSections((String) selections.get(numSelections-1));
+					}
+					else if (numSelections == cmLevelSize - 2)
+					{
+						levelOpts[numSelections] = getCMCourseOfferings(getSelectionString(selections, numSelections), t.getEid());
+					}
+					else if (numSelections < cmLevelSize)
+					{
+						levelOpts[numSelections] = sortCmObject(cms.findCourseSets(getSelectionString(selections, numSelections)));
+					}
+				}
+				// always set the top level
+				Set<CourseSet> courseSets = filterCourseSetList(getCourseSet(state));
+				levelOpts[0] = sortCmObject(courseSets);
+				
+				// clean further element inside the array
+				for (int i = numSelections + 1; i<cmLevelSize; i++)
+				{
+					levelOpts[i] = null;
 				}
 
 				context.put("cmLevelOptions", Arrays.asList(levelOpts));
+				context.put("cmBaseCourseSetLevel", Integer.valueOf((levelOpts.length-3) >= 0 ? (levelOpts.length-3) : 0)); // staring from that selection level, the lookup will be for CourseSet, CourseOffering, and Section
+				context.put("maxSelectionDepth", Integer.valueOf(levelOpts.length-1));
+				state.setAttribute(STATE_CM_LEVEL_OPTS, levelOpts);
 			}
 			if (state.getAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN) != null) {
 				context.put("selectedProviderCourse", state
@@ -2937,6 +2959,14 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			context.put("authzGroupService", AuthzGroupService.getInstance());
+			
+			if (selectedSect !=null){
+				context.put("value_uniqname", selectedSect.getAuthorizer());
+			}
+			else {
+				context.put("value_uniqname", "");
+			}
+
 			return (String) getContext(data).get("template") + TEMPLATE[53];
 		}
 
@@ -2946,6 +2976,81 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // buildContextForTemplate
 
+	private String getSelectionString(List selections, int numSelections) {
+		String eid = "";
+		for (int i = 0; i < numSelections;i++)
+		{
+			eid = eid + selections.get(i) + ",";
+		}
+		// trim off last ","
+		if (eid.endsWith(","))
+			eid = eid.substring(0, eid.lastIndexOf(","));
+		return eid;
+	}
+
+	/**
+	 * get CourseSet from CourseManagementService and update state attribute
+	 * @param state
+	 * @return
+	 */
+	private Set getCourseSet(SessionState state) {
+		Set courseSet = null;
+		if (state.getAttribute(STATE_COURSE_SET) != null)
+		{
+			courseSet = (Set) state.getAttribute(STATE_COURSE_SET);
+		}
+		else
+		{
+			courseSet = cms.getCourseSets();
+			state.setAttribute(STATE_COURSE_SET, courseSet);
+		}
+		return courseSet;
+	}
+	
+	/**
+	 * Depending on institutional setting, all or part of the CourseSet list will be shown in the dropdown list in find course page
+	 * for example, sakai.properties could have following setting:
+	 * sitemanage.cm.courseset.categories.count=1
+	 * sitemanage.cm.courseset.categories.1=Department
+	 * Hence, only CourseSet object with category of "Department" will be shown
+	 * @param courseSets
+	 * @return
+	 */
+	private Set<CourseSet> filterCourseSetList(Set<CourseSet> courseSets) {
+		if (ServerConfigurationService.getStrings("sitemanage.cm.courseset.categories") != null) {
+			List<String> showCourseSetTypes = new ArrayList(Arrays.asList(ServerConfigurationService.getStrings("sitemanage.cm.courseset.categories")));
+			Set<CourseSet> rv = new HashSet<CourseSet>();
+			for(CourseSet courseSet:courseSets)
+			{
+				if (showCourseSetTypes.contains(courseSet.getCategory()))
+				{
+					rv.add(courseSet);
+				}
+			}
+			courseSets = rv;
+		}
+		return courseSets;
+	}
+	
+	/**
+	 * sort any Cm object such as CourseOffering, CourseOfferingObject,
+	 * SectionObject provided object has getter & setter for eid & title
+	 * 
+	 * @param list
+	 * @return
+	 */
+	private Collection sortCmObject(Collection collection) {
+		if (collection != null) {
+			List propsList = new ArrayList();
+			propsList.add("eid");
+			propsList.add("title");
+			SortTool sort = new SortTool();
+			return sort.sort(collection, propsList);
+		} else {
+			return collection;
+		}
+	} // sortCmObject
+	
 	/**
 	 * Launch the Page Order Helper Tool -- for ordering, adding and customizing
 	 * pages
@@ -11949,6 +12054,21 @@ public class SiteAction extends PagedResourceActionII {
 			this.eid = section.getEid();
 			this.title = section.getTitle();
 			this.category = section.getCategory();
+			String authorizers = "";
+			if (section.getEnrollmentSet() != null){
+			        Set instructorset = section.getEnrollmentSet().getOfficialInstructors();
+			        List list = new ArrayList(instructorset);
+			        if (list != null) {
+			                for (int i = 0; i < list.size(); i++) {
+			                        if (i == 0) {
+			                                authorizers = (String) list.get(i);
+			                        } else {
+			                                authorizers = authorizers + ", " + list.get(i);
+			                        }
+			                }
+			        }
+			}
+			this.authorizer = authorizers;
 			this.categoryDescription = cms
 					.getSectionCategoryDescription(section.getCategory());
 			if ("01.lct".equals(section.getCategory())) {
