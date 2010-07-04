@@ -8351,9 +8351,20 @@ public class SiteAction extends PagedResourceActionII {
 		List roles = new Vector();
 		String realmId = SiteService.siteReference((String) state
 				.getAttribute(STATE_SITE_INSTANCE_ID));
+		boolean thisUserHasSiteUpdate = authzGroupService.allowUpdate(realmId);
 		try {
 			AuthzGroup realm = AuthzGroupService.getAuthzGroup(realmId);
-			roles.addAll(realm.getRoles());
+			Set<Role> permittedRoles = realm.getRoles();
+			if(!thisUserHasSiteUpdate) { // ...then remove any roles that do
+				for (Iterator<Role> i = permittedRoles.iterator(); i.hasNext();) {
+					Role r = i.next();
+					if (r != null && r.isAllowed("site.upd")) {
+						i.remove();
+						M_log.warn( this + ".getRoles: current user cannot add role: " + r.getId());
+					}
+				}
+			}
+			roles.addAll(permittedRoles);
 			Collections.sort(roles);
 		} catch (GroupNotDefinedException e) {
 			M_log.warn( this + ".getRoles: IdUnusedException " + realmId, e);
