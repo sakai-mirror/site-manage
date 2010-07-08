@@ -11189,7 +11189,7 @@ public class SiteAction extends PagedResourceActionII {
 	
 			// if the title has not yet been set and there is just
 			// one section, set the title to that section's EID
-			if (requestedSections.size() == 1) {
+			if (requestedSections.size() >= 1) {
 				SiteInfo siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 	
 				if (siteInfo == null) {
