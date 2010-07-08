@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
@@ -119,6 +120,9 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 	}
 	  
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
+
+    	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
+    	
 		List<Role> roles = handler.getRoles();
 	    StringList roleIds = new StringList();
 	    int i = 0;
@@ -126,10 +130,11 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 	    	if (!role.isProviderOnly())
 	    	{
 	    		roleIds.add(role.getId());
+	    		UIBranchContainer roleRow = UIBranchContainer.make(content, "role-row:", role.getId());
+	            UIOutput.make(roleRow, "role-id", role.getId());
+	            UIOutput.make(roleRow, "role-description", StringUtils.trimToEmpty(role.getDescription()));
 	    	}
 	    }
-	    
-    	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
         
     	UIForm differentRoleForm = UIForm.make(content, "differentRole-form");
     	

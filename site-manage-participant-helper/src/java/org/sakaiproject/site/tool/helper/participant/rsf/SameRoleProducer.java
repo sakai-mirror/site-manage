@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.Member;
@@ -62,6 +63,7 @@ import uk.org.ponder.rsf.components.UIMessage;
 import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIForm;
+import uk.org.ponder.rsf.components.UIOutputMany;
 import uk.org.ponder.rsf.components.UISelect;
 import uk.org.ponder.rsf.components.UISelectChoice;
 import uk.org.ponder.rsf.components.UISelectLabel;
@@ -128,6 +130,7 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
     	
     	// role choice 
 	    StringList roleItems = new StringList();
+	    StringList roleDescriptions = new StringList();
 	    UISelect roleSelect = UISelect.make(sameRoleForm, "select-roles", null,
 		        "#{siteAddParticipantHandler.sameRoleChoice}", handler.sameRoleChoice);
 	    String selectID = roleSelect.getFullID();
@@ -143,9 +146,16 @@ public class SameRoleProducer implements ViewComponentProducer, NavigationCaseRe
 	            UILabelTargetDecorator.targetLabel(lb, choice);
 	            
 	            roleItems.add(r.getId());
+	            String label = r.getId();
+	            if (StringUtils.trimToNull(r.getDescription()) != null)
+	            {
+	            	label += " (" + StringUtils.trimToNull(r.getDescription()) + ")";
+	            }
+	            roleDescriptions.add(label);
 	    	}
         }
         roleSelect.optionlist.setValue(roleItems.toStringArray()); 
+        roleSelect.optionnames = UIOutputMany.make(roleDescriptions.toStringArray());
         
         // list of users
         for (Iterator<String> it=handler.getUsers().iterator(); it.hasNext(); ) {
