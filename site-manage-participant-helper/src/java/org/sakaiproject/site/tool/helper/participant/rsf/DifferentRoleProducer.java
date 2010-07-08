@@ -77,7 +77,6 @@ import uk.org.ponder.rsf.view.ViewComponentProducer;
 import uk.org.ponder.rsf.viewstate.RawViewParameters;
 import uk.org.ponder.rsf.viewstate.SimpleViewParameters;
 import uk.org.ponder.rsf.viewstate.ViewParameters;
-import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
 import uk.org.ponder.stringutil.StringList;
 
 /**
@@ -121,10 +120,13 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
 	  
     public void fillComponents(UIContainer tofill, ViewParameters arg1, ComponentChecker arg2) {
 		List<Role> roles = handler.getRoles();
-	    roleIds = new String[roles.size()];
+	    StringList roleIds = new StringList();
 	    int i = 0;
 	    for (Role role: roles) {
-	      roleIds[i++] = role.getId();
+	    	if (!role.isProviderOnly())
+	    	{
+	    		roleIds.add(role.getId());
+	    	}
 	    }
 	    
     	UIBranchContainer content = UIBranchContainer.make(tofill, "content:");
@@ -154,7 +156,7 @@ public class DifferentRoleProducer implements ViewComponentProducer, NavigationC
             // SECOND LINE
             UIBranchContainer userRow = UIBranchContainer.make(differentRoleForm, "user-row:", curItemNum);
             UIOutput.make(userRow, "user-name", userEId + "(" + userName + ")");
-            UISelect.make(userRow, "role-select", roleIds, "siteAddParticipantHandler.userRoleEntries." + i + ".role", handler.getUserRole(userEId));
+            UISelect.make(userRow, "role-select", roleIds.toStringArray(), "siteAddParticipantHandler.userRoleEntries." + i + ".role", handler.getUserRole(userEId));
 
   		}
         
