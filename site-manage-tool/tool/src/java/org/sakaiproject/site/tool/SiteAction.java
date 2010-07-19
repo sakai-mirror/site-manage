@@ -313,6 +313,8 @@ public class SiteAction extends PagedResourceActionII {
 
 	/** Names of lists related to tools */
 	private static final String STATE_TOOL_REGISTRATION_LIST = "toolRegistrationList";
+	
+	private static final String STATE_TOOL_REGISTRATION_TITLE_LIST = "toolRegistrationTitleList";
 
 	private static final String STATE_TOOL_REGISTRATION_SELECTED_LIST = "toolRegistrationSelectedList";
 
@@ -1566,6 +1568,8 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("myworkspace_site", new Boolean(myworkspace_site));
 			
 			context.put(STATE_TOOL_REGISTRATION_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			// put tool title into context if PageOrderHelper is enabled
+			pageOrderToolTitleIntoContext(context, state, type, (site == null));
 
 			// all info related to multiple tools
 			multipleToolIntoContext(context, state);
@@ -2174,6 +2178,8 @@ public class SiteAction extends PagedResourceActionII {
 
 			context.put(STATE_TOOL_REGISTRATION_LIST, state
 					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			// put tool title into context if PageOrderHelper is enabled
+			pageOrderToolTitleIntoContext(context, state, site_type, false);
 
 			context.put("check_home", state
 					.getAttribute(STATE_TOOL_HOME_SELECTED));
@@ -2953,6 +2959,27 @@ public class SiteAction extends PagedResourceActionII {
 		// should never be reached
 		return (String) getContext(data).get("template") + TEMPLATE[0];
 
+	}
+
+	/**
+	 * put customized page title into context during an editing process for an existing site and the PageOrder tool is enabled for this site
+	 * @param context
+	 * @param state
+	 * @param siteType
+	 * @param newSite
+	 */
+	private void pageOrderToolTitleIntoContext(Context context, SessionState state, String siteType, boolean newSite) {
+		// check if this is an existing site and PageOrder is enabled for the site. If so, show tool title
+		if (!newSite && notStealthOrHiddenTool("sakai-site-pageorder-helper") && isPageOrderAllowed(siteType))
+		{
+			// the actual page titles
+			context.put(STATE_TOOL_REGISTRATION_TITLE_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_TITLE_LIST));
+			context.put("allowPageOrderHelper", Boolean.TRUE);
+		}
+		else
+		{
+			context.put("allowPageOrderHelper", Boolean.FALSE);
+		}
 	}
 
 	/**
@@ -9255,11 +9282,20 @@ public class SiteAction extends PagedResourceActionII {
 		setToolRegistrationList(state, type);
 		multipleToolIdAttributeMap = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null? (Map<String, Map<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap();
 		
-		List toolRegList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);
-		
 		// for the selected tools
 		boolean check_home = false;
 		Vector idSelected = new Vector();
+		HashMap<String, String> toolTitles = new HashMap<String, String>();
+		
+		List toolRegList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);
+		// populate the tool title list
+		if (toolRegList != null)
+		{
+			for (Object t: toolRegList) {
+				toolTitles.put(((MyTool) t).getId(),((MyTool) t).getTitle());
+			}
+		}
+		
 		if (!((pageList == null) || (pageList.size() == 0))) {
 			for (ListIterator i = pageList.listIterator(); i.hasNext();) {
 				// reset
@@ -9278,6 +9314,7 @@ public class SiteAction extends PagedResourceActionII {
 					if (isHomePage(page))
 					{
 						check_home = true;
+						toolTitles.put("home", page.getTitle());
 					}
 					else 
 					{
@@ -9285,6 +9322,7 @@ public class SiteAction extends PagedResourceActionII {
 						{
 							String mId = page.getId() + wSetupTool;
 							idSelected.add(mId);
+							toolTitles.put(mId, page.getTitle());
 							multipleToolIdTitleMap.put(mId, page.getTitle());
 							
 							// get the configuration for multiple instance
@@ -9314,6 +9352,7 @@ public class SiteAction extends PagedResourceActionII {
 						else
 						{
 							idSelected.add(wSetupTool);
+							toolTitles.put(wSetupTool, page.getTitle());
 						}
 					}
 
@@ -9331,6 +9370,7 @@ public class SiteAction extends PagedResourceActionII {
 		state.setAttribute(STATE_TOOL_HOME_SELECTED, new Boolean(check_home));
 		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, idSelected); // List
 		state.setAttribute(STATE_TOOL_REGISTRATION_LIST, toolRegList);
+		state.setAttribute(STATE_TOOL_REGISTRATION_TITLE_LIST, toolTitles);
 
 		// of
 		// ToolRegistration
@@ -9382,6 +9422,7 @@ public class SiteAction extends PagedResourceActionII {
 		state.removeAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP);
 		state.removeAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION);
 		state.removeAttribute(STATE_TOOL_REGISTRATION_LIST);
+		state.removeAttribute(STATE_TOOL_REGISTRATION_TITLE_LIST);
 		state.removeAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 	}
 
