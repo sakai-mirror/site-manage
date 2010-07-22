@@ -4903,6 +4903,11 @@ public class SiteAction extends PagedResourceActionII {
 			{
 				// normal site creation: add the features.
 				saveFeatures(params, state, site);
+				try {
+				    site = SiteService.getSite(site.getId());
+				} catch (Exception ee) {
+				    M_log.error(this + "doFinish: unable to reload site after copying tools");
+				}
 			}
 			else
 			{
@@ -4910,12 +4915,12 @@ public class SiteAction extends PagedResourceActionII {
 				importToolContent(site.getId(), templateSite.getId(), site, true);
 			}
 				
+			ResourcePropertiesEdit rp = site.getPropertiesEdit();
+
 			// for course sites
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
 				String siteId = site.getId();
-
-				ResourcePropertiesEdit rp = site.getPropertiesEdit();
 
 				AcademicSession term = null;
 				if (state.getAttribute(STATE_TERM_SELECTED) != null) {
