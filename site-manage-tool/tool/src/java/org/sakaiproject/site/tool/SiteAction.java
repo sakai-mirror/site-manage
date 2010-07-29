@@ -7535,7 +7535,7 @@ public class SiteAction extends PagedResourceActionII {
 		
 		if (bypassSecurity)
 		{
-			SecurityService.clearAdvisors();
+			SecurityService.popAdvisor();
 		}
 	}
 	/**

@@ -247,7 +247,7 @@ public class RoleGroupEventWatcher implements Observer
 					log.warn(this + ".update:" + e.getMessage() + ": " + event.getResource());
 				}
 				
-				SecurityService.clearAdvisors();
+				SecurityService.popAdvisor();
 				
 				// reset
 				ThreadLocalManager.set("current.event.resource.ref", null);
