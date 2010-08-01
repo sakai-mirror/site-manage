@@ -38,20 +38,29 @@
 		<input type="hidden" name="option" value="add" />
 		<input type="hidden" name="eventSubmit_doAdd_features" value="x" />                                     
 			<table class="listHier lines nolines" cellspacing="0" summary="$tlang.getString("feat.tools.list.summary")"  style="width:auto">
+				#if ($!defaultTools.indexOf($!homeToolId) != -1)
+					<tr style="display:none">
+						<td>
+						<input type="hidden" name="selectedTools" value="$!homeToolId" />
+						</td>
+					</tr>
+				#end
 				<tr id="row-home">
 					<td>
 						<input type="checkbox" name="selectedTools" value="$!homeToolId" id="home"
 							#if ($check_home)
 								checked="checked"
 							#end
-##							onchange="this.checked ? document.getElementById('row-home').className='selectedSelected':document.getElementById('row-home').className=''"
+							#if ($!defaultTools.indexOf($!homeToolId) != -1)
+								checked="checked" disabled="disabled"
+							#end
 						/>
 					</td>
 					<td>
 						<label for="home">
 							$tlang.getString("java.home")
 							#if ($!allowPageOrderHelper)
-								($validator.escapeHtml($!toolRegistrationTitleList.get("home")))
+								($validator.escapeHtml($!toolRegistrationTitleList.get($!homeToolId)))
 							#end
 						</label>
 					</td>	
