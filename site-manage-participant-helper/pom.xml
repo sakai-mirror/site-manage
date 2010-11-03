@@ -21,12 +21,16 @@
     <sakairsf.sakai.version>2.2.x</sakairsf.sakai.version>
     <deploy.webappname>tbook</deploy.webappname>
     <appserver.id>${sakai.appserver.id}</appserver.id>
-    <genericdao.version>${sakai.genericdao.version}</genericdao.version>
   </properties>
   <dependencies>
     <dependency>
       <groupId>org.sakaiproject.edu-services.course-management</groupId>
       <artifactId>coursemanagement-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sakaiproject.entitybroker</groupId>
+      <artifactId>entitybroker-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.sakaiproject.kernel</groupId>
@@ -48,10 +52,6 @@
       <groupId>org.sakaiproject.sitemanage</groupId>
       <artifactId>sakai-site-manage-util</artifactId>
     </dependency>
-        <dependency>
-      <groupId>org.sakaiproject.entitybroker</groupId>
-      <artifactId>entitybroker-api</artifactId>
-    </dependency>
     <dependency>
       <groupId>uk.org.ponder.sakairsf</groupId>
       <artifactId>SakaiRSFComponents-evolvers</artifactId>
@@ -67,6 +67,7 @@
     <dependency>
       <groupId>org.sakaiproject</groupId>
       <artifactId>sakai-velocity-tool-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.sakaiproject.accountvalidator</groupId>
