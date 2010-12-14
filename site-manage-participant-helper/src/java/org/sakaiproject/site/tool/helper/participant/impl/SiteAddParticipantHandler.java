@@ -420,7 +420,7 @@ public class SiteAddParticipantHandler {
 		boolean rv = true;
 		
 		// check the change of roles whether it is valid: changed current user into role without "membership edit" permission? leaving the site without maintain role?
-		User currentUser = userDirectoryService.getCurrentUser();
+		User currentUser = UserDirectoryService.getCurrentUser();
 		String currentUserEid = currentUser != null ? currentUser.getEid():"";
 		for (UserRoleEntry entry : userRoleEntries)
 		{
