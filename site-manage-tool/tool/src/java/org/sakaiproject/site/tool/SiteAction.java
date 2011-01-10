@@ -1540,13 +1540,10 @@ public class SiteAction extends PagedResourceActionII {
 								remove.add(removeSite);
 							} catch (IdUnusedException e) {
 								M_log.warn(this + "buildContextForTemplate chef_site-siteDeleteConfirm.vm - IdUnusedException " + id + e.getMessage());
-								addAlert(state, rb.getString("java.sitewith") + " "
-										+ id + " " + rb.getString("java.couldnt")
-										+ " ");
+								addAlert(state, rb.getFormattedMessage("java.couldntlocate", new Object[]{id}));
 							}
 						} else {
-							addAlert(state, site_title + " "
-									+ rb.getString("java.couldntdel") + " ");
+							addAlert(state, rb.getFormattedMessage("java.couldntdel", new Object[]{site_title}));
 						}
 					} else {
 						addAlert(state, rb.getString("java.yourwork"));
@@ -3288,9 +3285,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		if (fileFromUpload == null) {
 			// "The user submitted a file to upload but it was too big!"
-			addAlert(state, rb.getString("importFile.size") + " "
-					+ max_file_size_mb + "MB "
-					+ rb.getString("importFile.exceeded"));
+			addAlert(state, rb.getFormattedMessage("importFile.size", new Object[]{max_file_size_mb}));
 		} else if (fileFromUpload.getFileName() == null
 				|| fileFromUpload.getFileName().length() == 0) {
 			addAlert(state, rb.getString("importFile.choosefile"));
@@ -3298,8 +3293,7 @@ public class SiteAction extends PagedResourceActionII {
 			byte[] fileData = fileFromUpload.get();
 
 			if (fileData.length >= max_bytes) {
-				addAlert(state, rb.getString("importFile.size") + " " + max_file_size_mb
-						+ "MB " + rb.getString("importFile.exceeded"));
+				addAlert(state, rb.getFormattedMessage("importFile.size", new Object[]{max_file_size_mb}));
 			} else if (fileData.length > 0) {
 
 				if (importService.isValidArchive(fileData)) {
@@ -4018,18 +4012,14 @@ public class SiteAction extends PagedResourceActionII {
 						SiteService.removeSite(site);
 					} catch (IdUnusedException e) {
 						M_log.warn(this +".doSite_delete_confirmed - IdUnusedException " + id, e);
-						addAlert(state, rb.getString("java.sitewith") + " "
-								+ site_title + "(" + id + ") "
-								+ rb.getString("java.couldnt") + " ");
+						addAlert(state, rb.getFormattedMessage("java.couldnt", new Object[]{site_title,id}));
 					} catch (PermissionException e) {
 						M_log.warn(this + ".doSite_delete_confirmed -  PermissionException, site " + site_title + "(" + id + ").", e);
-						addAlert(state, site_title + " "
-								+ rb.getString("java.dontperm") + " ");
+						addAlert(state, rb.getFormattedMessage("java.dontperm", new Object[]{site_title}));
 					}
 				} else {
 					M_log.warn(this + ".doSite_delete_confirmed -  allowRemoveSite failed for site "+ id);
-					addAlert(state, site_title + " "
-							+ rb.getString("java.dontperm") + " ");
+					addAlert(state, rb.getFormattedMessage("java.dontperm", new Object[]{site_title}));
 				}
 			}
 		}
@@ -4417,11 +4407,7 @@ public class SiteAction extends PagedResourceActionII {
 					// if a future term is selected, do not check authorization
 					// uniqname
 					if (uniqname == null) {
-						addAlert(state, rb.getString("java.author")
-								+ " "
-								+ ServerConfigurationService
-										.getString("officialAccountName")
-								+ ". ");
+						addAlert(state, rb.getFormattedMessage("java.author", new Object[]{ServerConfigurationService.getString("officialAccountName")}));
 					} else {
 						// in case of multiple instructors
 						List instructors = new ArrayList(Arrays.asList(uniqname.split(",")));
@@ -4431,14 +4417,7 @@ public class SiteAction extends PagedResourceActionII {
 							try {
 								UserDirectoryService.getUserByEid(eid);
 							} catch (UserNotDefinedException e) {
-								addAlert(
-										state,
-										rb.getString("java.validAuthor1")
-												+ " "
-												+ ServerConfigurationService
-														.getString("officialAccountName")
-												+ " "
-												+ rb.getString("java.validAuthor2"));
+								addAlert(state, rb.getFormattedMessage("java.validAuthor", new Object[]{ServerConfigurationService.getString("officialAccountName")}));
 								M_log.warn(this + ".doManual_add_course: cannot find user with eid=" + eid, e);
 							}
 						}
@@ -8261,7 +8240,7 @@ public class SiteAction extends PagedResourceActionII {
 			// check for site title length 	 
 			else if (title.length() > SiteConstants.SITE_GROUP_TITLE_LIMIT) 	 
 			{ 	 
-				addAlert(state, rb.getString("site_group_title_length_limit_1") + SiteConstants.SITE_GROUP_TITLE_LIMIT + " " + rb.getString("site_group_title_length_limit_2")); 	 
+				addAlert(state, rb.getFormattedMessage("site_group_title_length_limit", new Object[]{SiteConstants.SITE_GROUP_TITLE_LIMIT})); 	 
 			}
         }
 		if (params.getString("description") != null) {
@@ -8324,8 +8303,7 @@ public class SiteAction extends PagedResourceActionII {
 							|| parts[0].length() == 0 || !Validator
 							.checkEmailLocal(parts[0]))) {
 				// invalid email
-				addAlert(state, email + " " + rb.getString("java.invalid")
-						+ rb.getString("java.theemail"));
+				addAlert(state, rb.getFormattedMessage("java.invalid.email", new Object[]{email}));
 			}
 			siteInfo.site_contact_email = email;
 		}
@@ -9346,8 +9324,8 @@ public class SiteAction extends PagedResourceActionII {
 				state.setAttribute(STATE_TEMPLATE_INDEX, params.getString("templateIndex"));
 				return;
 			} catch (PermissionException e) {
-				addAlert(state, rb.getString("java.permission") + " " + id + ".");
-				M_log.warn(this + ".addNewSite: " + rb.getString("java.permission") + " " + id + ".", e);
+				addAlert(state, rb.getFormattedMessage("java.permission", new Object[]{id}));
+				M_log.warn(this + ".addNewSite: " + rb.getFormattedMessage("java.permission", new Object[]{id}), e);
 				state.setAttribute(STATE_TEMPLATE_INDEX, params.getString("templateIndex"));
 				return;
 			}
