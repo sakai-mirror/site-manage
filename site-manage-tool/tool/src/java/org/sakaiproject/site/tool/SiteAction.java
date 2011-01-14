@@ -9417,6 +9417,7 @@ public class SiteAction extends PagedResourceActionII {
 			templateSites = new ArrayList();
 		
 		context.put("templateSites",templateSites);
+		context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
 		
 	} // setTemplateListForContext
 	
