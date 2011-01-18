@@ -1237,7 +1237,8 @@ public class SiteAction extends PagedResourceActionII {
 				"withDissertation", Boolean.FALSE.toString());
 
 		// course site type
-		context.put("courseSiteType", state.getAttribute(STATE_COURSE_SITE_TYPE));
+		String courseSiteType = (String) state.getAttribute(STATE_COURSE_SITE_TYPE);
+		context.put("courseSiteType", courseSiteType);
 		
 		//can the user create course sites?
 		context.put(STATE_SITE_ADD_COURSE, SiteService.allowAddCourseSite());
@@ -1449,7 +1450,7 @@ public class SiteAction extends PagedResourceActionII {
 			 * 
 			 */
 			String type = (String) state.getAttribute(STATE_SITE_TYPE);
-			if (type != null && type.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			if (type != null && type.equalsIgnoreCase(courseSiteType)) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("isProjectSite", Boolean.FALSE);
 			} else {
@@ -1586,7 +1587,7 @@ public class SiteAction extends PagedResourceActionII {
 			 */
 			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			String siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-			if (siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			if (siteType != null && siteType.equalsIgnoreCase(courseSiteType)) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("disableCourseSelection", ServerConfigurationService.getString("disable.course.site.skin.selection", "false").equals("true")?Boolean.TRUE:Boolean.FALSE);
 				context.put("isProjectSite", Boolean.FALSE);
@@ -1633,7 +1634,6 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("short_description", siteInfo.short_description);
 			context.put("siteContactName", siteInfo.site_contact_name);
 			context.put("siteContactEmail", siteInfo.site_contact_email);
-			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
 			toolRegistrationSelectedList = (List) state
 					.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
 			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST,
@@ -1785,7 +1785,7 @@ public class SiteAction extends PagedResourceActionII {
 						}
 						
 						// show the Edit Class Roster menu
-						if (ServerConfigurationService.getBoolean("site.setup.allow.editRoster", true) && siteType != null && siteType.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+						if (ServerConfigurationService.getBoolean("site.setup.allow.editRoster", true) && siteType != null && siteType.equals(courseSiteType)) {
 							b.add(new MenuEntry(rb.getString("java.editc"),
 									"doMenu_siteInfo_editClass"));
 						}
@@ -1969,7 +1969,7 @@ public class SiteAction extends PagedResourceActionII {
 				if (contactEmail != null) {
 					context.put("contactEmail", contactEmail);
 				}
-				if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+				if (siteType != null && siteType.equalsIgnoreCase(courseSiteType)) {
 					context.put("isCourseSite", Boolean.TRUE);
 					
 					coursesIntoContext(state, context, site);
@@ -2044,7 +2044,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("siteTitleEditable", Boolean.valueOf(siteTitleEditable(state, siteType)));
 			context.put("titleMaxLength", state.getAttribute(STATE_SITE_TITLE_MAX));
 
-			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			if (siteType != null && siteType.equalsIgnoreCase(courseSiteType)) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("isProjectSite", Boolean.FALSE);
 
@@ -2158,7 +2158,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("displaySiteAlias", Boolean.valueOf(displaySiteAlias()));
 			siteProperties = site.getProperties();
 			siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-			if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			if (siteType != null && siteType.equalsIgnoreCase(courseSiteType)) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("disableCourseSelection", ServerConfigurationService.getString("disable.course.site.skin.selection", "false").equals("true")?Boolean.TRUE:Boolean.FALSE);
 				context.put("siteTerm", siteInfo.term);
@@ -2335,7 +2335,7 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("continue", "10");
 
 				siteType = (String) state.getAttribute(STATE_SITE_TYPE);
-				if (siteType != null && siteType.equalsIgnoreCase((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+				if (siteType != null && siteType.equalsIgnoreCase(courseSiteType)) {
 					context.put("isCourseSite", Boolean.TRUE);
 					context.put("isProjectSite", Boolean.FALSE);
 				} else {
@@ -2523,7 +2523,7 @@ public class SiteAction extends PagedResourceActionII {
 			 */
 			context.put("siteTitle", site.getTitle());
 			String sType = site.getType();
-			if (sType != null && sType.equals((String) state.getAttribute(STATE_COURSE_SITE_TYPE))) {
+			if (sType != null && sType.equals(courseSiteType)) {
 				context.put("isCourseSite", Boolean.TRUE);
 				context.put("currentTermId", site.getProperties().getProperty(
 						PROP_SITE_TERM));
