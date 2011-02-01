@@ -702,6 +702,8 @@ public class SiteAddParticipantHandler {
 		// check that there is something with which to work
 		officialAccounts = StringUtil.trimToNull(officialAccountParticipant);
 		nonOfficialAccounts = StringUtil.trimToNull(nonOfficialAccountParticipant);
+		String updatedOfficialAccountParticipant = "";
+		String updatedNonOfficialAccountParticipant = "";
 
 		// if there is no eid or nonOfficialAccount entered
 		if (officialAccounts == null && nonOfficialAccounts == null) {
@@ -716,7 +718,8 @@ public class SiteAddParticipantHandler {
 					.split("\r\n");
 
 			for (i = 0; i < officialAccountArray.length; i++) {
-				String officialAccount = StringUtil.trimToNull(officialAccountArray[i].replaceAll("[\t\r\n]", ""));
+				String currentOfficialAccount = officialAccountArray[i];
+				String officialAccount = StringUtil.trimToNull(currentOfficialAccount.replaceAll("[\t\r\n]", ""));
 				// if there is some text, try to use it
 				if (officialAccount != null) {
 					// automatically add nonOfficialAccount account
@@ -812,6 +815,9 @@ public class SiteAddParticipantHandler {
 						if (!getUsers().contains(officialAccount) && !existingUsers.contains(officialAccount))
 						{
 							userRoleEntries.add(new UserRoleEntry(u.getEid(), ""));
+
+							// not existed user, update account
+							updatedOfficialAccountParticipant += currentOfficialAccount+ "\n";
 						}
 					}
 					else if (eidsForAllMatches.length() == 0)
@@ -828,7 +834,8 @@ public class SiteAddParticipantHandler {
 		if (nonOfficialAccounts != null) {
 			String[] nonOfficialAccountArray = nonOfficialAccounts.split("\r\n");
 			for (i = 0; i < nonOfficialAccountArray.length; i++) {
-				String nonOfficialAccountAll = StringUtil.trimToNull(nonOfficialAccountArray[i].replaceAll("[\t\r\n]", ""));
+				String currentNonOfficialAccount = nonOfficialAccountArray[i];
+				String nonOfficialAccountAll = StringUtil.trimToNull(currentNonOfficialAccount.replaceAll("[\t\r\n]", ""));
 				// the format of per user entry is: email address,first name,last name
 				// comma separated
 				String[] nonOfficialAccountParts  = nonOfficialAccountAll.split(",");
@@ -957,11 +964,18 @@ public class SiteAddParticipantHandler {
 						if (!getUsers().contains(userEid) && !existingUsers.contains(userEid))
 						{
 							userRoleEntries.add(new UserRoleEntry(userEid, "", userFirstName, userLastName));
+							// not existed user, update account
+							updatedNonOfficialAccountParticipant += currentNonOfficialAccount+ "\n";
 						}
 					}
 				} // if
 			} // 	
 		} // nonOfficialAccounts
+		
+		// update participant attributes
+		officialAccountParticipant = updatedOfficialAccountParticipant;
+		nonOfficialAccountParticipant = updatedNonOfficialAccountParticipant;
+		
 
 		if ("same_role".equals(roleChoice)) {
 			targettedMessageList.addMessage(new TargettedMessage("java.roletype", null, TargettedMessage.SEVERITY_ERROR));
