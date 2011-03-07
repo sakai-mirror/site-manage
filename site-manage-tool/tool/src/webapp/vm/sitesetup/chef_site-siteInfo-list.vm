@@ -307,44 +307,8 @@ function printPreview(target){
 						</a>
 					</th>
 					#if ($hasProviderSet)
-						<th id="coursename">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_course")" title ="$tlang.getString("sitegen.siteinfolist.sortname1")"> 
-								$tlang.getString("sitegen.siteinfolist.enrolled")
-								#if ($currentSortedBy.equals("participant_course")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnameas1")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" alt ="$tlang.getString("sitegen.siteinfolist.sortnamedes1")" /> 
-									#end 
-								#end 
-							</a>
-						</th>
 					#end
 					#if ($!isCourseSite)
-						<th id="id">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_id")" title ="$tlang.getString("sitegen.siteinfolist.sortid")"> 
-								$tlang.getString("sitegen.siteinfolist.id")
-								#if ($currentSortedBy.equals("participant_id")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortidas")" alt ="$tlang.getString("sitegen.siteinfolist.sortidas")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortiddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortiddes")" /> 
-									#end 
-								#end 
-							</a>
-						</th>
-						<th id="credits">
-							<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_credits")" title ="$tlang.getString("sitegen.siteinfolist.sortcred")"> 
-								$tlang.getString("sitegen.siteinfolist.credits")
-								#if ($currentSortedBy.equals("participant_credits")) 
-									#if ($currentSortAsc.equals("true")) 
-										<img src = "#imageLink("sakai/sortascending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcredas")" alt ="$tlang.getString("sitegen.siteinfolist.sortcredas")" /> 
-									#else 
-										<img src = "#imageLink("sakai/sortdescending.gif")" border="0" title ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" alt ="$tlang.getString("sitegen.siteinfolist.sortcreddes")" /> 
-									#end 
-								#end 
-							</a>
-						</th>
 					#end
 					<th id="role">
 						<a href="#toolLinkParam("SiteAction" "doSort_roster" "criterion=participant_role")" title ="$tlang.getString("sitegen.siteinfolist.sortrole")"> 
@@ -397,23 +361,8 @@ function printPreview(target){
 							</h5>
 						</td>
 						#if ($hasProviderSet)
-							<td headers="coursename">
-								#set($partSection = "")
-								#set($partSection = $participant.getSection())
-								$partSection
-							</td>
 						#end
 						#if ($!isCourseSite)
-							<td headers="id">
-								#set($partId = "")
-								#set($partId = $participant.getRegId())
-								$!partId
-							</td>
-							<td headers="credits">
-								#set($partCredits = "")
-								#set($partCredits = $participant.getCredits())
-								$!partCredits
-							</td>
 						#end
 						<td headers="role">
 							#set($uRole = "")
