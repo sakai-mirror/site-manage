@@ -49,6 +49,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.velocity.tools.generic.SortTool;
@@ -152,7 +153,6 @@ import org.sakaiproject.util.FormattedText;
 import org.sakaiproject.util.ParameterParser;
 import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SortedIterator;
-import org.sakaiproject.util.StringUtil;
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.util.Web;
 
@@ -863,7 +863,7 @@ public class SiteAction extends PagedResourceActionII {
 		PortletConfig config = portlet.getPortletConfig();
 
 		// types of sites that can either be public or private
-		String changeableTypes = StringUtil.trimToNull(config
+		String changeableTypes = StringUtils.trimToNull(config
 				.getInitParameter("publicChangeableSiteTypes"));
 		if (state.getAttribute(STATE_PUBLIC_CHANGEABLE_SITE_TYPES) == null) {
 			if (changeableTypes != null) {
@@ -878,7 +878,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		// type of sites that are always public
-		String publicTypes = StringUtil.trimToNull(config
+		String publicTypes = StringUtils.trimToNull(config
 				.getInitParameter("publicSiteTypes"));
 		if (state.getAttribute(STATE_PUBLIC_SITE_TYPES) == null) {
 			if (publicTypes != null) {
@@ -890,7 +890,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		// types of sites that are always private
-		String privateTypes = StringUtil.trimToNull(config
+		String privateTypes = StringUtils.trimToNull(config
 				.getInitParameter("privateSiteTypes"));
 		if (state.getAttribute(STATE_PRIVATE_SITE_TYPES) == null) {
 			if (privateTypes != null) {
@@ -902,7 +902,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		// default site type
-		String defaultType = StringUtil.trimToNull(config
+		String defaultType = StringUtils.trimToNull(config
 				.getInitParameter("defaultSiteType"));
 		if (state.getAttribute(STATE_DEFAULT_SITE_TYPE) == null) {
 			if (defaultType != null) {
@@ -1292,7 +1292,7 @@ public class SiteAction extends PagedResourceActionII {
 					try {
 						// the Grad Tools site option is only presented to
 						// GradTools Candidates
-						String userId = StringUtil.trimToZero(SessionManager
+						String userId = StringUtils.trimToEmpty(SessionManager
 								.getCurrentSessionUserId());
 
 						// am I a grad student?
@@ -1407,7 +1407,7 @@ public class SiteAction extends PagedResourceActionII {
 				try {
 					// the Grad Tools site option is only presented to UM grad
 					// students
-					String userId = StringUtil.trimToZero(SessionManager
+					String userId = StringUtils.trimToEmpty(SessionManager
 							.getCurrentSessionUserId());
 
 					// am I a UM grad student?
@@ -1610,7 +1610,7 @@ public class SiteAction extends PagedResourceActionII {
 				}
 
 				context.put("skins", state.getAttribute(STATE_ICONS));
-				if (StringUtil.trimToNull(siteInfo.getIconUrl()) != null) {
+				if (StringUtils.trimToNull(siteInfo.getIconUrl()) != null) {
 					context.put("selectedIcon", siteInfo.getIconUrl());
 				}
 			} else {
@@ -1619,12 +1619,12 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("isProjectSite", Boolean.TRUE);
 				}
 
-				if (StringUtil.trimToNull(siteInfo.iconUrl) != null) {
+				if (StringUtils.trimToNull(siteInfo.iconUrl) != null) {
 					context.put("iconUrl", siteInfo.iconUrl);
 				}
 			}
 			
-			if (StringUtil.trimToNull(siteInfo.getUrlAlias()) != null) {
+			if (StringUtils.trimToNull(siteInfo.getUrlAlias()) != null) {
 				String urlAliasFull = aliasBaseUrl + siteInfo.getUrlAlias();
 				context.put(FORM_URL_ALIAS_FULL, urlAliasFull);
 			}
@@ -1707,8 +1707,7 @@ public class SiteAction extends PagedResourceActionII {
 					List skins = (List) state.getAttribute(STATE_ICONS);
 					for (int i = 0; i < skins.size(); i++) {
 						MyIcon s = (MyIcon) skins.get(i);
-						if (!StringUtil
-								.different(s.getUrl(), site.getIconUrl())) {
+						if (StringUtils.equals(s.getUrl(), site.getIconUrl())) {
 							context.put("siteUnit", s.getName());
 							break;
 						}
@@ -2085,7 +2084,7 @@ public class SiteAction extends PagedResourceActionII {
 				// whether to show course skin selection choices or not
 				courseSkinSelection(context, state, site, siteInfo);
 				
-				if (StringUtil.trimToNull(siteInfo.term) == null) {
+				if (StringUtils.trimToNull(siteInfo.term) == null) {
 					if (site != null)
 					{
 						// existing site
@@ -2106,7 +2105,7 @@ public class SiteAction extends PagedResourceActionII {
 					context.put("isProjectSite", Boolean.TRUE);
 				}
 
-				if (StringUtil.trimToNull(siteInfo.iconUrl) != null) {
+				if (StringUtils.trimToNull(siteInfo.iconUrl) != null) {
 					context.put(FORM_ICON_URL, siteInfo.iconUrl);
 				}
 			}
@@ -2183,7 +2182,7 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("oName", siteProperties.getProperty(PROP_SITE_CONTACT_NAME));
 			context.put("email", siteInfo.site_contact_email);
 			context.put("oEmail", siteProperties.getProperty(PROP_SITE_CONTACT_EMAIL));
-			if (StringUtil.trimToNull(siteInfo.getUrlAlias()) != null) {
+			if (StringUtils.trimToNull(siteInfo.getUrlAlias()) != null) {
 				String urlAliasFull = aliasBaseUrl + siteInfo.getUrlAlias();
 				context.put(FORM_URL_ALIAS_FULL, urlAliasFull);
 			}
@@ -3141,7 +3140,7 @@ public class SiteAction extends PagedResourceActionII {
 		String hidePageOrderSiteTypes = ServerConfigurationService.getString("hide.pageorder.site.types", "");
 		if ( hidePageOrderSiteTypes.length() != 0)
 		{
-			if (new ArrayList<String>(Arrays.asList(StringUtil.split(hidePageOrderSiteTypes, ","))).contains(siteType))
+			if (new ArrayList<String>(Arrays.asList(StringUtils.split(hidePageOrderSiteTypes, ","))).contains(siteType))
 			{
 				rv = false;
 			}
@@ -3171,7 +3170,7 @@ public class SiteAction extends PagedResourceActionII {
 		// The setting defaults to be false.
 		context.put("disableCourseSelection", ServerConfigurationService.getString("disable.course.site.skin.selection", "false").equals("true")?Boolean.TRUE:Boolean.FALSE);
 		context.put("skins", state.getAttribute(STATE_ICONS));
-		if (siteInfo != null && StringUtil.trimToNull(siteInfo.getIconUrl()) != null) 
+		if (siteInfo != null && StringUtils.trimToNull(siteInfo.getIconUrl()) != null) 
 		{
 			context.put("selectedIcon", siteInfo.getIconUrl());
 		} else if (site != null && site.getIconUrl() != null) 
@@ -3530,7 +3529,7 @@ public class SiteAction extends PagedResourceActionII {
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 
 		// read the search form field into the state object
-		String search = StringUtil.trimToNull(data.getParameters().getString(
+		String search = StringUtils.trimToNull(data.getParameters().getString(
 				FORM_SEARCH));
 
 		// set the flag to go to the prev page on the next list
@@ -3590,7 +3589,7 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	private void courseListFromStringIntoContext(SessionState state, Context context, Site site, String site_prop_name, String state_attribute_string, String context_string) {
-		String courseListString = StringUtil.trimToNull(site != null?site.getProperties().getProperty(site_prop_name):null);
+		String courseListString = StringUtils.trimToNull(site != null?site.getProperties().getProperty(site_prop_name):null);
 		if (courseListString != null) {
 			List courseList = new Vector();
 			if (courseListString.indexOf("+") != -1) {
@@ -3663,7 +3662,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		// if called from the site list page
 		if (((String) state.getAttribute(STATE_TEMPLATE_INDEX)).equals("0")) {
-			search = StringUtil.trimToNull((String) state
+			search = StringUtils.trimToNull((String) state
 					.getAttribute(STATE_SEARCH));
 			if (SecurityService.isSuperUser()) {
 				// admin-type of user
@@ -3765,7 +3764,7 @@ public class SiteAction extends PagedResourceActionII {
 	 * {@inheritDoc}
 	 */
 	protected List readResourcesPage(SessionState state, int first, int last) {
-		String search = StringUtil.trimToNull((String) state
+		String search = StringUtils.trimToNull((String) state
 				.getAttribute(STATE_SEARCH));
 
 		// if called from the site list page
@@ -4235,7 +4234,7 @@ public class SiteAction extends PagedResourceActionII {
 				.intValue();
 		actionForTemplate("continue", index, params, state, data);
 
-		String type = StringUtil.trimToNull(params.getString("itemType"));
+		String type = StringUtils.trimToNull(params.getString("itemType"));
 
 		if (type == null) {
 			addAlert(state, rb.getString("java.select") + " ");
@@ -4427,7 +4426,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (option.equalsIgnoreCase("change") || option.equalsIgnoreCase("add")) {
 			readCourseSectionInfo(state, params);
 
-			String uniqname = StringUtil.trimToNull(params
+			String uniqname = StringUtils.trimToNull(params
 					.getString("uniqname"));
 			state.setAttribute(STATE_SITE_QUEST_UNIQNAME, uniqname);
 			
@@ -4457,7 +4456,7 @@ public class SiteAction extends PagedResourceActionII {
 						List instructors = new ArrayList(Arrays.asList(uniqname.split(",")));
 						for (Iterator iInstructors = instructors.iterator(); iInstructors.hasNext();)
 						{
-							String eid = StringUtil.trimToZero((String) iInstructors.next());
+							String eid = StringUtils.trimToEmpty((String) iInstructors.next());
 							try {
 								UserDirectoryService.getUserByEid(eid);
 							} catch (UserNotDefinedException e) {
@@ -4569,7 +4568,7 @@ public class SiteAction extends PagedResourceActionII {
 				SectionField sectionField = (SectionField) requiredFields
 						.get(k);
 				String fieldLabel = sectionField.getLabelKey();
-				String fieldInput = StringUtil.trimToZero(params
+				String fieldInput = StringUtils.trimToEmpty(params
 						.getString(fieldLabel + i));
 				sectionField.setValue(fieldInput);
 				aCourseInputs.add(sectionField);
@@ -4626,7 +4625,7 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		// set state attributes
-		state.setAttribute(FORM_ADDITIONAL, StringUtil.trimToZero(params
+		state.setAttribute(FORM_ADDITIONAL, StringUtils.trimToEmpty(params
 				.getString("additional")));
 
 		SiteInfo siteInfo = new SiteInfo();
@@ -5069,7 +5068,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (oTools == null || (oTools!=null && !oTools.contains("sakai.mailbox")))
 		{
 			// set alias only if the email archive tool is newly added
-			String alias = StringUtil.trimToNull((String) state
+			String alias = StringUtils.trimToNull((String) state
 					.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
 			if (alias != null) {
 				String channelReference = mailArchiveChannelReference(siteId);
@@ -5153,7 +5152,7 @@ public class SiteAction extends PagedResourceActionII {
 				AuthzGroup realmEdit = AuthzGroupService
 						.getAuthzGroup(realm);
 				String providerRealm = buildExternalRealm(siteId, state,
-						providerCourseList, StringUtil.trimToNull(realmEdit.getProviderGroupId()));
+						providerCourseList, StringUtils.trimToNull(realmEdit.getProviderGroupId()));
 				realmEdit.setProviderGroupId(providerRealm);
 				AuthzGroupService.save(realmEdit);
 			} catch (GroupNotDefinedException e) {
@@ -5605,7 +5604,7 @@ public class SiteAction extends PagedResourceActionII {
 			String replyTo = NULL_STRING;
 			String sender = UserDirectoryService.getCurrentUser()
 					.getDisplayName();
-			String userId = StringUtil.trimToZero(SessionManager
+			String userId = StringUtils.trimToEmpty(SessionManager
 					.getCurrentSessionUserId());
 			try {
 				userId = UserDirectoryService.getUserEid(userId);
@@ -6391,9 +6390,9 @@ public class SiteAction extends PagedResourceActionII {
 			PortletConfig config = portlet.getPortletConfig();
 
 			// all site types (SITE_DEFAULT_LIST overrides tool config)
-			String t = StringUtil.trimToNull(SITE_DEFAULT_LIST);
+			String t = StringUtils.trimToNull(SITE_DEFAULT_LIST);
 			if ( t == null )
-				t = StringUtil.trimToNull(config.getInitParameter("siteTypes"));
+				t = StringUtils.trimToNull(config.getInitParameter("siteTypes"));
 			if (t != null) {
 				List types = new ArrayList(Arrays.asList(t.split(",")));
 				if (cms == null)
@@ -6443,7 +6442,7 @@ public class SiteAction extends PagedResourceActionII {
 	public void doNavigate_to_site(RunData data) {
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
-		String siteId = StringUtil.trimToNull(data.getParameters().getString(
+		String siteId = StringUtils.trimToNull(data.getParameters().getString(
 				"option"));
 		if (siteId != null) {
 			getReviseSite(state, siteId);
@@ -6794,8 +6793,8 @@ public class SiteAction extends PagedResourceActionII {
 				if (include != null) {
 					siteInfo.include = include.equalsIgnoreCase("true") ? true
 							: false;
-				} else if (StringUtil.trimToNull(siteInfo.site_type) != null) {
-					String type = StringUtil.trimToNull(siteInfo.site_type);
+				} else if (StringUtils.trimToNull(siteInfo.site_type) != null) {
+					String type = StringUtils.trimToNull(siteInfo.site_type);
 					List publicSiteTypes = (List) state
 							.getAttribute(STATE_PUBLIC_SITE_TYPES);
 					List privateSiteTypes = (List) state
@@ -6816,7 +6815,7 @@ public class SiteAction extends PagedResourceActionII {
 				String joinable = params.getString("joinable");
 				if (joinable != null && joinable.equalsIgnoreCase("true")) {
 					siteInfo.joinable = true;
-					String joinerRole = StringUtil.trimToNull(params
+					String joinerRole = StringUtils.trimToNull(params
 							.getString("joinerRole"));
 					if (joinerRole != null) {
 						siteInfo.joinerRole = joinerRole;
@@ -6837,7 +6836,24 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 	} // doUpdate_site_access
-
+	
+	private void readInputAndUpdateStateVariable(SessionState state, ParameterParser params, String paramName, String stateAttributeName, boolean isBoolean)
+	{
+		String paramValue = StringUtils.trimToNull(params.getString(paramName));
+		if (paramValue != null) {
+			if (isBoolean)
+			{
+				state.setAttribute(stateAttributeName, Boolean.valueOf(paramValue));
+			}
+			else
+			{
+				state.setAttribute(stateAttributeName, paramValue);
+			}
+		} else {
+			state.removeAttribute(stateAttributeName);
+		}
+	}
+	
 	/**
 	 * Apply requested changes to a site's joinability. Only relevant for
 	 * site edits, not new site creation.
@@ -6868,7 +6884,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (joinable != null && joinable.equalsIgnoreCase("true")) {
 			state.setAttribute(STATE_JOINABLE, Boolean.TRUE);
 			sEdit.setJoinable(true);
-			String joinerRole = StringUtil.trimToNull(params
+			String joinerRole = StringUtils.trimToNull(params
 					.getString("joinerRole"));
 			if (joinerRole != null) {
 				state.setAttribute(STATE_JOINERROLE, joinerRole);
@@ -7140,7 +7156,7 @@ public class SiteAction extends PagedResourceActionII {
 			 */
 			if (forward) {
 				if (state.getAttribute(SITE_DUPLICATED) == null) {
-					if (StringUtil.trimToNull(params.getString("title")) == null) {
+					if (StringUtils.trimToNull(params.getString("title")) == null) {
 						addAlert(state, rb.getString("java.dupli") + " ");
 					} else {
 						String title = params.getString("title");
@@ -7189,7 +7205,7 @@ public class SiteAction extends PagedResourceActionII {
 								// for course site, need to
 								// read in the input for
 								// term information
-								String termId = StringUtil.trimToNull(params
+								String termId = StringUtils.trimToNull(params
 										.getString("selectTerm"));
 								if (termId != null) {
 									AcademicSession term = cms.getAcademicSession(termId);
@@ -7308,7 +7324,7 @@ public class SiteAction extends PagedResourceActionII {
 									.removeAttribute(STATE_ADD_CLASS_PROVIDER_CHOSEN);
 							// set special instruction & we will keep
 							// STATE_CM_AUTHORIZER_LIST
-							String additional = StringUtil.trimToZero(params
+							String additional = StringUtils.trimToEmpty(params
 									.getString("additional"));
 							state.setAttribute(FORM_ADDITIONAL, additional);
 						}
@@ -7769,7 +7785,7 @@ public class SiteAction extends PagedResourceActionII {
 			try
 			{
 				AuthzGroup gRealm = AuthzGroupService.getAuthzGroup(group.getReference());
-				String gProviderId = StringUtil.trimToNull(gRealm.getProviderGroupId());
+				String gProviderId = StringUtils.trimToNull(gRealm.getProviderGroupId());
 				if (gProviderId != null)
 				{ 
 					if ((manualCourseSectionList== null && cmRequestedCourseList == null)
@@ -7897,7 +7913,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			if (userId != null) {
-				String rId = StringUtil.trimToNull(params.getString("role"
+				String rId = StringUtils.trimToNull(params.getString("role"
 						+ userId));
 				if (rId == null) {
 					addAlert(state, rb.getString("java.rolefor") + " " + userId
@@ -8010,7 +8026,7 @@ public class SiteAction extends PagedResourceActionII {
 		Site site = getStateSite(state);
 
 		if (site != null) {
-			if (StringUtil.trimToNull(siteInfo.title) != null) {
+			if (StringUtils.trimToNull(siteInfo.title) != null) {
 				site.setTitle(siteInfo.title);
 			}
 			if (siteInfo.description != null) {
@@ -8021,7 +8037,7 @@ public class SiteAction extends PagedResourceActionII {
 			setAppearance(state, site, siteInfo.iconUrl);
 
 			site.setJoinable(siteInfo.joinable);
-			if (StringUtil.trimToNull(siteInfo.joinerRole) != null) {
+			if (StringUtils.trimToNull(siteInfo.joinerRole) != null) {
 				site.setJoinerRole(siteInfo.joinerRole);
 			}
 			// Make changes and then put changed site back in state
@@ -8068,7 +8084,7 @@ public class SiteAction extends PagedResourceActionII {
         if (siteTitleEditable(state, siteInfo.site_type) && params.getString("title") != null) 	 
         { 	 
 			// site titel is editable and could not be null
-        	String title = StringUtil.trimToNull(params.getString("title"));
+        	String title = StringUtils.trimToNull(params.getString("title"));
         	siteInfo.title = title;
 			
         	if (title == null) { 	 
@@ -8091,11 +8107,11 @@ public class SiteAction extends PagedResourceActionII {
         String skin = params.getString("skin"); 	 
         if (skin != null) { 	 
                 // if there is a skin input for course site 	 
-                skin = StringUtil.trimToNull(skin);
+                skin = StringUtils.trimToNull(skin);
                 siteInfo.iconUrl = skin; 	 
         } else { 	 
                 // if ther is a icon input for non-course site 	 
-                String icon = StringUtil.trimToNull(params.getString("icon")); 	 
+                String icon = StringUtils.trimToNull(params.getString("icon")); 	 
                 if (icon != null) { 	 
                         if (icon.endsWith(PROTOCOL_STRING)) { 	 
                                 addAlert(state, rb.getString("alert.protocol")); 	 
@@ -8128,10 +8144,9 @@ public class SiteAction extends PagedResourceActionII {
 		}
 
 		// site contact information
-		String name = StringUtil
-				.trimToZero(params.getString("siteContactName"));
+		String name = StringUtils.trimToEmpty(params.getString("siteContactName"));
 		siteInfo.site_contact_name = name;
-		String email = StringUtil.trimToZero(params
+		String email = StringUtils.trimToEmpty(params
 				.getString("siteContactEmail"));
 		if (email != null) {
 			String[] parts = email.split("@");
@@ -8282,7 +8297,7 @@ public class SiteAction extends PagedResourceActionII {
 			String choice = (String) j.next();
 			if ("sakai.mailbox".equals(choice)) {
 				hasEmail = true;
-				String alias = StringUtil.trimToNull((String) state
+				String alias = StringUtils.trimToNull((String) state
 						.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
 				String channelReference = mailArchiveChannelReference(site.getId());
 				if (alias != null) {
@@ -9042,7 +9057,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (state.getAttribute(STATE_SITE_INFO) != null) {
 			siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 		}
-		String id = StringUtil.trimToNull(siteInfo.getSiteId());
+		String id = StringUtils.trimToNull(siteInfo.getSiteId());
 		if (id == null) {
 			// get id
 			id = IdManager.createUuid();
@@ -9064,7 +9079,7 @@ public class SiteAction extends PagedResourceActionII {
 				// add current user as the maintainer
 				site.addMember(UserDirectoryService.getCurrentUser().getId(), site.getMaintainRole(), true, false);
 
-				String title = StringUtil.trimToNull(siteInfo.title);
+				String title = StringUtils.trimToNull(siteInfo.title);
 				String description = siteInfo.description;
 				setAppearance(state, site, siteInfo.iconUrl);
 				site.setDescription(description);
@@ -9113,9 +9128,9 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void setSiteAlias(String alias, String siteReference, SessionState state)
 	{
-		if (StringUtil.trimToNull(alias) != null && StringUtil.trimToNull(siteReference) != null) 
+		if (StringUtils.trimToNull(alias) != null && StringUtils.trimToNull(siteReference) != null) 
 		{
-			String currentAlias = StringUtil.trimToNull(getSiteAlias(siteReference));
+			String currentAlias = StringUtils.trimToNull(getSiteAlias(siteReference));
 			
 			if (currentAlias == null || !currentAlias.equals(alias))
 			{
@@ -9661,9 +9676,8 @@ public class SiteAction extends PagedResourceActionII {
 				&& (iconNames.length == iconUrls.length)
 				&& (iconNames.length == iconSkins.length)) {
 			for (int i = 0; i < iconNames.length; i++) {
-				MyIcon s = new MyIcon(StringUtil.trimToNull((String) iconNames[i]),
-						StringUtil.trimToNull((String) iconUrls[i]), StringUtil
-								.trimToNull((String) iconSkins[i]));
+				MyIcon s = new MyIcon(StringUtils.trimToNull((String) iconNames[i]),
+						StringUtils.trimToNull((String) iconUrls[i]), StringUtils.trimToNull((String) iconSkins[i]));
 				icons.add(s);
 			}
 		}
@@ -9673,18 +9687,14 @@ public class SiteAction extends PagedResourceActionII {
 
 	private void setAppearance(SessionState state, Site edit, String iconUrl) {
 		// set the icon
+		iconUrl = StringUtils.trimToNull(iconUrl);
 		edit.setIconUrl(iconUrl);
-		if (iconUrl == null) {
-			// this is the default case - no icon, no (default) skin
-			edit.setSkin(null);
-			return;
-		}
 
 		// if this icon is in the config appearance list, find a skin to set
 		List icons = (List) state.getAttribute(STATE_ICONS);
 		for (Iterator i = icons.iterator(); i.hasNext();) {
 			Object icon = (Object) i.next();
-			if (icon instanceof MyIcon && !StringUtil.different(((MyIcon) icon).getUrl(), iconUrl)) {
+			if (icon instanceof MyIcon && StringUtils.equals(((MyIcon) icon).getUrl(), iconUrl)) {
 				edit.setSkin(((MyIcon) icon).getSkin());
 				return;
 			}
@@ -9807,7 +9817,7 @@ public class SiteAction extends PagedResourceActionII {
 				has_home = true;
 			} else if (id.equalsIgnoreCase("sakai.mailbox")) {
 				// read email id
-				emailId = StringUtil.trimToNull(params.getString("emailId"));
+				emailId = StringUtils.trimToNull(params.getString("emailId"));
 				state.setAttribute(STATE_TOOL_EMAIL_ADDRESS, emailId);
 				if ( updateConfigVariables ) {
 					// if Email archive tool is selected, check the email alias
@@ -9845,7 +9855,7 @@ public class SiteAction extends PagedResourceActionII {
 			else if (isMultipleInstancesAllowed(findOriginalToolId(state, id)) && (idSelected != null && !idSelected.contains(id) || idSelected == null))
 			{
 				// newly added mutliple instances
-				String title = StringUtil.trimToNull(params.getString("title_" + id));
+				String title = StringUtils.trimToNull(params.getString("title_" + id));
 				if (title != null) 
 				{
 					// save the titles entered
@@ -9865,7 +9875,7 @@ public class SiteAction extends PagedResourceActionII {
 					for(Iterator<String> e = attributes.keySet().iterator(); e.hasNext();)
 					{
 						String attribute = e.next();
-						String attributeInput = StringUtil.trimToNull(params.getString(attribute + "_" + id));
+						String attributeInput = StringUtils.trimToNull(params.getString(attribute + "_" + id));
 						if (attributeInput != null)
 						{
 							// save the attribute input
@@ -11376,7 +11386,7 @@ public class SiteAction extends PagedResourceActionII {
 		{
 			if ("continue".equals(option)) 
 			{
-				String uniqname = StringUtil.trimToNull(params
+				String uniqname = StringUtils.trimToNull(params
 						.getString("uniqname"));
 				state.setAttribute(STATE_SITE_QUEST_UNIQNAME, uniqname);
 
@@ -11689,7 +11699,7 @@ public class SiteAction extends PagedResourceActionII {
 	public void doSite_type_option(RunData data)
 	{
 		ParameterParser params = data.getParameters();
-		String option = StringUtil.trimToNull(params.getString("option"));
+		String option = StringUtils.trimToNull(params.getString("option"));
 		SessionState state = ((JetspeedRunData) data).getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		
 		if (option != null)
@@ -11766,8 +11776,8 @@ public class SiteAction extends PagedResourceActionII {
 				siteInfo = (SiteInfo) state.getAttribute(STATE_SITE_INFO);
 			}
 			siteInfo.site_type = templateSite.getType();
-			siteInfo.title = StringUtil.trimToNull(params.getString("siteTitleField"));
-			siteInfo.term = StringUtil.trimToNull(params.getString("selectTermTemplate"));
+			siteInfo.title = StringUtils.trimToNull(params.getString("siteTitleField"));
+			siteInfo.term = StringUtils.trimToNull(params.getString("selectTermTemplate"));
 			siteInfo.iconUrl = templateSite.getIconUrl();
 			siteInfo.description = templateSite.getDescription();
 			siteInfo.short_description = templateSite.getShortDescription();
