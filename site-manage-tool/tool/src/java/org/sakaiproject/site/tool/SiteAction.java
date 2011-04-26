@@ -3594,7 +3594,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (courseListString != null) {
 			List courseList = new Vector();
 			if (courseListString.indexOf("+") != -1) {
-				courseList = new ArrayList(Arrays.asList(courseListString.split("\\+")));
+				courseList = new ArrayList(Arrays.asList(groupProvider.unpackId(courseListString)));
 			} else {
 				courseList.add(courseListString);
 			}
@@ -3617,7 +3617,7 @@ public class SiteAction extends PagedResourceActionII {
 					}
 					catch (Exception e)
 					{
-						M_log.warn(this + ".courseListFromStringIntoContext: cannot find section " + courseEid, e);
+						M_log.warn(this + ": cannot find section " + courseEid, e);
 					}
 				}
 				if (soList.size() > 0)
