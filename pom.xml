@@ -11,7 +11,7 @@
     <name>sakai-site-manage base pom</name>
     <groupId>org.sakaiproject.sitemanage</groupId>
     <artifactId>sitemanage</artifactId>
-    <version>2.9-SNAPSHOT</version>
+    <version>2.9.0-b01</version>
     <packaging>pom</packaging>
 
     <profiles>
@@ -71,9 +71,9 @@
     </profiles>
 
     <scm>
-        <connection>scm:svn:https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.9.0-b01</connection>
-        <developerConnection>scm:svn:https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.9.0-b01</developerConnection>
-        <url>https://source.sakaiproject.org/svn/site-manage/branches/sakai-2.9.0-b01</url>
+        <connection>scm:svn:https://source.sakaiproject.org/svn/site-manage/tags/sakai-2.9.0-b01</connection>
+        <developerConnection>scm:svn:https://source.sakaiproject.org/svn/site-manage/tags/sakai-2.9.0-b01</developerConnection>
+        <url>https://source.sakaiproject.org/svn/site-manage/tags/sakai-2.9.0-b01</url>
     </scm>
 
     <distributionManagement>
