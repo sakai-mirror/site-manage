@@ -4,8 +4,8 @@
 <script type="text/javascript" src="/library/js/jquery/jquery-ui/js/jquery-ui.js"></script>
 <link type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" rel="stylesheet" media="screen" />
 <script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage.js"></script>
-#if ($shoppingPeriodInstructorEditable)
-	<script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage-shopping.js"></script>
+#if ($shoppingPeriodInstructorEditable || $viewDelegatedAccessUsers)
+	<script type="text/javascript" src="/sakai-site-manage-tool/js/site-manage-delegatedaccess.js"></script>
 #end
 <script type="text/javascript">
 <!-- hide from non-JS browsers
@@ -219,7 +219,30 @@
 		</div>
 
 		<span id="siteId" style="display:none">$site.id</span>
+		#if ($viewDelegatedAccessUsers)
+			<span id="viewDelegatedAccessUsers" style="display:none">true</span>
+			<div id="viewDelegatedAccessUsersDiv" style="display:none">
+				<h4>$tlang.getString("daAccess.header")</h4>
+				<div class="instruction">
+					$tlang.getString("daAccess.instructions")
+				</div>
+				<br/>
+				<table id="viewDAAccessUsersTable" class = "listHier lines" cellspacing="0" border="0" style="width: auto">
+					<tr>
+						<th>$tlang.getString("daAccess.tableheader.name")</th>
+						<th>$tlang.getString("daAccess.tableheader.eid")</th>
+						<th>$tlang.getString("daAccess.tableheader.realm")</th>
+						<th>$tlang.getString("daAccess.tableheader.role")</th>
+						<th>$tlang.getString("daAccess.tableheader.restrictedTools")</th>
+					</tr>
+				</table>
+				<br/>
+				<br/>
+			</div>
+		#end
+		
 		#if ($shoppingPeriodInstructorEditable)
+		<span id="shoppingPeriodInstructorEditable" style="display:none">true</span>
 		<div id="shoppingVisibilityDiv" style="display:none">
 			<!-- easy access for JS -->
 			
