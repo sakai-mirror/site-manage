@@ -5,13 +5,13 @@
     <parent>
         <groupId>org.sakaiproject</groupId>
         <artifactId>master</artifactId>
-        <version>2.9-SNAPSHOT</version>
+        <version>2.9.0-b06</version>
     </parent>
 
     <name>sakai-site-manage base pom</name>
     <groupId>org.sakaiproject.sitemanage</groupId>
     <artifactId>sitemanage</artifactId>
-    <version>2.9-SNAPSHOT</version>
+    <version>2.9.0-b06</version>
     <packaging>pom</packaging>
 
     <profiles>
