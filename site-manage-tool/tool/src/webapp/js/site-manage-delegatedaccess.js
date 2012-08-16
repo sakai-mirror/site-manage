@@ -17,6 +17,7 @@ $(document).ready(function(){
 				}
 				if(anyAccess){
 					$('#viewDelegatedAccessUsersDiv').show();
+					resizeFrame('grow');
 				}
 			}
 		);
@@ -119,6 +120,7 @@ $(document).ready(function(){
 					$("#viewShoppingInstructions").show();
 					$('#shoppingPeriodOverride').attr('checked', false);
 				}
+	            resizeFrame('grow');
 		    }
 		);
 	
@@ -185,3 +187,22 @@ function optOutOfShoppingPeriod(){
 	setShoppingSettingsDisabled(false)
 }
 
+
+function resizeFrame(updown){
+    var clientH;
+    if (top.location !== self.location) {
+        var frame = parent.document.getElementById(window.name);
+    }
+    if (frame) {
+        if (updown === 'shrink') {
+            clientH = document.body.clientHeight;
+        }
+        else {
+            clientH = document.body.clientHeight + 50;
+        }
+        $(frame).height(clientH);
+    }
+    else {
+        // throw( "resizeFrame did not get the frame (using name=" + window.name + ")" );
+    }
+}
