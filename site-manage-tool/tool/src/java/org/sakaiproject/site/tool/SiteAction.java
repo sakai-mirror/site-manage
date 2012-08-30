@@ -2282,7 +2282,6 @@ public class SiteAction extends PagedResourceActionII {
 			context.put("oEmail", siteProperties.getProperty(Site.PROP_SITE_CONTACT_EMAIL));
 			context.put("siteUrls",  getSiteUrlsForAliasIds(siteInfo.siteRefAliases));
 			context.put("oSiteUrls", getSiteUrlsForSite(site));
-			
 			return (String) getContext(data).get("template") + TEMPLATE[14];
 		case 15:
 			/*
@@ -6843,7 +6842,7 @@ public class SiteAction extends PagedResourceActionII {
 									.equalsIgnoreCase("true") ? true
 									: false;
 						}
-						boolean activeGrantChange = participant.isActive() && !activeGrant || !participant.isActive() && activeGrant;
+						boolean activeGrantChange = roleId != null && (participant.isActive() && !activeGrant || !participant.isActive() && activeGrant);
 						
 						// save any roles changed for permission check
 						if (roleChange) {
