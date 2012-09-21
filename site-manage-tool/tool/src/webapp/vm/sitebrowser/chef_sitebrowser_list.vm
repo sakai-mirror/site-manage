@@ -57,11 +57,11 @@
 				#if ($pagesize != 0)
 					#if ($goPPButton == "true")
 						<form name="nextpageForm" style="display:inline" method="post" action="#toolForm("$action")">
-							<input type="submit" name="eventSubmit_doList_prev" value="&lt;"  title="$tlang.getString("list.previous") $pagesize" accesskey="p" />
+							<fieldset><legend>$tlang.getString("list.previous") $pagesize</legend><input type="submit" name="eventSubmit_doList_prev" value="&lt;"  title="$tlang.getString("list.previous") $pagesize" accesskey="p" /></fieldset>
 							<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
 						</form>
 					#else
-						<input type="submit" name="eventSubmit_doList_prev" value="&lt;"  disabled="disabled" />
+						<fieldset><legend>$tlang.getString("list.previous") $pagesize</legend><input type="submit" name="eventSubmit_doList_prev" value="&lt;"  disabled="disabled" /></fieldset>
 					#end
 				#end
 			
@@ -83,10 +83,10 @@
 					#if ($goNPButton == "true")
 						<form name="nextpageForm" class="inlineForm" method="post" action="#toolForm("$action")">
 						<input type="hidden" name="sakai_csrf_token" value="$sakai_csrf_token" />
-						<input type="submit" name="eventSubmit_doList_next" value="&gt;"  title="$tlang.getString("list.next") $pagesize" accesskey="n" />
+						<fieldset><legend>$tlang.getString("list.next") $pagesize</legend><input type="submit" name="eventSubmit_doList_next" value="&gt;"  title="$tlang.getString("list.next") $pagesize" accesskey="n" /></fieldset>
 						</form>
 					#else
-							<input type="submit" name="eventSubmit_doList_next" value="&gt;" disabled="disabled" />
+							<fieldset><legend>$tlang.getString("list.next") $pagesize</legend><input type="submit" name="eventSubmit_doList_next" value="&gt;" disabled="disabled" /></fieldset>
 					#end
 				#end
 
