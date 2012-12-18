@@ -413,7 +413,7 @@ var setupCategTools = function(){
         if ($(this).attr('checked')) {
             //console.log(thisToolCat  + ' has a checked tool')
             $(this).next('label').css('font-weight', 'bold');
-            $('#toolSelectionList ul').append('<li class=\"icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"' + $(this).attr('id').replace(/\./g, '_') + '\">' + $(this).next('label').text() + removeLink + '</li>');
+            $('#toolSelectionList ul').append('<li class=\"icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"selected_' + $(this).attr('id').replace(/\./g, '_') + '\">' + $(this).next('label').text() + removeLink + '</li>');
             $('#toolHolder').find('#' + thisToolCatEsc).find('ul').show();
             $('#toolHolder').find('#' + thisToolCatEsc).find('h4').find('a').addClass('open');
         }
