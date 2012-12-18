@@ -104,7 +104,6 @@ function submitFindCourse(){
 function submitChangeUser(){
     index = document.getElementById("index");
     index.value="1";
-    document.addCourseForm.submit();  // SAK-22915
 }
 
 function redirectBasedOnSelection(){
@@ -182,9 +181,8 @@ function redirectBasedOnSelection(){
 				<input type="text" name="userId" id="userId-id" value="$userId"/>
 				<input type="hidden" name="itemType" value="$!courseSiteType" />
 				<input type="hidden" name="selectTerm" value="$term.eid" />
-				<input type="button" accesskey="s" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
-					onclick="document.getElementById('option').value='change_user'; document.addCourseForm.submit(); return false;"
-				 />
+				<input type="submit" accesskey="s" name="eventSubmit_doChange_user" value="$tlang.getString("nscourse.change_button")"
+				onclick="javascript:submitChangeUser()" />
 				#if ($campusDirectory)
 					<a href="#" onclick="javascript:window.open('$campusDirectory','new_window'); return false;"
 						title="$tlang.getString("nscourse.look_up_an_username")">

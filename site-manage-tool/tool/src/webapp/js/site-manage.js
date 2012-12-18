@@ -1,13 +1,11 @@
-var sakai = sakai ||
-{};
-var utils = utils ||
-{};
+var sakai = sakai || {};
+var utils = utils || {};
 
- 
+
 $.ajaxSetup({
-  cache: false
+    cache: false
 });
- 
+
 /*
  calling template has dom placeholder for dialog,
  args:class of trigger, id of dialog, message strings
@@ -59,10 +57,10 @@ sakai.getSiteInfo = function(trigger, dialogTarget, nosd, nold){
  calling template has dom placeholder for dialog,
  args:class of trigger, id of dialog, message strings
  */
-sakai.getGroupInfo = function(trigger, dialogTarget, memberstr, printstr, tablestr1,tablestr2,tablestr3){
+sakai.getGroupInfo = function(trigger, dialogTarget, memberstr, printstr, tablestr1, tablestr2, tablestr3){
     utils.startDialog(dialogTarget);
-	$('.' + trigger).click(function(e){
-		
+    $('.' + trigger).click(function(e){
+    
         var id = $(this).attr('id');
         var title = $('#group' + id).html();
         var groupURL = '/direct/membership/group/' + id + '.json';
@@ -165,7 +163,7 @@ sakai.siteTypeSetup = function(){
         $('#submitFromTemplate').show();
         $('#submitBuildOwn').hide();
         $('#submitBuildOwn').attr('disabled', 'disabled');
-	$('#copyContent').attr('checked','checked');
+        $('#copyContent').attr('checked', 'checked');
     });
     
     $('#buildOwn').click(function(e){
@@ -177,7 +175,7 @@ sakai.siteTypeSetup = function(){
         $('#templateSettings span').hide();
         $('#siteTypeList').show();
         $('#submitFromTemplate').hide();
-            $('#submitFromTemplate').attr('disabled', 'disabled');
+        $('#submitFromTemplate').attr('disabled', 'disabled');
         $('#submitFromTemplateCourse').hide();
         $('#submitBuildOwn').show();
         $('#nextInstructions span').hide();
@@ -218,7 +216,7 @@ sakai.siteTypeSetup = function(){
             $('#templateSettings span').hide();
             $('#templateSettings select').attr('selectedIndex', 0);
             $('#submitFromTemplateCourse').attr('disabled', 'disabled');
-                $('#siteTitleField').attr('value', '');
+            $('#siteTitleField').attr('value', '');
         }
         else {
         
@@ -226,19 +224,19 @@ sakai.siteTypeSetup = function(){
             $('#templateSettings span').hide();
             $('#nextInstructions span').hide();
             if (type == "course") {
-              $('#templateCourseInstruction').show();
-              $('#submitFromTemplate').hide();
-			  $('#submitFromTemplateCourse').show();
-    		  $('#siteTerms').show();
-              $('#siteTitle').hide();	
-              $('#siteTerms select').focus();
-              $('#siteTitleField').attr('value', '');
+                $('#templateCourseInstruction').show();
+                $('#submitFromTemplate').hide();
+                $('#submitFromTemplateCourse').show();
+                $('#siteTerms').show();
+                $('#siteTitle').hide();
+                $('#siteTerms select').focus();
+                $('#siteTitleField').attr('value', '');
             }
             else {
                 $('#submitFromTemplate').show();
                 $('#submitFromTemplateCourse').hide();
-                $('#templateNonCourseInstruction').show();				
-                $('#siteTitle').show();	
+                $('#templateNonCourseInstruction').show();
+                $('#siteTitle').show();
                 $('#siteTerms select').attr('selectedIndex', 0);
                 $('#siteTitle input').focus();
             }
@@ -261,7 +259,7 @@ sakai.setupToggleAreas = function(toggler, togglee, openInit, speed){
     // togglee=class of container to expand
     // openInit=true - all togglee open on enter
     // speed=speed of expand/collapse animation
-
+    
     if (openInit === true && openInit !== null) {
         $('.expand').hide();
     }
@@ -284,13 +282,12 @@ sakai.setupToggleAreas = function(toggler, togglee, openInit, speed){
 /*
  initialize a jQuery-UI dialog
  */
-
-utils.setupUtils= function(){
+utils.setupUtils = function(){
     $('.revealInstructions').click(function(e){
-		e.preventDefault();
+        e.preventDefault();
         $(this).hide().next().fadeIn('fast');
     });
-}; 
+};
 utils.startDialog = function(dialogTarget){
     $("#" + dialogTarget).dialog({
         close: function(event, ui){
@@ -299,7 +296,7 @@ utils.startDialog = function(dialogTarget){
         autoOpen: false,
         modal: true,
         height: 330,
-		maxHeight:350,
+        maxHeight: 350,
         width: 500,
         draggable: true,
         closeOnEscape: true
@@ -318,10 +315,10 @@ utils.endDialog = function(ev, dialogTarget){
         var clientH = document.body.clientHeight + 360;
         $(frame).height(clientH);
     }
-
+    
     $("#" + dialogTarget).dialog('option', 'position', [100, ev.pageY + 10]);
     $("#" + dialogTarget).dialog("open");
-
+    
 };
 
 
@@ -357,5 +354,305 @@ utils.resizeFrame = function(updown){
     else {
         // throw( "resizeFrame did not get the frame (using name=" + window.name + ")" );
     }
+};
+
+
+
+
+var setupCategTools = function(){
+  /*
+  var cats;
+    if ($('#projectHead').length) {
+        cats = $('#projectCategoryHolder').val();
+    }
+    else 
+        if ($('#courseHead').length) {
+            cats = $('#courseCategoryHolder').val();
+        }
+        else {
+            cats = $('#projectCategoryHolder').val();
+        }
+    // there is another else here.
+    
+    
+    var catObject = eval('(' + cats + ')');
+    var catList;
+    var seen = "";
+    var count = ""
+    $.each(catObject, function(i){
+        var thisCat = '' + this;
+        if (seen.indexOf(thisCat) === -1) {
+            $('#toolHolder').append('<li id=\"' + thisCat.replace(' ', '_') + '\"><h4 class=\"' + thisCat.toLowerCase().replace(' ', '_') + ' specialLink\"><a href=\"#\"><span class=\"catTitle\">' + thisCat + '</span><span class=\"checkedCount\"></span></a></h4><ul class=\"toolGroup\"></ul></li>');
+            count++;
+        }
+        seen = seen + ' ' + thisCat;
+    });
+    */
+    var sourceList = $('input[name="selectedTools"][type="checkbox"]');
+    $.each(sourceList, function(){
+
+        var removeLink = '';
+        var thisToolCat = '';
+        var thisIdClass = '';
+        var toolInstance = '';
+        if ($(this).attr('id').length > 37) {
+            thisToolCat = $(this).attr('id').substring(36) + '';
+            thisIdClass = $(this).attr('id').substring(36) + '';
+            toolInstance = ' toolInstance';
+        }
+        else {
+            thisToolCat = $(this).attr('id') + '';
+            thisIdClass = $(this).attr('id') + '';
+        }
+        var thisToolCatEsc = thisToolCat.replace(' ', '_');
+        
+
+        if ($(this).attr('disabled') !== true) {
+            removeLink = '<a href="#" class=\"removeTool ' + toolInstance + '\">x</a>';
+        }
+        
+        if ($(this).attr('checked')) {
+            //console.log(thisToolCat  + ' has a checked tool')
+            $(this).next('label').css('font-weight', 'bold');
+            $('#toolSelectionList ul').append('<li class=\"icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"' + $(this).attr('id').replace(/\./g, '_') + '\">' + $(this).next('label').text() + removeLink + '</li>');
+            $('#toolHolder').find('#' + thisToolCatEsc).find('ul').show();
+            $('#toolHolder').find('#' + thisToolCatEsc).find('h4').find('a').addClass('open');
+        }
+        else {
+            $(this).next('label').css('font-weight', 'normal');
+        }
+        var parentRow = $(this).closest('li');
+        $('#toolHolder').find('#' + thisToolCatEsc).find('ul').append(parentRow);
+        //push into an array this id, and to close the function traverse and send a click to each
+    });
+    $('.toolGroup').each(function(){
+        var count = $(this).find(':checked').length;
+        if (count !== 0) {
+            $(this).parent('li').find('#selectAll').hide();
+            $(this).parent('li').find('span.checkedCount').text(count).show();
+        }
+        else {
+            $(this).parent('li').find('span.checkedCount').hide();
+            $(this).parent('li').find('#unSelectAll').hide();
+            
+        }
+    });
+    
+
+    $('#toolHolder a').click(function(e){
+        e.preventDefault();
+        if ($(this).attr('href')) {
+            $(this).closest('li').find('ul').fadeToggle('fast', function(){
+                utils.resizeFrame('grow');
+            });
+            $(this).toggleClass('open');
+            return false;
+        }
+    });
+    
+    $('input[name="selectedTools"][type="checkbox"]').click(function(){
+        var myId = $(this).attr('id').replace(/\./g, '_');
+        var thisIdClass;
+        if ($(this).attr('id').length > 37) {
+            thisIdClass = $(this).attr('id').substring(36) + '';
+        }
+        else {
+            thisIdClass = $(this).attr('id') + '';
+        }
+        
+        if ($(this).attr('checked')) {
+            $(this).next('label').css('font-weight', 'bold');
+            $('#toolSelectionList ul').append('<li style=\"display:none\" class=\" highlightTool icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+            sorttoolSelectionList();
+            $('#toolSelectionList ul').find('#' + myId).fadeIn(2000, function(){
+                $(this).removeClass('highlightTool');
+            });
+            
+        }
+        else {
+            $(this).next('label').css('font-weight', 'normal');
+            $('#toolSelectionList ul').find('#' + myId).addClass('highlightTool').fadeOut(2000, function(){
+                $(this).remove();
+            });
+        }
+        var count = $(this).closest('ul').find(':checked').length;
+        if (count !== 0) {
+            $(this).closest('ul').parent('li').find('span.checkedCount').text(count).show();
+        }
+        else {
+            $(this).closest('ul').parent('li').find('span.checkedCount').hide();
+            
+        }
+    });
+    
+    $('#collExpContainer a').click(function(e){
+        // elegant - but flawed
+        // $('ol#toolHolder h4 a').trigger('click');
+        // more involved but sound
+        if ($(this).attr('id') === 'expandAll') {
+            $('#toolHolder .toolGroup').not(':eq(0)').show();
+            $('#toolHolder h4 a').addClass('open');
+            utils.resizeFrame('grow');
+        }
+        else {
+            $('#toolHolder .toolGroup').not(':eq(0)').hide();
+            $('#toolHolder h4 a').removeClass('open');
+            utils.resizeFrame('grow');
+        }
+        
+        // just plain elegant
+        $('#collExpContainer a').toggle();
+        return false;
+    });
+    
+    $('.selectAll').click(function(){
+        if ($(this).attr('id') === "selectAll") {
+            $('.sel_unsel_core em').hide();
+            $('.sel_unsel_core em#unSelectAll').show();
+            
+            $.each($(this).closest('li').find('input[type="checkbox"]'), function(){
+                var myId = $(this).attr('id').replace(/\./g, '_');
+                $('#toolSelectionList ul').append('<li class=\"icon-' + $(this).attr('id').replace(/\./g, '-') + '\" id=\"' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+            });
+            $(this).closest('li').find('label').css('font-weight', 'bold');
+            $(this).closest('li').find('input[type="checkbox"]').attr('checked', true);
+            $(this).closest('li').find('span.checkedCount').text($(this).closest('li').find(':checked').length).show();
+            sorttoolSelectionList();
+            
+        }
+        else {
+            $('.sel_unsel_core em').hide();
+            $('.sel_unsel_core em#selectAll').show();
+            $.each($(this).closest('li').find(':checked'), function(){
+                var myId = $(this).attr('id').replace(/\./g, '_');
+                $('#toolSelectionList ul').find('li#' + myId).remove();
+            });
+            $(this).closest('li').find('input[type="checkbox"]').attr('checked', false);
+            $(this).closest('li').find('label').css('font-weight', 'normal');
+            $(this).closest('li').find('span.checkedCount').hide();
+        }
+        /*
+         if ($(this).closest('li').find(':checked').length){
+         $('.sel_unsel_core em').hide();
+         $('.sel_unsel_core em#selectAll').show();
+         $.each($(this).closest('li').find(':checked'), function(){
+         var myId = $(this).attr('id').replace(/\./g, '_');
+         $('#toolSelectionList ul').find('li#' + myId).remove();
+         });
+         $(this).closest('li').find('input[type="checkbox"]').attr('checked', false);
+         $(this).closest('li').find('label').css('font-weight', 'normal');
+         $(this).closest('li').find('span.checkedCount').hide();
+         }
+         else {
+         $('.sel_unsel_core em').hide();
+         $('.sel_unsel_core em#unSelectAll').show();
+         $.each($(this).closest('li').find('input[type="checkbox"]'), function(){
+         var myId = $(this).attr('id').replace(/\./g, '_');
+         $('#toolSelectionList ul').append('<li class=\"icon-' + $(this).attr('id').replace(/\./g, '-') + '\" id=\"' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+         });
+         $(this).closest('li').find('label').css('font-weight', 'bold');
+         $(this).closest('li').find('input[type="checkbox"]').attr('checked', true);
+         $(this).closest('li').find('span.checkedCount').text($(this).closest('li').find(':checked').length).show();
+         sorttoolSelectionList();
+         
+         }
+         */
+    });
+    
+    
+    $('.removeTool').live('click', function(e){
+        e.preventDefault();
+        var myId = $(this).closest('li').attr('id').replace(/_/g, '.');
+        if ($('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').attr('disabled') == 'disabled') {
+        }
+        else {
+            $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').attr('checked', false).next('label').css('font-weight', 'normal');
+            if ($(this).hasClass('toolInstance')) {
+                $(this).closest('li').addClass('highlightTool');
+                showAlert(e);
+                return false;
+                // remove the checkbox? put in an alert
+            }
+            
+        }
+        
+        var count = $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').find(':checked').length;
+        if (count === 0) {
+            $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').closest('li').find('.checkedCount').hide();
+        }
+        else {
+            $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').closest('li').find('.checkedCount').text(count);
+        }
+        $(this).closest('li').addClass('highlightTool').fadeOut('slow', function(){
+            $(this).closest('li').remove();
+        });
+        
+        
+    });
+    
+    var showAlert = function(e){
+        var pos = $(e.target).position();
+        $(e.target).parent('li').append('<div id=\"alertBox\">Remove configured tool? <a href=\"#\" id=\"alertBoxYes\">Yes</a>&nbsp;|&nbsp;<a href=\"#\" id=\"alertBoxNo\">No</a></div>');
+        $(e.target).find('#alertBox').css({
+            'top': pos.top - 14,
+            'left': pos.left - 150
+        });
+        $('#alertBox a#alertBoxYes').live('click', function(){
+            $(this).parent('div').prev('a').removeClass('toolInstance').click();
+            $('#alertBox').remove();
+        });
+        $('#alertBox a#alertBoxNo').live('click', function(){
+            $(this).closest('li').removeClass('highlightTool');
+            $('#alertBox').remove();
+        });
+    };
+    
+    $('.moreInfoTool').click(function(e){
+        e.preventDefault();
+        var thisToolId = '';
+        var thisToolTitle = '';
+        thisToolTitle = 'What is neat about' + $(this).closest('li').find('label').text();
+        
+        if ($(this).closest('li').find('input[type="checkbox"]').attr('id').length > 37) {
+            thisToolId = $(this).closest('li').find('input[type="checkbox"]').attr('id').substring(36) + '';
+        }
+        else {
+            thisToolId = $(this).closest('li').find('input[type="checkbox"]').attr('id') + '';
+        }
+        
+        //var thistoolIdURL = '/portal/help/TOCDisplay/content.hlp?docId=argq'
+        //var XthistoolIdURL = '/portal/help/TOCDisplay/main?help=' + $(this).closest('li').find('input[type="checkbox"]').attr('id');
+        //        console.log(XthistoolIdURL)
+        //        $("#moreInfoHolder").load(XthistoolIdURL + 'body')
+        
+        $('#moreInfoHolder').html('<p>Information related to <strong>' + thisToolId + '</strong></p><p>This can contain any type of information, text, screenshots, etc.</p><p>If the information is larger than the container the container will get scrollbars.</p><div><img src="http://upload.wikimedia.org/wikipedia/commons/e/e1/Ubuntu_11.10_Final.png" />');
+        $("#moreInfoHolder").dialog({
+            autoOpen: false,
+            height: 500,
+            maxHeight: 500,
+            maxWidth: 700,
+            width: 700,
+            title: thisToolId,
+            modal: true
+        });
+        $("span.ui-dialog-title").text(thisToolTitle);
+        $('#moreInfoHolder').dialog('open');
+    });
+    
+    var sorttoolSelectionList = function(){
+        var mylist = $('#toolSelectionList ul');
+        var listitems = mylist.children('li').get();
+        listitems.sort(function(a, b){
+            return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
+        });
+        $.each(listitems, function(idx, itm){
+            mylist.append(itm);
+        });
+        
+        if ($('#toolSelectionList ul').find('li#home').length) {
+            $('#toolSelectionList ul').find('li#home').insertBefore($('#toolSelectionList ul li:first-child'));
+        }
+    };
+    
 };
 
