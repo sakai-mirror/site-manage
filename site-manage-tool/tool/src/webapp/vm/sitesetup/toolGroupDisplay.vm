@@ -34,7 +34,7 @@
                                 <li id="row-home">
                                      <div class="toolListControl">
                                         #if ($!defaultTools.indexOf($!homeToolId) != -1) <input type="hidden" name="selectedTools" value="$!homeToolId" /> #end
-                                        <input type="checkbox" name="selectedTools" value="$!homeToolId" id="home"
+                                        <input type="checkbox" name="selectedTools" value="$!homeToolId" id="sakai.home"
                                             #if ($check_home)
                                                 checked="checked"
                                             #end
@@ -42,7 +42,7 @@
                                                 checked="checked" disabled="disabled"
                                             #end
                                         />
-                                        <label for="home">
+                                        <label for="sakai.home">
                                             $tlang.getString("java.home")
                                             ## only show when title is customized
                                             #if ($!allowPageOrderHelper)
@@ -77,7 +77,10 @@
                                             </li>
                                         #end
                                         <li id="row-$rowCount">
+                                            
                                             <div class="toolListControl">
+                                                ##required: $tool.isRequired() | 
+                                                ##selected: $tool.isSelected()
                                                 <input type="checkbox" name="selectedTools" value="$toolId" id="$toolId"
                                                 #if ($!defaultTools.indexOf($toolId) != -1)
                                                     checked="checked" disabled="disabled"

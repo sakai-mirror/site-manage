@@ -390,7 +390,6 @@ var setupCategTools = function(){
     */
     var sourceList = $('input[name="selectedTools"][type="checkbox"]');
     $.each(sourceList, function(){
-
         var removeLink = '';
         var thisToolCat = '';
         var thisIdClass = '';
@@ -462,16 +461,16 @@ var setupCategTools = function(){
         
         if ($(this).attr('checked')) {
             $(this).next('label').css('font-weight', 'bold');
-            $('#toolSelectionList ul').append('<li style=\"display:none\" class=\" highlightTool icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+            $('#toolSelectionList ul').append('<li style=\"display:none\" class=\" highlightTool icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"selected_' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
             sorttoolSelectionList();
-            $('#toolSelectionList ul').find('#' + myId).fadeIn(2000, function(){
+            $('#toolSelectionList ul').find('#selected_' + myId).fadeIn(2000, function(){
                 $(this).removeClass('highlightTool');
             });
             
         }
         else {
             $(this).next('label').css('font-weight', 'normal');
-            $('#toolSelectionList ul').find('#' + myId).addClass('highlightTool').fadeOut(2000, function(){
+            $('#toolSelectionList ul').find('#selected_' + myId).addClass('highlightTool').fadeOut(2000, function(){
                 $(this).remove();
             });
         }
@@ -562,11 +561,11 @@ var setupCategTools = function(){
     
     $('.removeTool').live('click', function(e){
         e.preventDefault();
-        var myId = $(this).closest('li').attr('id').replace(/_/g, '.');
-        if ($('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').attr('disabled') == 'disabled') {
+        var myId = $(this).closest('li').attr('id').replace(/_/g, '.').replace('selected.','');
+        if ($('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').attr('disabled') == 'disabled') {
         }
         else {
-            $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').attr('checked', false).next('label').css('font-weight', 'normal');
+            $('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').attr('checked', false).next('label').css('font-weight', 'normal');
             if ($(this).hasClass('toolInstance')) {
                 $(this).closest('li').addClass('highlightTool');
                 showAlert(e);
@@ -648,9 +647,10 @@ var setupCategTools = function(){
         $.each(listitems, function(idx, itm){
             mylist.append(itm);
         });
-        
-        if ($('#toolSelectionList ul').find('li#home').length) {
-            $('#toolSelectionList ul').find('li#home').insertBefore($('#toolSelectionList ul li:first-child'));
+        if ($('#toolSelectionList ul li').length > 1) {
+            if ($('#toolSelectionList ul').find('li#selected_sakai_home').length) {
+             $('#toolSelectionList ul').find('li#selected_sakai_home').insertBefore($('#toolSelectionList ul li:first-child'));
+            }
         }
     };
     
