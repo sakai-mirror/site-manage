@@ -14,18 +14,18 @@
         <ol id="toolHolder">
             #set ($groupCount = 0)
             #foreach ($mapEntry in $toolsByGroup.entrySet())
-            #set ($groupCount = $groupCount  + 1)
-            #set ($escapedKey = $mapEntry.key.replaceAll(" ", "_"))
+                #set ($groupCount = $groupCount  + 1)
+                #set ($escapedKey = $mapEntry.key.replaceAll(" ", "_"))
                     <li id="$escapedKey" class="">
                         <h4 class="$escapedKey specialLink">
                             <a  #if ($groupCount ==1) class="open toggleNone"#else href="#" #end>
                                 <span class="catTitle">$mapEntry.key</span>
                                 <span class="checkedCount"></span>
-                                #if ($groupCount ==1)
-                                <span class="sel_unsel_core">
-                                    <em id="selectAll" class="selectAll" href="#" style="display: none;"> - select all</em>
-                                    <em id="unSelectAll" class="selectAll" href="#"> - unselect all</em>
-                                </span>
+                                #if ($groupCount == 1) 
+                                    <span class="sel_unsel_core">
+                                        <em id="selectAll" class="selectAll" href="#" style="display: none;"> - select all</em>
+                                        <em id="unSelectAll" class="selectAll" href="#" style="display: none;"> - unselect all</em>
+                                    </span>
                                 #end
                             </a>
                         </h4>
