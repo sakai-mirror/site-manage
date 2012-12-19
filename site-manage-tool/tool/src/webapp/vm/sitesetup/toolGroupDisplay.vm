@@ -135,6 +135,7 @@
 
     <div id="toolSelectionList">
     <h4>Selected tools</h4>
+    <div id="toolSelectionListMessage" style="display:none" class="instruction">No tools selected</div>
     <ul>
     </ul>
 </div>

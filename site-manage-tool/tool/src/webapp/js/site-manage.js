@@ -488,7 +488,7 @@ var setupCategTools = function(){
         }
         else {
             $(this).next('label').css('font-weight', 'normal');
-            $('#toolSelectionList ul').find('#selected_' + myId).addClass('highlightTool').fadeOut(2000, function(){
+            $('#toolSelectionList ul').find('#selected_' + myId).addClass('highlightTool').fadeOut(1000, function(){
                 $(this).remove();
             });
         }
@@ -548,6 +548,7 @@ var setupCategTools = function(){
         e.preventDefault();
         var myId = $(this).closest('li').attr('id').replace(/_/g, '.').replace('selected.','');
         if ($('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').attr('disabled') == 'disabled') {
+            // there should be no instances of a "required" tool having a control to remove it.
         }
         else {
             $('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').attr('checked', false).next('label').css('font-weight', 'normal');
@@ -557,16 +558,20 @@ var setupCategTools = function(){
                 return false;
                 // remove the checkbox? put in an alert
             }
-            
         }
-        var count = $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').find(':checked').length;
-        $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').closest('li').find('.checkedCount').text(count);
-        
         $(this).closest('li').addClass('highlightTool').fadeOut('slow', function(){
             $(this).closest('li').remove();
         });
+        var countSelected = $('#toolHolder').find('input[type="checkbox"][value=' + myId + ']').closest('ul').find(':checked').length;
         
         
+        $('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').closest('ul').closest('li').find('.checkedCount').text(countSelected);
+        if ($('#toolSelectionList  ul li').length - 1 > 0)  {
+            $('#toolSelectionList #toolSelectionListMessage').hide()
+        }
+        else {
+            $('#toolSelectionList #toolSelectionListMessage').show()
+        }
     });
     
     var showAlert = function(e){
