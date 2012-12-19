@@ -14,6 +14,7 @@
         <ol id="toolHolder">
             #set ($groupCount = 0)
             #foreach ($mapEntry in $toolsByGroup.entrySet())
+                #set ($escapedKey = "")
                 #set ($groupCount = $groupCount  + 1)
                 #set ($escapedKey = $mapEntry.key.replaceAll(" ", "_"))
                     <li id="$escapedKey" class="">
@@ -82,7 +83,7 @@
                                                 ##required: $tool.isRequired() | 
                                                 ##selected: $tool.isSelected()
                                                 <input type="checkbox" name="selectedTools" value="$toolId" id="$toolId"
-                                                #if ($!defaultTools.indexOf($toolId) != -1)
+                                                #if ($tool.isRequired())
                                                     checked="checked" disabled="disabled"
                                                 #else
                                                     #if($toolRegistrationSelectedList)

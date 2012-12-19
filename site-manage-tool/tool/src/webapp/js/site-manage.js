@@ -360,40 +360,59 @@ utils.resizeFrame = function(updown){
 
 
 var setupCategTools = function(){
-  /*
-  var cats;
-    if ($('#projectHead').length) {
-        cats = $('#projectCategoryHolder').val();
-    }
-    else 
-        if ($('#courseHead').length) {
-            cats = $('#courseCategoryHolder').val();
+
+    var sorttoolSelectionList = function(){
+        var mylist = $('#toolSelectionList ul');
+        var listitems = mylist.children('li').get();
+        listitems.sort(function(a, b){
+            return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
+        });
+        $.each(listitems, function(idx, itm){
+            mylist.append(itm);
+        });
+        if ($('#toolSelectionList ul li').length > 1) {
+            if ($('#toolSelectionList ul').find('li#selected_sakai_home').length) {
+             $('#toolSelectionList ul').find('li#selected_sakai_home').insertBefore($('#toolSelectionList ul li:first-child'));
+            }
+        }
+    };
+    
+
+   var noTools = function() {
+        
+        if ($('#toolSelectionList  ul li').length - 1 === 0)  {
+            $('#toolSelectionList #toolSelectionListMessage').show();
         }
         else {
-            cats = $('#projectCategoryHolder').val();
+            $('#toolSelectionList #toolSelectionListMessage').hide();
         }
-    // there is another else here.
+};
+    var showAlert = function(e){
+        var pos = $(e.target).position();
+        $(e.target).parent('li').append('<div id=\"alertBox\">Remove configured tool? <a href=\"#\" id=\"alertBoxYes\">Yes</a>&nbsp;|&nbsp;<a href=\"#\" id=\"alertBoxNo\">No</a></div>');
+        $(e.target).find('#alertBox').css({
+            'top': pos.top - 14,
+            'left': pos.left - 150
+        });
+        $('#alertBox a#alertBoxYes').live('click', function(){
+            $(this).parent('div').prev('a').removeClass('toolInstance').click();
+            $('#alertBox').remove();
+        });
+        $('#alertBox a#alertBoxNo').live('click', function(){
+            $(this).closest('li').removeClass('highlightTool');
+            $('#alertBox').remove();
+        });
+    };
     
     
-    var catObject = eval('(' + cats + ')');
-    var catList;
-    var seen = "";
-    var count = ""
-    $.each(catObject, function(i){
-        var thisCat = '' + this;
-        if (seen.indexOf(thisCat) === -1) {
-            $('#toolHolder').append('<li id=\"' + thisCat.replace(' ', '_') + '\"><h4 class=\"' + thisCat.toLowerCase().replace(' ', '_') + ' specialLink\"><a href=\"#\"><span class=\"catTitle\">' + thisCat + '</span><span class=\"checkedCount\"></span></a></h4><ul class=\"toolGroup\"></ul></li>');
-            count++;
-        }
-        seen = seen + ' ' + thisCat;
-    });
-    */
+    
     var sourceList = $('input[name="selectedTools"][type="checkbox"]');
     $.each(sourceList, function(){
         var removeLink = '';
         var thisToolCat = '';
         var thisIdClass = '';
         var toolInstance = '';
+        var thisToolCatEsc = '';
         if ($(this).attr('id').length > 37) {
             thisToolCat = $(this).attr('id').substring(36) + '';
             thisIdClass = $(this).attr('id').substring(36) + '';
@@ -403,7 +422,7 @@ var setupCategTools = function(){
             thisToolCat = $(this).attr('id') + '';
             thisIdClass = $(this).attr('id') + '';
         }
-        var thisToolCatEsc = thisToolCat.replace(' ', '_');
+        thisToolCatEsc = thisToolCat.replace(' ', '_');
         
 
         if ($(this).attr('disabled') !== true) {
@@ -465,10 +484,8 @@ var setupCategTools = function(){
             $('#unSelectAll').hide();
             
         }
-            var count = $(this).closest('ul').find(':checked').length;
-            $(this).closest('ul').parent('li').find('span.checkedCount').text(count).show();
-
-
+        var count = $(this).closest('ul').find(':checked').length;
+        $(this).closest('ul').parent('li').find('span.checkedCount').text(count).show();
         var thisIdClass;
         if ($(this).attr('id').length > 37) {
             thisIdClass = $(this).attr('id').substring(36) + '';
@@ -492,7 +509,8 @@ var setupCategTools = function(){
                 $(this).remove();
             });
         }
-   utils.resizeFrame('grow');
+        utils.resizeFrame('grow');
+        noTools();
     });
     
     $('#collExpContainer a').click(function(e){
@@ -566,31 +584,9 @@ var setupCategTools = function(){
         
         
         $('#toolHolder').find('input[type="checkbox"][id=' + myId + ']').closest('ul').closest('li').find('.checkedCount').text(countSelected);
-        if ($('#toolSelectionList  ul li').length - 1 > 0)  {
-            $('#toolSelectionList #toolSelectionListMessage').hide()
-        }
-        else {
-            $('#toolSelectionList #toolSelectionListMessage').show()
-        }
+        noTools();
     });
-    
-    var showAlert = function(e){
-        var pos = $(e.target).position();
-        $(e.target).parent('li').append('<div id=\"alertBox\">Remove configured tool? <a href=\"#\" id=\"alertBoxYes\">Yes</a>&nbsp;|&nbsp;<a href=\"#\" id=\"alertBoxNo\">No</a></div>');
-        $(e.target).find('#alertBox').css({
-            'top': pos.top - 14,
-            'left': pos.left - 150
-        });
-        $('#alertBox a#alertBoxYes').live('click', function(){
-            $(this).parent('div').prev('a').removeClass('toolInstance').click();
-            $('#alertBox').remove();
-        });
-        $('#alertBox a#alertBoxNo').live('click', function(){
-            $(this).closest('li').removeClass('highlightTool');
-            $('#alertBox').remove();
-        });
-    };
-    
+ 
     $('.moreInfoTool').click(function(e){
         e.preventDefault();
         var thisToolId = '';
@@ -622,22 +618,6 @@ var setupCategTools = function(){
         $("span.ui-dialog-title").text(thisToolTitle);
         $('#moreInfoHolder').dialog('open');
     });
-    
-    var sorttoolSelectionList = function(){
-        var mylist = $('#toolSelectionList ul');
-        var listitems = mylist.children('li').get();
-        listitems.sort(function(a, b){
-            return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
-        });
-        $.each(listitems, function(idx, itm){
-            mylist.append(itm);
-        });
-        if ($('#toolSelectionList ul li').length > 1) {
-            if ($('#toolSelectionList ul').find('li#selected_sakai_home').length) {
-             $('#toolSelectionList ul').find('li#selected_sakai_home').insertBefore($('#toolSelectionList ul li:first-child'));
-            }
-        }
-    };
     
 };
 
