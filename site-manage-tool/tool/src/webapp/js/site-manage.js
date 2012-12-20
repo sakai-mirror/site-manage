@@ -455,8 +455,8 @@ var setupCategTools = function(){
             $(this).parent('li').find('#unSelectAll').show();
         }
         if (countChecked !==  0 && countChecked !== countTotal) {
-            $(this).parent('li').find('#selectAll').show();
-            $(this).parent('li').find('#unSelectAll').hide();
+            $(this).parent('li').find('#selectAll').hide();
+            $(this).parent('li').find('#unSelectAll').show();
         }
         $(this).parent('li').find('span.checkedCount').text(countChecked).show(); //$(this).parent('li').find('span.checkedCount').hide();
     });
@@ -540,7 +540,9 @@ var setupCategTools = function(){
             
             $.each($(this).closest('li').find('input[type="checkbox"]'), function(){
                 var myId = $(this).attr('id').replace(/\./g, '_');
-                $('#toolSelectionList ul').append('<li class=\"icon-' + $(this).attr('id').replace(/\./g, '-') + '\" id=\"selected_' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+                 if ($('#toolSelectionList ul').find('#selected_' + myId).length === 0) {
+                    $('#toolSelectionList ul').append('<li class=\"icon-' + $(this).attr('id').replace(/\./g, '-') + '\" id=\"selected_' + myId + '\">' + $(this).next('label').text() + '<a href="#" class=\"removeTool\">x</a></li>');
+                 }
             });
             $(this).closest('li').find('label').css('font-weight', 'bold');
             $(this).closest('li').find('input[type="checkbox"]').attr('checked', true);
