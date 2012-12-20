@@ -589,9 +589,10 @@ var setupCategTools = function(){
  
     $('.moreInfoTool').click(function(e){
         e.preventDefault();
+        $('#moreInfoHolder').html('');
         var thisToolId = '';
         var thisToolTitle = '';
-        thisToolTitle = 'What is neat about' + $(this).closest('li').find('label').text();
+        thisToolTitle = $(this).closest('li').find('label').text();
         
         if ($(this).closest('li').find('input[type="checkbox"]').attr('id').length > 37) {
             thisToolId = $(this).closest('li').find('input[type="checkbox"]').attr('id').substring(36) + '';
@@ -605,7 +606,10 @@ var setupCategTools = function(){
         //        console.log(XthistoolIdURL)
         //        $("#moreInfoHolder").load(XthistoolIdURL + 'body')
         
-        $('#moreInfoHolder').html('<p>Information related to <strong>' + thisToolId + '</strong></p><p>This can contain any type of information, text, screenshots, etc.</p><p>If the information is larger than the container the container will get scrollbars.</p><div><img src="http://upload.wikimedia.org/wikipedia/commons/e/e1/Ubuntu_11.10_Final.png" />');
+          //should be something more robust (turn off cache, fallback callbacks that put in some content 
+          // also - what about the url? the path should be settable
+          $('#moreInfoHolder').load('/access/content/public/more-info/' + thisToolId);
+
         $("#moreInfoHolder").dialog({
             autoOpen: false,
             height: 500,

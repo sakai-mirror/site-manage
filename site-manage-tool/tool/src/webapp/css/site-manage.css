@@ -76,6 +76,9 @@ dl.defList dd {
     line-height: 200%;
 }
 
+#toolSelectionList h4{
+    margin:0
+}
 #toolSelectionList li:first-child {
     -webkit-border-top-left-radius: 3px;
     -webkit-border-top-right-radius: 3px;

@@ -80,8 +80,6 @@
                                         <li id="row-$rowCount">
                                             
                                             <div class="toolListControl">
-                                                ##required: $tool.isRequired() | 
-                                                ##selected: $tool.isSelected()
                                                 <input type="checkbox" name="selectedTools" value="$toolId" id="$toolId"
                                                 #if ($tool.isRequired())
                                                     checked="checked" disabled="disabled"
@@ -122,6 +120,7 @@
                                                             #end)
                                                         #end
                                                     #end
+                                                    <a class="moreInfoTool" href="#" target="_blank">More info</a> <span class="textPanelFooter">(test, points to /access/content/public/more-info/ + tool.id)</span>
                                             </div>
                                         </li>
                                     #end
