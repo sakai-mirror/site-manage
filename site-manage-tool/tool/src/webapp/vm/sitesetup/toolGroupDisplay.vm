@@ -93,8 +93,8 @@
                                                     #end
                                                 #end
                                                 />
-                                                #if ($tool.moreInfo())
-                                                    <a class="moreInfoTool" href=$tool.moreInfo() target="_blank">More info</a>
+                                                #if ($tool.getMoreInfo())
+                                                    <a class="moreInfoTool" href=$tool.getMoreInfo() target="_blank">More info</a>
                                                 #end                                                
                                                 <label for="$toolId">
                                                     #if ($!multipleToolIdTitleMap.containsKey($toolId))

@@ -5197,7 +5197,6 @@ public class SiteAction extends PagedResourceActionII {
 	private void setToolGroupList(SessionState state, String type) {
 		M_log.debug("setToolGroupList:Loading group list for " + type);
 		String moreInfoDir = ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/WEB-INF/content/moreinfo");
-		String baseUrl = ServerConfigurationService.getServerUrl();
 		String countryCode = rb.getLocale().getCountry();
 		Map<String,List> toolGroup = new LinkedHashMap<String,List>();
 		List tools = new ArrayList();
