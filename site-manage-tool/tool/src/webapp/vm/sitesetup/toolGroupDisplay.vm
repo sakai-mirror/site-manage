@@ -93,6 +93,9 @@
                                                     #end
                                                 #end
                                                 />
+                                                #if ($tool.moreInfo())
+                                                    <a class="moreInfoTool" href=$tool.moreInfo() target="_blank">More info</a>
+                                                #end                                                
                                                 <label for="$toolId">
                                                     #if ($!multipleToolIdTitleMap.containsKey($toolId))
                                                         #set($title = $validator.escapeHtml($!multipleToolIdTitleMap.get($toolId)))
@@ -120,7 +123,6 @@
                                                             #end)
                                                         #end
                                                     #end
-                                                    <a class="moreInfoTool" href="#" target="_blank">More info</a> <span class="textPanelFooter">(test, points to /access/content/public/more-info/ + tool.id)</span>
                                             </div>
                                         </li>
                                     #end
@@ -128,7 +130,7 @@
                         </ul> 
                     </li>
                 #end
-        </ol
+        </ol>
     </div>
 
 </div>

@@ -25,6 +25,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +47,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Map.Entry;
+
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -700,6 +704,7 @@ public class SiteAction extends PagedResourceActionII {
 	private final static String SORT_ORDER_COURSE_OFFERING = "worksitesetup.sort.order.courseOffering";
 	private final static String SORT_KEY_SECTION = "worksitesetup.sort.key.section";
 	private final static String SORT_ORDER_SECTION = "worksitesetup.sort.order.section";
+	private final static String m_baseDir = "/WEB-INF";
 
 	private List prefLocales = new ArrayList();
 	private String SAKAI_LOCALES = "locales";
@@ -715,6 +720,8 @@ public class SiteAction extends PagedResourceActionII {
 	// state variable for selected lti tools during tool modification
 	private String STATE_LTITOOL_SELECTED_LIST = "state_ltitool_selected_list";
 
+	private String m_filePath;
+	private ServletContext ctx;
 	/**
 	 * what are the tool ids within Home page?
 	 * If this is for a newly added Home tool, get the tool ids from template site or system set default
@@ -893,7 +900,9 @@ public class SiteAction extends PagedResourceActionII {
 	protected void initState(SessionState state, VelocityPortlet portlet,
 			JetspeedRunData rundata) {
 
-
+		ctx = rundata.getRequest().getSession().getServletContext();		
+		//assert input != null;
+		//M_log.info("Path " + input.available());
 		// Cleanout if the helper has been asked to start afresh.
 		if (state.getAttribute(SiteHelper.SITE_CREATE_START) != null) {
 			cleanState(state);
@@ -2932,6 +2941,7 @@ public class SiteAction extends PagedResourceActionII {
 
 			if (site != null) {
 				context.put("site", site);
+				context.put("siteTitle", site.getTitle());
 
 				List providerCourseList = (List) state
 						.getAttribute(SITE_PROVIDER_COURSE_LIST);
@@ -5186,6 +5196,9 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private void setToolGroupList(SessionState state, String type) {
 		M_log.debug("setToolGroupList:Loading group list for " + type);
+		String moreInfoDir = ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/WEB-INF/content/moreinfo");
+		String baseUrl = ServerConfigurationService.getServerUrl();
+		String countryCode = rb.getLocale().getCountry();
 		Map<String,List> toolGroup = new LinkedHashMap<String,List>();
 		List tools = new ArrayList();
 		state.removeAttribute(STATE_TOOL_GROUP_LIST);
@@ -5202,6 +5215,7 @@ public class SiteAction extends PagedResourceActionII {
 				List toolsInGroup = new ArrayList();
 				for(Iterator<String> iter = toolList.iterator(); iter.hasNext();) {
 					String id = iter.next();
+					String relativeWebPath = null;
 					Tool tr = ToolManager.getTool(id);
 					if (tr != null) {
 						String toolId = tr.getId();
@@ -5211,7 +5225,10 @@ public class SiteAction extends PagedResourceActionII {
 						newTool.id = toolId;
 						newTool.description = tr.getDescription();
 						newTool.group = groupName;
-						newTool.moreInfo = toolId; // TODO: convert to image dir url
+						relativeWebPath = getMoreInfoUrl(moreInfoDir, countryCode, toolId);
+						if (relativeWebPath != null) {
+							newTool.moreInfo = relativeWebPath;
+						}
 						newTool.required = ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
 						newTool.selected = ServerConfigurationService.toolGroupIsSelected(groupId,toolId);
 						toolsInGroup.add(newTool);
@@ -5226,6 +5243,24 @@ public class SiteAction extends PagedResourceActionII {
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
 	}
 
+	private String getMoreInfoUrl(String moreInfoDir, String countryCode, String toolId) {
+		// String relativeWebPath = moreInfoDir;
+		// //"/WEB-INF/content/moreinfo/sitemanage.txt";
+		// String fpath = ctx.getRealPath(relativeWebPath);
+		// InputStream input = ctx.getResourceAsStream(relativeWebPath);
+		String filename = moreInfoDir + "/" + toolId + "_" + countryCode + ".html";
+		String fpath = ctx.getRealPath(filename);
+		String result = null;
+		try {
+			File file = new File(fpath);
+			if (file.exists()) {
+				result = filename;
+			}
+		} catch (Exception e) {
+			result = null;
+		}
+		return result;
+	}
 
 	/**
 	 * Set the state variables for tool registration list basd on site type
@@ -5413,9 +5448,6 @@ public class SiteAction extends PagedResourceActionII {
 			doCancel_create(data);
 		} else if ("norosters".equals(option)) {
 			state.setAttribute(STATE_TEMPLATE_INDEX, "13");
-		}
-		else if (option.equalsIgnoreCase("change_user")) {  // SAK-22915
-			doChange_user(data);
 		}
 		else if (option.equalsIgnoreCase("change_user")) {  // SAK-22915
 			doChange_user(data);
@@ -11265,6 +11297,8 @@ public class SiteAction extends PagedResourceActionII {
 		public String group = NULL_STRING;
 
 		public String moreInfo = NULL_STRING;
+
+		public String countryCode = NULL_STRING;
 
 		public boolean required = false;
 
