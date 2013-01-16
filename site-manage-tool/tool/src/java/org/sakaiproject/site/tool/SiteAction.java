@@ -20,6 +20,7 @@
  **********************************************************************************/
 package org.sakaiproject.site.tool;
 
+import java.util.LinkedHashMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -37,7 +38,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -5191,7 +5191,7 @@ public class SiteAction extends PagedResourceActionII {
 	/** SAK16600
 	 * Set the state variables for tool registration list basd on current site type, save to STATE_TOOL_GROUP_LIST
 	 * @param state
-	 * @param type
+	 * @param is type
 
 	 */
 	private void setToolGroupList(SessionState state, String type) {
@@ -5239,6 +5239,9 @@ public class SiteAction extends PagedResourceActionII {
 		}
 		// TODO sort and add methods to remove highlighted groupNames from sort (i.e. where 'Core' defaults to top of list)
 		M_log.debug("setToolGroupList:complete");
+		// add external tools to end of toolGroup list
+		String externaltoolgroupname = ServerConfigurationService.getString("externalToolGroupName","External Tools");
+		toolGroup.put(externaltoolgroupname, getExternalTools(externaltoolgroupname, moreInfoDir, countryCode));
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
 	}
 
@@ -5261,6 +5264,52 @@ public class SiteAction extends PagedResourceActionII {
 		return result;
 	}
 
+	
+	// configure list of ltitools to add to toolgroups
+	private List getExternalTools(String groupName,String moreInfoDir, String countryCode) {
+		List ltiTools = new ArrayList();
+		List<Map<String,Object>> tools = m_ltiService.getTools(null,null,0,0);
+		if (tools != null && !tools.isEmpty())
+		{
+			// get invoke count for all lti tools
+			List<Map<String,Object>> contents = m_ltiService.getContents(null,null,0,0);
+			HashMap<String, Map<String, Object>> linkedLtiContents = new HashMap<String, Map<String, Object>>();
+			for ( Map<String,Object> content : contents ) {
+				String ltiToolId = content.get(m_ltiService.LTI_TOOL_ID).toString();
+				String siteId = StringUtils.trimToNull((String) content.get(m_ltiService.LTI_SITE_ID));
+				if (siteId != null)
+				{
+					// whether the tool is already enabled in site
+					String pstr = (String) content.get(LTIService.LTI_PLACEMENT);
+					if (StringUtils.trimToNull(pstr) != null) // && site != null)
+					{
+						// the lti tool is enabled in the site
+						ToolConfiguration toolConfig = SiteService.findTool(pstr);
+						if (toolConfig != null && toolConfig.getSiteId().equals(siteId))
+						{
+							String relativeWebPath = null;
+							Map<String, Object> ltiToolValues = m_ltiService.getTool(Long.valueOf(ltiToolId));
+							MyTool newTool = new MyTool();
+							newTool.title =  ltiToolValues.get(LTIService.LTI_TITLE).toString();
+							newTool.id = ltiToolId;
+							newTool.description = ltiToolValues.get(LTIService.LTI_TITLE).toString();
+							newTool.group = groupName;
+							relativeWebPath = getMoreInfoUrl(moreInfoDir, countryCode, ltiToolId);
+							if (relativeWebPath != null) {
+								newTool.moreInfo = relativeWebPath;
+							}
+							newTool.required = false; //ServerConfigurationService.toolGroupIsRequired(groupId,ltiToolId);
+							newTool.selected = false; //ServerConfigurationService.toolGroupIsSelected(groupId,ltiToolId);
+							ltiTools.add(newTool);
+						}
+					}
+				}
+			}	
+		}
+		return ltiTools;
+	}
+	
+	
 	/**
 	 * Set the state variables for tool registration list basd on site type
 	 * @param state
