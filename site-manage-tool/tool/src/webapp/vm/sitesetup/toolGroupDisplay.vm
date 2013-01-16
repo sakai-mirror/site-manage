@@ -93,9 +93,6 @@
                                                     #end
                                                 #end
                                                 />
-                                                #if ($tool.getMoreInfo())
-                                                    <a class="moreInfoTool" href=$tool.getMoreInfo() target="_blank">More info</a>
-                                                #end                                                
                                                 <label for="$toolId">
                                                     #if ($!multipleToolIdTitleMap.containsKey($toolId))
                                                         #set($title = $validator.escapeHtml($!multipleToolIdTitleMap.get($toolId)))
@@ -123,6 +120,9 @@
                                                             #end)
                                                         #end
                                                     #end
+                                                    #if ($tool.getMoreInfo() && ($tool.getMoreInfo() != ""))
+                                                        <a class="moreInfoTool" href=$tool.getMoreInfo() target="_blank">More info</a>
+                                                     #end
                                             </div>
                                         </li>
                                     #end
