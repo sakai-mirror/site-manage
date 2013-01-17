@@ -592,36 +592,21 @@ var setupCategTools = function(){
     $('.moreInfoTool').click(function(e){
         e.preventDefault();
         $('#moreInfoHolder').html('');
-        var thisToolId = '';
-        var thisToolTitle = '';
-        thisToolTitle = $(this).closest('li').find('label').text();
-        
-        if ($(this).closest('li').find('input[type="checkbox"]').attr('id').length > 37) {
-            thisToolId = $(this).closest('li').find('input[type="checkbox"]').attr('id').substring(36) + '';
-        }
-        else {
-            thisToolId = $(this).closest('li').find('input[type="checkbox"]').attr('id') + '';
-        }
-        
-        //var thistoolIdURL = '/portal/help/TOCDisplay/content.hlp?docId=argq'
-        //var XthistoolIdURL = '/portal/help/TOCDisplay/main?help=' + $(this).closest('li').find('input[type="checkbox"]').attr('id');
-        //        console.log(XthistoolIdURL)
-        //        $("#moreInfoHolder").load(XthistoolIdURL + 'body')
-        
-          //should be something more robust (turn off cache, fallback callbacks that put in some content 
-          // also - what about the url? the path should be settable
-          $('#moreInfoHolder').load('/access/content/public/more-info/' + thisToolId);
-
+        var moreInfo = document.getElementById("moreInfoLink");
+	var moreInfoTitle = moreInfo.getAttribute("title");
+        var moreInfoHref = moreInfo.getAttribute("href");
+        $('#moreInfoHolder').load(moreInfoHref);
+	
         $("#moreInfoHolder").dialog({
             autoOpen: false,
             height: 500,
             maxHeight: 500,
             maxWidth: 700,
             width: 700,
-            title: thisToolId,
+            title: moreInfoTitle,
             modal: true
         });
-        $("span.ui-dialog-title").text(thisToolTitle);
+        $("span.ui-dialog-title").text(moreInfoTitle);
         $('#moreInfoHolder').dialog('open');
     });
     

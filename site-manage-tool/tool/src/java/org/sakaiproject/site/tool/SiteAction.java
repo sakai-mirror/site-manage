@@ -52,6 +52,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -721,7 +723,8 @@ public class SiteAction extends PagedResourceActionII {
 	private String STATE_LTITOOL_SELECTED_LIST = "state_ltitool_selected_list";
 
 	private String m_filePath;
-	private ServletContext ctx;
+	private String moreInfoPath;
+	private String libraryPath;
 	/**
 	 * what are the tool ids within Home page?
 	 * If this is for a newly added Home tool, get the tool ids from template site or system set default
@@ -894,25 +897,51 @@ public class SiteAction extends PagedResourceActionII {
 		return rv;
 	}
 
+	/*
+	 * Configure url to moreInfo resource
+	 */
+	private String setLibraryPath(HttpServletRequest req) {
+		String server = req.getServerName();
+		int port =  req.getServerPort();
+		String lPath = server;
+		if (port > 0) {
+			lPath += ":"+new Integer(port).toString();
+		}
+		return lPath  + "/" + ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
+	}
+	
+	
+	/*
+	 * Configure directory for moreInfo content
+	 */
+	private String setMoreInfoPath(ServletContext ctx) {
+				
+		String rpath = ctx.getRealPath("");
+		String ctxPath = ctx.getServletContextName();
+		String rserve = StringUtils.remove(rpath,ctxPath);
+		String moreInfoDir = ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
+		return rserve + moreInfoDir;		
+		//libraryPath = ctx.getServerInfo
+	}
+	
 	/**
 	 * Populate the state object, if needed.
 	 */
 	protected void initState(SessionState state, VelocityPortlet portlet,
 			JetspeedRunData rundata) {
-
-		ctx = rundata.getRequest().getSession().getServletContext();		
+		ServletContext ctx = rundata.getRequest().getSession().getServletContext();
+		libraryPath = setLibraryPath(rundata.getRequest()); 
+		moreInfoPath = setMoreInfoPath(ctx);
 		//assert input != null;
 		//M_log.info("Path " + input.available());
 		// Cleanout if the helper has been asked to start afresh.
 		if (state.getAttribute(SiteHelper.SITE_CREATE_START) != null) {
 			cleanState(state);
 			cleanStateHelper(state);
-
 			// Removed from possible previous invokations.
 			state.removeAttribute(SiteHelper.SITE_CREATE_START);
 			state.removeAttribute(SiteHelper.SITE_CREATE_CANCELLED);
 			state.removeAttribute(SiteHelper.SITE_CREATE_SITE_ID);
-
 		}
 
 		super.initState(state, portlet, rundata);
@@ -5196,9 +5225,9 @@ public class SiteAction extends PagedResourceActionII {
 	 */
 	private void setToolGroupList(SessionState state, String type) {
 		M_log.debug("setToolGroupList:Loading group list for " + type);
-		String moreInfoDir = ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/WEB-INF/content/moreinfo");
 		String countryCode = rb.getLocale().getCountry();
 		Map<String,List> toolGroup = new LinkedHashMap<String,List>();
+		File moreInfoDir = new File(moreInfoPath);
 		List tools = new ArrayList();
 		state.removeAttribute(STATE_TOOL_GROUP_LIST);
 		// get all the groups that are available for this site type
@@ -5224,10 +5253,7 @@ public class SiteAction extends PagedResourceActionII {
 						newTool.id = toolId;
 						newTool.description = tr.getDescription();
 						newTool.group = groupName;
-						relativeWebPath = getMoreInfoUrl(moreInfoDir, countryCode, toolId);
-						if (relativeWebPath != null) {
-							newTool.moreInfo = relativeWebPath;
-						}
+						newTool.moreInfo =  getMoreInfoUrl(moreInfoDir, toolId);
 						newTool.required = ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
 						newTool.selected = ServerConfigurationService.toolGroupIsSelected(groupId,toolId);
 						toolsInGroup.add(newTool);
@@ -5245,28 +5271,27 @@ public class SiteAction extends PagedResourceActionII {
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
 	}
 
-	private String getMoreInfoUrl(String moreInfoDir, String countryCode, String toolId) {
-		// String relativeWebPath = moreInfoDir;
-		// //"/WEB-INF/content/moreinfo/sitemanage.txt";
-		// String fpath = ctx.getRealPath(relativeWebPath);
-		// InputStream input = ctx.getResourceAsStream(relativeWebPath);
-		String filename = moreInfoDir + "/" + toolId + "_" + countryCode + ".html";
-		String fpath = ctx.getRealPath(filename);
-		String result = null;
+	/*
+	 * Using moreInfoDir, if toolId is found in the dir return path otherwise return null
+	 */
+	private String getMoreInfoUrl(File infoDir, String toolId) {
+		String moreInfoUrl = null;
 		try {
-			File file = new File(fpath);
-			if (file.exists()) {
-				result = filename;
+			Collection<File> files = FileUtils.listFiles(infoDir, new WildcardFileFilter(toolId+"*"), null);		
+			if (files.isEmpty()==false) {
+				File mFile = files.iterator().next();
+				moreInfoUrl = libraryPath + mFile.getName(); // toolId;
 			}
 		} catch (Exception e) {
-			result = null;
+			M_log.info("unable to read moreinfo");
 		}
-		return result;
+		return moreInfoUrl;
+		
 	}
 
 	
 	// configure list of ltitools to add to toolgroups
-	private List getExternalTools(String groupName,String moreInfoDir, String countryCode) {
+	private List getExternalTools(String groupName,File moreInfoDir, String countryCode) {
 		List ltiTools = new ArrayList();
 		List<Map<String,Object>> tools = m_ltiService.getTools(null,null,0,0);
 		if (tools != null && !tools.isEmpty())
@@ -5294,7 +5319,7 @@ public class SiteAction extends PagedResourceActionII {
 							newTool.id = ltiToolId;
 							newTool.description = ltiToolValues.get(LTIService.LTI_TITLE).toString();
 							newTool.group = groupName;
-							relativeWebPath = getMoreInfoUrl(moreInfoDir, countryCode, ltiToolId);
+							relativeWebPath = getMoreInfoUrl(moreInfoDir, ltiToolId);
 							if (relativeWebPath != null) {
 								newTool.moreInfo = relativeWebPath;
 							}

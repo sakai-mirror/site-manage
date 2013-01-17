@@ -121,7 +121,7 @@
                                                         #end
                                                     #end
                                                     #if ($tool.getMoreInfo() && ($tool.getMoreInfo() != ""))
-                                                        <a class="moreInfoTool" href=$tool.getMoreInfo() target="_blank">More info</a>
+                                                        <a class="moreInfoTool" id="moreInfoLink" title='$tool.getTitle()' href="$tool.getMoreInfo()" target="_blank">More info</a>
                                                      #end
                                             </div>
                                         </li>
