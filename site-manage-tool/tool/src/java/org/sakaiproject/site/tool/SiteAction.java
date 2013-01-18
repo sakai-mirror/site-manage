@@ -5274,6 +5274,25 @@ public class SiteAction extends PagedResourceActionII {
 	/*
 	 * Using moreInfoDir, if toolId is found in the dir return path otherwise return null
 	 */
+	private String getMoreInfoImg(File infoDir, String toolId) {
+		String moreInfoUrl = null;
+		try {
+			Collection<File> files = FileUtils.listFiles(infoDir, new WildcardFileFilter(toolId+"*"), null);		
+			if (files.isEmpty()==false) {
+				File mFile = files.iterator().next();
+				moreInfoUrl = libraryPath + mFile.getName(); // toolId;
+			}
+		} catch (Exception e) {
+			M_log.info("unable to read moreinfo");
+		}
+		return moreInfoUrl;
+		
+	}
+	
+	
+	/*
+	 * Using moreInfoDir, if toolId is found in the dir return path otherwise return null
+	 */
 	private String getMoreInfoUrl(File infoDir, String toolId) {
 		String moreInfoUrl = null;
 		try {
@@ -5288,6 +5307,7 @@ public class SiteAction extends PagedResourceActionII {
 		return moreInfoUrl;
 		
 	}
+	
 
 	
 	// configure list of ltitools to add to toolgroups

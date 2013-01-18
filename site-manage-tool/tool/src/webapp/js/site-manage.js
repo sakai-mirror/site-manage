@@ -591,12 +591,12 @@ var setupCategTools = function(){
  
     $('.moreInfoTool').click(function(e){
         e.preventDefault();
-        $('#moreInfoHolder').html('');
+        //$('#moreInfoHolder').html('this is a test');
         var moreInfo = document.getElementById("moreInfoLink");
 	var moreInfoTitle = moreInfo.getAttribute("title");
-        var moreInfoHref = moreInfo.getAttribute("href");
-        $('#moreInfoHolder').load(moreInfoHref);
-	
+        var moreInfoImageSrc = moreInfo.getAttribute("href");
+	//$('#moreImageSrc').src=moreInfoImageSrc;
+	console.log(moreInfoImageSrc);
         $("#moreInfoHolder").dialog({
             autoOpen: false,
             height: 500,

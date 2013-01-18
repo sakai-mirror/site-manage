@@ -141,5 +141,5 @@
     <ul>
     </ul>
 </div>
-<div id="moreInfoHolder" style="display:none; height:500px;width:700px;overflow:auto"></div>
+<div id="moreInfoHolder" style="display:none; height:500px;width:700px;overflow:auto"><img src="" id="moreImageSrc"/></div>
         
