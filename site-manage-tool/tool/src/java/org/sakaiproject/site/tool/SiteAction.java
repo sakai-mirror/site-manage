@@ -5213,7 +5213,7 @@ public class SiteAction extends PagedResourceActionII {
 		if (!"copy".equals(type))
 		{
 			setToolRegistrationList(state, type);
-			setToolGroupList(state,type); // SAK-16600
+			setToolGroupList(state,type,null); // SAK-16600
 		}
 	}
 
@@ -5223,7 +5223,7 @@ public class SiteAction extends PagedResourceActionII {
 	 * @param is type
 
 	 */
-	private void setToolGroupList(SessionState state, String type) {
+	private void setToolGroupList(SessionState state, String type, String siteId) {
 		M_log.debug("setToolGroupList:Loading group list for " + type);
 		String countryCode = rb.getLocale().getCountry();
 		Map<String,List> toolGroup = new LinkedHashMap<String,List>();
@@ -5267,7 +5267,7 @@ public class SiteAction extends PagedResourceActionII {
 		M_log.debug("setToolGroupList:complete");
 		// add external tools to end of toolGroup list
 		String externaltoolgroupname = ServerConfigurationService.getString("externalToolGroupName","External Tools");
-		toolGroup.put(externaltoolgroupname, getExternalTools(externaltoolgroupname, moreInfoDir, countryCode));
+		toolGroup.put(externaltoolgroupname, getExternalTools(externaltoolgroupname, moreInfoDir, countryCode, siteId));
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
 	}
 
@@ -5310,47 +5310,44 @@ public class SiteAction extends PagedResourceActionII {
 	
 
 	
-	// configure list of ltitools to add to toolgroups
-	private List getExternalTools(String groupName,File moreInfoDir, String countryCode) {
+	// configure list of ltitools to add to toolgroups; set selected for those tools already added to a site
+	private List getExternalTools(String groupName,File moreInfoDir, String countryCode,String siteId) {
 		List ltiTools = new ArrayList();
-		List<Map<String,Object>> tools = m_ltiService.getTools(null,null,0,0);
-		if (tools != null && !tools.isEmpty())
+		/*List<Map<String,Object>> allTools = m_ltiService.getTools(null,null,0,0);
+		if (allTools != null && !allTools.isEmpty())
 		{
-			// get invoke count for all lti tools
-			List<Map<String,Object>> contents = m_ltiService.getContents(null,null,0,0);
-			HashMap<String, Map<String, Object>> linkedLtiContents = new HashMap<String, Map<String, Object>>();
-			for ( Map<String,Object> content : contents ) {
-				String ltiToolId = content.get(m_ltiService.LTI_TOOL_ID).toString();
-				String siteId = StringUtils.trimToNull((String) content.get(m_ltiService.LTI_SITE_ID));
-				if (siteId != null)
-				{
-					// whether the tool is already enabled in site
-					String pstr = (String) content.get(LTIService.LTI_PLACEMENT);
-					if (StringUtils.trimToNull(pstr) != null) // && site != null)
-					{
-						// the lti tool is enabled in the site
-						ToolConfiguration toolConfig = SiteService.findTool(pstr);
-						if (toolConfig != null && toolConfig.getSiteId().equals(siteId))
-						{
-							String relativeWebPath = null;
-							Map<String, Object> ltiToolValues = m_ltiService.getTool(Long.valueOf(ltiToolId));
-							MyTool newTool = new MyTool();
-							newTool.title =  ltiToolValues.get(LTIService.LTI_TITLE).toString();
-							newTool.id = ltiToolId;
-							newTool.description = ltiToolValues.get(LTIService.LTI_TITLE).toString();
-							newTool.group = groupName;
-							relativeWebPath = getMoreInfoUrl(moreInfoDir, ltiToolId);
-							if (relativeWebPath != null) {
-								newTool.moreInfo = relativeWebPath;
-							}
-							newTool.required = false; //ServerConfigurationService.toolGroupIsRequired(groupId,ltiToolId);
-							newTool.selected = false; //ServerConfigurationService.toolGroupIsSelected(groupId,ltiToolId);
-							ltiTools.add(newTool);
-						}
+			for ( Map<String,Object> tool : allTools ) {
+				Set keySet = tool.keySet();
+				String ltiToolId = (String)tool.get("id");
+				//int keyindex = tool.indexOf("id");
+				if (ltiToolId!=null) {
+					String relativeWebPath = null;
+					MyTool newTool = new MyTool();
+					newTool.title =  tool.get("title").toString();
+					newTool.id = ltiToolId;
+					newTool.description = tool.get("description").toString();
+					newTool.group = groupName;
+					relativeWebPath = getMoreInfoUrl(moreInfoDir, ltiToolId);
+					if (relativeWebPath != null) {
+						newTool.moreInfo = relativeWebPath;
 					}
+					newTool.required = false; //ServerConfigurationService.toolGroupIsRequired(groupId,ltiToolId);
+					newTool.selected = false; //ServerConfigurationService.toolGroupIsSelected(groupId,ltiToolId);
+					ltiTools.add(newTool);
+				}
+			}		
+		}*/
+		// get ltitools already assigned to current siteId and those only assigned to this site and not in alltools
+		/*List<Map<String,Object>> contents = m_ltiService.getContents(null,null,0,0,siteId);
+		for ( Map<String,Object> content : contents ) {
+				String ltiToolId = content.get(m_ltiService.LTI_TOOL_ID).toString();
+				String ltiSiteId = StringUtils.trimToNull((String) content.get(m_ltiService.LTI_SITE_ID));
+				if (ltiSiteId != null)
+				{
+					MyTool ltiTool = getToolById(ltiToolId,)
 				}
 			}	
-		}
+		}*/
 		return ltiTools;
 	}
 	
@@ -10627,7 +10624,7 @@ public class SiteAction extends PagedResourceActionII {
 		// set tool registration list
 		setToolRegistrationList(state, type);
 		// set tool group list  SAK-16600
-		setToolGroupList(state,type);
+		setToolGroupList(state,type, site.getId());
 		multipleToolIdAttributeMap = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null? (Map<String, Map<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap();
 
 		// for the selected tools
