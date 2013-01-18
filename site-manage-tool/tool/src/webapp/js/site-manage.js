@@ -595,7 +595,8 @@ var setupCategTools = function(){
         var moreInfo = document.getElementById("moreInfoLink");
 	var moreInfoTitle = moreInfo.getAttribute("title");
         var moreInfoImageSrc = moreInfo.getAttribute("href");
-	//$('#moreImageSrc').src=moreInfoImageSrc;
+    // change/give the src attribute the value
+    $('#moreInfoHolder img').attr('src',moreInfoImageSrc);
 	console.log(moreInfoImageSrc);
         $("#moreInfoHolder").dialog({
             autoOpen: false,

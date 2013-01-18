@@ -897,31 +897,15 @@ public class SiteAction extends PagedResourceActionII {
 		return rv;
 	}
 
-	/*
-	 * Configure url to moreInfo resource
-	 */
-	private String setLibraryPath(HttpServletRequest req) {
-		/*String server = req.getServerName();
-		int port =  req.getServerPort();
-		String lPath = server;
-		if (port > 0) {
-			lPath += ":"+new Integer(port).toString();
-		}*/
-		return  "/" + ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
-	}
-	
 	
 	/*
 	 * Configure directory for moreInfo content
 	 */
 	private String setMoreInfoPath(ServletContext ctx) {
-				
 		String rpath = ctx.getRealPath("");
 		String ctxPath = ctx.getServletContextName();
 		String rserve = StringUtils.remove(rpath,ctxPath);
-		String moreInfoDir = ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
-		return rserve + moreInfoDir;		
-		//libraryPath = ctx.getServerInfo
+		return rserve +  ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");		
 	}
 	
 	/**
@@ -930,7 +914,7 @@ public class SiteAction extends PagedResourceActionII {
 	protected void initState(SessionState state, VelocityPortlet portlet,
 			JetspeedRunData rundata) {
 		ServletContext ctx = rundata.getRequest().getSession().getServletContext();
-		libraryPath = setLibraryPath(rundata.getRequest()); 
+		libraryPath = "/" + ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
 		moreInfoPath = setMoreInfoPath(ctx);
 		//assert input != null;
 		//M_log.info("Path " + input.available());
