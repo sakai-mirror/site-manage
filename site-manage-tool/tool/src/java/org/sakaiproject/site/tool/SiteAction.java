@@ -901,13 +901,13 @@ public class SiteAction extends PagedResourceActionII {
 	 * Configure url to moreInfo resource
 	 */
 	private String setLibraryPath(HttpServletRequest req) {
-		String server = req.getServerName();
+		/*String server = req.getServerName();
 		int port =  req.getServerPort();
 		String lPath = server;
 		if (port > 0) {
 			lPath += ":"+new Integer(port).toString();
-		}
-		return lPath  + "/" + ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
+		}*/
+		return  "/" + ServerConfigurationService.getString("config.sitemanage.moreInfoDir", "/content/moreinfo");
 	}
 	
 	
