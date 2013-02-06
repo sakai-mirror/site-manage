@@ -361,7 +361,7 @@ utils.resizeFrame = function(updown){
 
 var setupCategTools = function(){
 
-    var sorttoolSelectionList = function(){
+   var sorttoolSelectionList = function(){
         var mylist = $('#toolSelectionList ul');
         var listitems = mylist.children('li').get();
         listitems.sort(function(a, b){
@@ -375,7 +375,7 @@ var setupCategTools = function(){
              $('#toolSelectionList ul').find('li#selected_sakai_home').insertBefore($('#toolSelectionList ul li:first-child'));
             }
         }
-    };
+   };
     
 
    var noTools = function() {

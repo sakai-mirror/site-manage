@@ -25,6 +25,8 @@
 				document.getElementById('removedInstruction').style.display='block'
 			</script>
 		#end
+		## 
+		##
 		#foreach ($oldTool in $oldSelectedTools)
 			#foreach($t in $toolRegistrationList)
 				#if ($t.getId() == $oldTool)
@@ -40,6 +42,7 @@
 			#if(!$found && $!extraSelectedToolList.contains($newTool))
 				#set($found=true)
 			#end
+			## if no added tools found then 
 			#if (!$found)
 				<script type="text/javascript">
 					document.getElementById('removedInstruction').style.display='block'
