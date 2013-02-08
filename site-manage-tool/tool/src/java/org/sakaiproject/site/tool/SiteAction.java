@@ -1568,7 +1568,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST, toolRegistrationSelectedList);
 			
-			context.put(STATE_TOOL_GROUP_MULTIPLES, getToolGroupMultiples(state, toolRegistrationSelectedList); // <- SAK-16600
+			context.put(STATE_TOOL_GROUP_MULTIPLES, getToolGroupMultiples(state, toolRegistrationSelectedList)); // <- SAK-16600
 			boolean myworkspace_site = false;
 			// Put up tool lists filtered by category
 			List siteTypes = (List) state.getAttribute(STATE_SITE_TYPES);
@@ -2551,7 +2551,7 @@ public class SiteAction extends PagedResourceActionII {
 			}
 
 			toolRegistrationSelectedList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-			toolRegistrationList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);
+			toolRegistrationList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);			
 			context.put(STATE_TOOL_REGISTRATION_LIST, toolRegistrationList);
 			if (toolRegistrationSelectedList != null && toolRegistrationList != null)
 			{
@@ -2712,11 +2712,11 @@ public class SiteAction extends PagedResourceActionII {
 				context.put("existingSite", Boolean.FALSE);
 				context.put("continue", "18");
 			}
-
-			context.put(STATE_TOOL_REGISTRATION_LIST, state
-					.getAttribute(STATE_TOOL_REGISTRATION_LIST));
+			
 			toolRegistrationSelectedList = (List) state
 					.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+			
+			context.put(STATE_TOOL_REGISTRATION_LIST, state.getAttribute(STATE_TOOL_REGISTRATION_LIST));
 			context.put(STATE_TOOL_REGISTRATION_SELECTED_LIST,
 					toolRegistrationSelectedList); // String toolId's
 
@@ -3590,31 +3590,30 @@ public class SiteAction extends PagedResourceActionII {
 	}
 
 	// SAK-16600 TooGroupMultiples come from toolregistrationselectedlist
-	private Map setToolGroupMultiples(SessionState state, List list) {
+	private Map getToolGroupMultiples(SessionState state, List list) {
 		Set multipleToolIdSet = (Set) state.getAttribute(STATE_MULTIPLE_TOOL_ID_SET);
 		Map multipleToolIdTitleMap = state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP) != null? (Map) state.getAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP):new HashMap();
 		Map<String,List> toolGroupMultiples = new HashMap<String, List>();
-
+		List tools;
 		for(Iterator iter = list.iterator(); iter.hasNext();)
 		{
-			MyTool tool  = (MyTool) iter.next();
-			String toolId = tool.getId();
+			String toolId = (String)iter.next();
+			String originId = findOriginalToolId(state, toolId);
 			// is this tool in the list of multipeToolIds?
-			if (multipleToolIdSet.contains(toolId)) {
-				String originId = findOriginalToolId(state, toolId);
+			if (multipleToolIdSet.contains(originId)) {
 				// is this the original tool or a multiple having uniqueId+originalToolId?
-				if (!originId.equals(tool.getId())) {
+				if (!originId.equals(toolId)) {
 					if (!toolGroupMultiples.containsKey(originId)) {
-						List tools = new ArrayList();
-						// tool comes from toolRegistrationSelectList so selected should be true
-						tool.selected = true;
-						// is a toolMultiple ever *required*?
-						tools.add(tool);
-						toolGroupMultiples.put(originId, tools);
-					} else {
-						List tools = toolGroupMultiples.get(toolId);
-						tools.add(tool);
+						toolGroupMultiples.put(originId,  new ArrayList());
 					}
+					tools = toolGroupMultiples.get(originId);
+					MyTool tool = new MyTool();
+					tool.id = toolId;
+					tool.title = (String) multipleToolIdTitleMap.get(toolId);
+					// tool comes from toolRegistrationSelectList so selected should be true
+					tool.selected = true;
+					// is a toolMultiple ever *required*?
+					tools.add(tool);
 				}
 			}
 		}
