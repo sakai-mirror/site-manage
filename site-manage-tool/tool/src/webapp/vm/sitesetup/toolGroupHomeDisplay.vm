@@ -1,4 +1,3 @@
-HOMEDISPLAY!!!
 #set($hometool=$tool)
 #set($hometoolId=$hometool.getId())
 <li id="row-home">
