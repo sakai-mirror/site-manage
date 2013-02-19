@@ -31,44 +31,14 @@
                             </a>
                         </h4>
                         <ul class="toolGroup">
-                            #if ($groupCount ==1)
-                                <li id="row-home">
-                                     <div class="toolListControl">
-                                        #if ($!defaultTools.indexOf($!homeToolId) != -1) <input type="hidden" name="selectedTools" value="$!homeToolId" /> #end
-                                        <input type="checkbox" name="selectedTools" value="$!homeToolId" id="sakai.home"
-                                            #if ($check_home)
-                                                checked="checked"
-                                            #end
-                                            #if ($!defaultTools.indexOf($!homeToolId) != -1)
-                                                checked="checked" disabled="disabled"
-                                            #end
-                                        />
-                                        <label for="sakai.home">
-                                            $tlang.getString("java.home")
-                                            ## only show when title is customized
-                                            #if ($!allowPageOrderHelper)
-                                                #set($currentTitle = $validator.escapeHtml($!toolRegistrationTitleList.get($!homeToolId)))
-                                                #if (!$currentTitle.equals($tlang.getString("java.home")))
-                                                    ($currentTitle)
-                                                #end
-                                            #end
-                                        </label>
-                                    </div>
-                                    <div class="toolListDesc textPanelFooter specialLink">
-                                        $tlang.getString("feat.forv")
-                                    </div>
-                                </li>
-                            #end
 
                             ## list those extra tools (added outside Site Info tool with tool id not listed as the allowed tool for current site type) as hidded input
                             #foreach($tool in $!extraSelectedToolList)
                                 <input type="hidden" name="selectedTools" value="$tool" />
                             #end
-       
                             
                             #foreach($tool in $mapEntry.value)
                                 #set ($rowCount=0)
-                                    #set($toolId = $tool.getId())
                                     #if (!$toolId.equals("sakai.basiclti"))
                                         ## SAK-22108: exclude the Basic LTI tools, since they would be listed separately down the list
                                         #set ($rowCount=$rowCount + 1)
@@ -78,6 +48,10 @@
                                             </li>
                                         #end
                                         <li id="row-$rowCount">                                            
+                                        #set($toolId = $tool.getId())
+                                   			 #if ($!toolId.equals($!homeToolId)
+                                    			#parse("/vm/sitesetup/toolGroupHomeDisplay.vm")
+                                    		#else 
                                             <div class="toolListControl">
                                                 <input type="checkbox" name="selectedTools" value="$toolId" id="$toolId"
                                                 #if ($tools.isSelected())
@@ -114,7 +88,8 @@
                                                     #if ($tool.getMoreInfo() && ($tool.getMoreInfo() != ""))
                                                         <a class="moreInfoTool" id="moreInfoLink" title='$tool.getTitle()' href="$tool.getMoreInfo()" target="_blank">More info</a>
                                                      #end
-                                            </div>                                            
+                                            </div>
+                                            #end                                            
                                         </li>
                                         ## add multi if required
                                         #if ($tool.hasMultiples())

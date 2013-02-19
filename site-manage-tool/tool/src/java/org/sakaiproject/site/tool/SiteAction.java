@@ -5247,9 +5247,11 @@ public class SiteAction extends PagedResourceActionII {
 
 	 */
 	private void setToolGroupList(SessionState state, String type, String siteId) {
+		boolean checkhome = false;
 		M_log.debug("setToolGroupList:Loading group list for " + type);
 		String countryCode = rb.getLocale().getCountry();
 		Map<String,List> toolGroup = new LinkedHashMap<String,List>();
+		MyTool newTool = null;
 		//SAK-16600 tool multiples ready to be added
 		
 		File moreInfoDir = new File(moreInfoPath);
@@ -5260,6 +5262,7 @@ public class SiteAction extends PagedResourceActionII {
 		// create master list of all tools
 		for(Iterator<String> itr = groups.iterator(); itr.hasNext();) {
 			String groupId = itr.next();
+			
 			String groupName = getGroupName(groupId);
 			List toolList = ServerConfigurationService.getToolGroup(groupId);
 			if (toolList == null) {
@@ -5269,20 +5272,32 @@ public class SiteAction extends PagedResourceActionII {
 				for(Iterator<String> iter = toolList.iterator(); iter.hasNext();) {
 					String id = iter.next();
 					String relativeWebPath = null;
-					Tool tr = ToolManager.getTool(id);
-					if (tr != null) {
-						String toolId = tr.getId();
-						//M_log.info("loading tool " + toolId + " for group " + groupName );
-						MyTool newTool = new MyTool();
-						newTool.title = tr.getTitle();
-						newTool.id = toolId;
-						newTool.description = tr.getDescription();
-						newTool.group = groupName;
-						newTool.moreInfo =  getMoreInfoUrl(moreInfoDir, toolId);
-						newTool.required = ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
-						newTool.selected = ServerConfigurationService.toolGroupIsSelected(groupId,toolId);
-						// does tool allow multiples and if so are they already defined?
-						newTool.multiple = isMultipleInstancesAllowed(toolId); // SAK-16600 - this flag will allow action for template#3 to massage list into new format
+					if (id.equals(TOOL_ID_HOME)) { // SAK-23208
+						newTool = new MyTool();
+						newTool.id = id;
+						newTool.title = "Home";
+						newTool.description = "Home";
+						newTool.selected = true; //ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
+						newTool.required = false; //ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
+						newTool.multiple = false;
+					} else {
+						Tool tr = ToolManager.getTool(id);
+						if (tr != null) {
+							String toolId = tr.getId();
+							//M_log.info("loading tool " + toolId + " for group " + groupName );
+							newTool = new MyTool();
+							newTool.title = tr.getTitle();
+							newTool.id = toolId;
+							newTool.description = tr.getDescription();
+							newTool.group = groupName;
+							newTool.moreInfo =  getMoreInfoUrl(moreInfoDir, toolId);
+							newTool.required = ServerConfigurationService.toolGroupIsRequired(groupId,toolId);
+							newTool.selected = ServerConfigurationService.toolGroupIsSelected(groupId,toolId);
+							// does tool allow multiples and if so are they already defined?
+							newTool.multiple = isMultipleInstancesAllowed(toolId); // SAK-16600 - this flag will allow action for template#3 to massage list into new format
+						}
+					}
+					if (newTool != null) {
 						toolsInGroup.add(newTool);
 					}
 				}
@@ -5295,7 +5310,12 @@ public class SiteAction extends PagedResourceActionII {
 		// add external tools to end of toolGroup list
 		String externaltoolgroupname = ServerConfigurationService.getString("config.sitemanage.externalToolGroupName","External Tools");
 		toolGroup.put(externaltoolgroupname, getExternalTools(externaltoolgroupname, moreInfoDir, countryCode, siteId));
+		// set checkhome too SAK-23208
+		if (checkhome==true) {
+			state.setAttribute(STATE_TOOL_HOME_SELECTED, new Boolean(true));
+		}
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
+		
 	}
 
 	/*
