@@ -287,11 +287,11 @@ sakai.siteTypeSetup = function(){
                     if (key === type) {
                         if (this.copyContentVis === true) {
                             $('#copyContentWrapper').show();
-                            $('#fromTemplateSettingsContainer_instruction_body_copyUsers').show();
+                            $('#fromTemplateSettingsContainer_instruction_body_copyContent').show();
                         }
                         else {
                             $('#copyContentWrapper').hide();
-                            $('#fromTemplateSettingsContainer_instruction_body_copyUsers').hide();
+                            $('#fromTemplateSettingsContainer_instruction_body_copyContent').hide();
                         }
                         if (this.copyContentChecked === true) {
                             $('#copyContentWrapper input').attr('checked', 'checked');
@@ -307,11 +307,11 @@ sakai.siteTypeSetup = function(){
                         }
                         if (this.copyUsersVis === true) {
                             $('#copyUsersWrapper').show();
-                            $('#fromTemplateSettingsContainer_instruction_body_copyContent').show();
+                            $('#fromTemplateSettingsContainer_instruction_body_copyUsers').show();
                         }
                         else {
                             $('#copyUsersWrapper').hide();
-                            $('#fromTemplateSettingsContainer_instruction_body_copyContent').hide();
+                            $('#fromTemplateSettingsContainer_instruction_body_copyUsers').hide();
                         }
                         if (this.copyUsersChecked === true) {
                             $('#copyUsersWrapper input').attr('checked', 'checked');
