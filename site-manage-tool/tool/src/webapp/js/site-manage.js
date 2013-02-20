@@ -246,7 +246,8 @@ sakai.siteTypeSetup = function(){
     
     // handler that opens a block explaining what all the options are 
     // in the template selection (copy users, content, publish now)
-    $('#fromTemplateSettingsContainer_instruction_control').click(function(){
+    $('#fromTemplateSettingsContainer_instruction_control').click(function(e){
+        e.preventDefault();
         var pos = $(this).position();
         varContainerHeight = $('#fromTemplateSettingsContainer_instruction_body').height();
         $('#fromTemplateSettingsContainer_instruction_body').css({'top': pos.top - varContainerHeight - 20,'left': pos.left - 290}).toggle();
