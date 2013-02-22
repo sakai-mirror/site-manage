@@ -1,6 +1,6 @@
 var sakai = sakai || {};
 var utils = utils || {};
-
+var selTools = new Array();
 
 $.ajaxSetup({
     cache: false
@@ -405,7 +405,7 @@ var setupCategTools = function(){
     };
     
     
-    
+    // loop through list of selectedTools; creating entry for each unique instance
     var sourceList = $('input[name="selectedTools"][type="checkbox"]');
     $.each(sourceList, function(){
         var removeLink = '';
@@ -413,36 +413,46 @@ var setupCategTools = function(){
         var thisIdClass = '';
         var toolInstance = '';
         var thisToolCatEsc = '';
-        if ($(this).attr('id').length > 37) {
-            thisToolCat = $(this).attr('id').substring(36) + '';
-            thisIdClass = $(this).attr('id').substring(36) + '';
+	var thisToolId = $(this).attr('id');
+	
+        if (thisToolId.length > 37) {
+            thisToolCat = thisToolId.substring(36) + '';
+            thisIdClass = thisToolId.substring(36) + '';
             toolInstance = ' toolInstance';
         }
         else {
-            thisToolCat = $(this).attr('id') + '';
-            thisIdClass = $(this).attr('id') + '';
+            thisToolCat = thisToolId + '';
+            thisIdClass = thisToolId + '';
         }
         thisToolCatEsc = thisToolCat.replace(' ', '_');
         
-
-        if ($(this).attr('disabled') !== true) {
-            removeLink = '<a href="#" class=\"removeTool ' + toolInstance + '\">x</a>';
-        }
+        // ignore duplicates already found in array
+        var idx=selTools.indexOf(thisToolId);
+        if (idx < 0) {
+        	selTools.push(thisToolId);        
+        	
+        	// selectedTools with disable checkboxes don't have the red [X] remove link
+        	if ($(this).attr('disabled') !== true) {
+        		removeLink = '<a href="#" class=\"removeTool ' + toolInstance + '\">x</a>';
+        	}
         
-        if ($(this).attr('checked')) {
-            console.log(thisToolCat  + ' has a checked tool')
-            $(this).next('label').css('font-weight', 'bold');
-            $('#toolSelectionList ul').append('<li class=\"icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"selected_' + $(this).attr('id').replace(/\./g, '_') + '\">' + $(this).next('label').text() + removeLink + '</li>');
-            $('#toolHolder').find('#' + thisToolCatEsc).find('ul').show();
-            $('#toolHolder').find('#' + thisToolCatEsc).find('h4').find('a').addClass('open');
+        	// append to selected tool
+        	if ($(this).attr('checked')) {
+        		console.log(thisToolCat  + ' has a checked tool');
+        		$(this).next('label').css('font-weight', 'bold');
+        		$('#toolSelectionList ul').append('<li class=\"icon-' + thisIdClass.replace(/\./g, '-') + '\" id=\"selected_' + $(this).attr('id').replace(/\./g, '_') + '\">' + $(this).next('label').text() + removeLink + '</li>');
+        		$('#toolHolder').find('#' + thisToolCatEsc).find('ul').show();
+        		$('#toolHolder').find('#' + thisToolCatEsc).find('h4').find('a').addClass('open');
+        	}
+        	else {
+        		$(this).next('label').css('font-weight', 'normal');
+        	}
+        	var parentRow = $(this).closest('li');
+        	$('#toolHolder').find('#' + thisToolCatEsc).find('ul').append(parentRow);
+        	//push into an array this id, and to close the function traverse and send a click to each
         }
-        else {
-            $(this).next('label').css('font-weight', 'normal');
-        }
-        var parentRow = $(this).closest('li');
-        $('#toolHolder').find('#' + thisToolCatEsc).find('ul').append(parentRow);
-        //push into an array this id, and to close the function traverse and send a click to each
     });
+    
     $('.toolGroup').each(function(){
         var countChecked = $(this).find(':checked').length;
         var countTotal = $(this).find('input[type="checkbox"]').length;

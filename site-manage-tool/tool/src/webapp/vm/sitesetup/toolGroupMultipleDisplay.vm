@@ -1,3 +1,4 @@
+TOOLGROUPS
 <script type="text/javascript">
       $(document).ready(function() {
             setupCategTools();
@@ -118,12 +119,12 @@
                 #end
         </ol>
     </div>
-</div>
 
     <div id="toolSelectionList">
     <h4>Selected tools</h4>
     <div id="toolSelectionListMessage" style="display:none" class="instruction">No tools selected</div>
     <ul>
     </ul>
+    </div>
 </div>
 <div id="moreInfoHolder" style="display:none; height:500px;width:700px;overflow:auto"><img src="" id="moreImageSrc"/></div>

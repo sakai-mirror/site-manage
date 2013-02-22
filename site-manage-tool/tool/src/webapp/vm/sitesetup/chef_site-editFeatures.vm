@@ -24,7 +24,7 @@
     
     
         
-        #if(${toolsByGroup})  
+        #if(${toolsByGroup}) 
             #parse("/vm/sitesetup/toolGroupMultipleDisplay.vm")
         #else
             #parse("/vm/sitesetup/toolListDisplay.vm")

@@ -2,7 +2,7 @@
 #foreach ($toolMultiple in $toolMultipleList)
 	#set($toolMultipleId = $toolMultiple.getId())
     	#set ($rowCount=$rowCount + 1)
-	<li id="row-$rowCount">
+	<li id="row-$rowCount" class="indnt3">
 		<div class="toolListControl">
 			<input type="checkbox" name="selectedTools" value="$toolMultipleId" id="$toolMultipleId"
 				## toolMultiples shouldn't be *required* but hey...
