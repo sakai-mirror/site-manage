@@ -1,3 +1,4 @@
+TOOLGROUPS
 <script type="text/javascript">
       $(document).ready(function() {
             setupCategTools();

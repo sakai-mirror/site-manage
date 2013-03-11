@@ -1667,12 +1667,13 @@ public class SiteAction extends PagedResourceActionII {
 
 			context.put("homeToolId", TOOL_ID_HOME);
 
-			// get the list of available external lti tools
+			// get the list of available external lti tools for ToolOrder display
+			// SAK 16600 - external tools are in master toolSelectedList for ToolGroup display
 			List<Map<String,Object>> tools = m_ltiService.getTools(null,null,0,0);
 			if (tools != null && !tools.isEmpty())
 			{
 				HashMap<String, Map<String, Object>> ltiTools = new HashMap<String, Map<String, Object>>();
-				// get invoke count for all lti tools
+				// get invoke count for all lti tosols
 				List<Map<String,Object>> contents = m_ltiService.getContents(null,null,0,0);
 				HashMap<String, Map<String, Object>> linkedLtiContents = new HashMap<String, Map<String, Object>>();
 				for ( Map<String,Object> content : contents ) {
@@ -2552,41 +2553,68 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 
-			toolRegistrationSelectedList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
-			toolRegistrationList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);			
-			context.put(STATE_TOOL_REGISTRATION_LIST, toolRegistrationList);
-			if (toolRegistrationSelectedList != null && toolRegistrationList != null)
-			{
-				// see if any tool is added outside of Site Info tool, which means the tool is outside of the allowed tool set for this site type
-				context.put("extraSelectedToolList", state.getAttribute(STATE_EXTRA_SELECTED_TOOL_LIST));
-			}
-			// put tool title into context if PageOrderHelper is enabled
-			pageOrderToolTitleIntoContext(context, state, site_type, false, site.getProperties().getProperty(SiteConstants.SITE_PROPERTY_OVERRIDE_HIDE_PAGEORDER_SITE_TYPES));
-
-			context.put("check_home", state
-					.getAttribute(STATE_TOOL_HOME_SELECTED));
-			context.put("selectedTools", orderToolIds(state, checkNullSiteType(state, site), toolRegistrationSelectedList, false));
-			context.put("oldSelectedTools", state
-					.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST));
-			context.put("oldSelectedHome", state
-					.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_HOME));
 			context.put("continueIndex", "12");
+
 			if (state.getAttribute(STATE_TOOL_EMAIL_ADDRESS) != null) {
-				context.put("emailId", state
-						.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
+				context.put("emailId", state.getAttribute(STATE_TOOL_EMAIL_ADDRESS));
 			}
-			context.put("serverName", ServerConfigurationService
-					.getServerName());
+
+			context.put("serverName", ServerConfigurationService.getServerName());
 
 			// all info related to multiple tools
 			multipleToolIntoContext(context, state);
 
 			context.put("homeToolId", TOOL_ID_HOME);
+						
+			toolRegistrationSelectedList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);  	// id's of all tools marked as selected
+			toolRegistrationList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_LIST);						// id's of all tools
+			List oldSelToolList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST);  		// id's of tools to be removed
 
-			// put the lti tools information into context
+			// immediately put registrationList and home back in context; doesn't need any further processing
+			context.put(STATE_TOOL_REGISTRATION_LIST, toolRegistrationList);			
+			context.put("oldSelectedHome", state.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_HOME));
+			
+			// see if any tool is added outside of Site Info tool, which means the tool is outside of the allowed tool set for this site type
+			if (toolRegistrationSelectedList != null && toolRegistrationList != null)
+			{
+				context.put("extraSelectedToolList", state.getAttribute(STATE_EXTRA_SELECTED_TOOL_LIST));
+			}
+
+			// put tool title into context if PageOrderHelper is enabled
+			pageOrderToolTitleIntoContext(context, state, site_type, false, site.getProperties().getProperty(SiteConstants.SITE_PROPERTY_OVERRIDE_HIDE_PAGEORDER_SITE_TYPES));
+			context.put("check_home", state.getAttribute(STATE_TOOL_HOME_SELECTED));
+
+			// SAK-16600 if mode=toolGroup, all selecte live in one list.  oldSelToolList and toolRegistrationSelectedList so they don't include lti tools (for toolOrder) and
+			// ltiTools contains any changes made by toolGroup mode
+			List toolRegistrationSelectedListNoLti = removeLtiTools(toolRegistrationSelectedList);
+			List oldSelToolListNoLti = removeLtiTools(oldSelToolList);
+
+			// put non-Lti selected and old tools back into context and state
+			List orderedToolRegistrationSelectedListNoLti = orderToolIds(state, checkNullSiteType(state, site), toolRegistrationSelectedListNoLti, false);
+			state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, orderedToolRegistrationSelectedListNoLti);
+			state.setAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST, oldSelToolListNoLti);
+			context.put("selectedTools",state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST));						// id's of all tools
+			context.put("oldSelectedTools", state.getAttribute(STATE_TOOL_REGISTRATION_OLD_SELECTED_LIST));
+
+			
+			// SAK-16600 merge existing toolOrder ltiTools and oldLtiTools with ltiTools found in toolGroup's toolRegistrationSelectedList and oldSelToolList
+
+			
+			// retrieve lti tools information into context for toolGroup mode
+			// SAK-16600 update for the way ToolGroups manages plugin (external) tools; i.e. as a single group
+			List toolGroupSelectedLti = getToolGroupLtiTools(toolRegistrationSelectedList);
+			List toolGroupOldLti = getToolGroupLtiTools(oldSelToolList);
+
+			// Merge lti for both toolOrder and toolGroup modes
+			HashMap<String, Map<String, Object>> mergedLtiTools = MergeToolGroupAndToolOrderLtiTools(state,toolGroupSelectedLti);			
+			HashMap<String, Map<String, Object>> mergedOldLtiTools = MergeToolGroupAndToolOrderOldLtiTools(state,toolGroupOldLti);
+			
+			// insert into context and save state
+			state.setAttribute(STATE_LTITOOL_SELECTED_LIST, mergedLtiTools);
+			state.setAttribute(STATE_LTITOOL_EXISTING_SELECTED_LIST, mergedOldLtiTools);
 			context.put("ltiTools", state.getAttribute(STATE_LTITOOL_SELECTED_LIST));
 			context.put("oldLtiTools", state.getAttribute(STATE_LTITOOL_EXISTING_SELECTED_LIST));
-
+			
 			return (String) getContext(data).get("template") + TEMPLATE[15];
 		case 18:
 			/*
@@ -5268,6 +5296,7 @@ public class SiteAction extends PagedResourceActionII {
 		
 		File moreInfoDir = new File(moreInfoPath);
 		List tools = new ArrayList();
+		List<String> selectedTools = new ArrayList<String>();
 		state.removeAttribute(STATE_TOOL_GROUP_LIST);
 		// get all the groups that are available for this site type
 		List groups = ServerConfigurationService.getCategoryGroups(type);  // ,sortType)
@@ -5312,6 +5341,9 @@ public class SiteAction extends PagedResourceActionII {
 					if (newTool != null) {
 						toolsInGroup.add(newTool);
 					}
+					if (newTool.selected) {
+						selectedTools.add(newTool.id);
+					}
 				}
 				M_log.info(groupName + ": loaded " + new Integer(toolsInGroup.size()).toString() + " tools");
 				toolGroup.put(groupName, toolsInGroup);
@@ -5321,13 +5353,13 @@ public class SiteAction extends PagedResourceActionII {
 		M_log.debug("setToolGroupList:complete");
 		// add external tools to end of toolGroup list
 		String externaltoolgroupname = ServerConfigurationService.getString("config.sitemanage.externalToolGroupName","External Tools");
-		toolGroup.put(externaltoolgroupname, getExternalTools(externaltoolgroupname, moreInfoDir, countryCode, siteId));
+		toolGroup.put(externaltoolgroupname, getPluginToolGroup(externaltoolgroupname, moreInfoDir, countryCode, siteId));
 		// set checkhome too SAK-23208
 		if (checkhome==true) {
 			state.setAttribute(STATE_TOOL_HOME_SELECTED, new Boolean(true));
 		}
 		state.setAttribute(STATE_TOOL_GROUP_LIST, toolGroup);
-		
+
 	}
 
 	/*
@@ -5375,11 +5407,98 @@ public class SiteAction extends PagedResourceActionII {
 		
 	}
 	
+	// SAK-16600
+	// External tools are handled differently in ToolGroups; make sure selected and unselected ltiTools are merged into the
+	// old structure used by the ToolOrder method by returning only those tools in toolsSelectionList that are ltiTools
+	private List<String> getToolGroupLtiTools(List<String> selToolList) {
+		List<String> onlyLtiTools = new ArrayList<String>();
+		List<Map<String, Object>> allTools = m_ltiService.getTools(null, null,0, 0);
+		if (allTools != null && !allTools.isEmpty()) {
+			for (Map<String, Object> tool : allTools) {
+				Set keySet = tool.keySet();
+				Integer ltiId = (Integer) tool.get("id");
+				if (ltiId != null) {
+					String toolId = ltiId.toString();
+					if (selToolList.contains(toolId)) {
+						onlyLtiTools.add(toolId);
+					}
+				}
+			}
+		}		
+		return onlyLtiTools;
+	}	
+	
+	// SAK-16600
+	// return only those tools in toolsSelectionList that are ltiTools
+	private List<String> removeLtiTools(List<String> selToolList) {
+		List<String> noLtiList = new ArrayList<String>();
+		noLtiList.addAll(selToolList);
+		List<Map<String, Object>> allTools = m_ltiService.getTools(null, null,0, 0);
+			if (allTools != null && !allTools.isEmpty()) {
+			for (Map<String, Object> tool : allTools) {
+				Set keySet = tool.keySet();
+				Integer ltiId = (Integer) tool.get("id");
+				if (ltiId != null) {
+					String toolId = ltiId.toString();
+					if (noLtiList.contains(toolId)) {
+						noLtiList.remove(toolId);
+					}
+				}
+			}
+		}		
+		return noLtiList;
+	}	
+	
+	// return only those tools in toolsRegOldSelectionList that are selected ltiTools and not already in the list
+	private HashMap<String, Map<String, Object>> MergeToolGroupAndToolOrderLtiTools(SessionState state, List toolGroupSelLtiTools) {
+	    HashMap<String, Map<String, Object>> ltiTools = state.getAttribute(STATE_LTITOOL_SELECTED_LIST) != null?(HashMap<String, Map<String, Object>>) state.getAttribute(STATE_LTITOOL_SELECTED_LIST):new HashMap<String, Map<String, Object>>();
+		Map<String, Object> newLtiToolValues;
+		for(Iterator itr = toolGroupSelLtiTools.iterator(); itr.hasNext();) {
+			String toolid = (String) itr.next();
+			if (!ltiTools.containsKey(toolid)) {
+				Map<String, Object> addedLtiTool = m_ltiService.getTool(Long.valueOf(toolid));
+				Properties reqProp = new Properties();
+				reqProp.put(LTIService.LTI_TOOL_ID, toolid);
+				addedLtiTool.put("reqProperties", reqProp);
+				ltiTools.put(toolid, addedLtiTool);	
+			}
+		}
+		return ltiTools;
+	}
 
+	// return only those tools in toolsRegOldSelectionList that are selected ltiTools and not already in the list
+	private HashMap<String, Map<String, Object>> MergeToolGroupAndToolOrderOldLtiTools(SessionState state, List toolGroupOldLtiTools) {
+	    HashMap<String, Map<String, Object>> oldLtiTools = state.getAttribute(STATE_LTITOOL_SELECTED_LIST) != null?(HashMap<String, Map<String, Object>>) state.getAttribute(STATE_LTITOOL_SELECTED_LIST):new HashMap<String, Map<String, Object>>();
+		Map<String, Object> newLtiToolValues;
+		for(Iterator itr = toolGroupOldLtiTools.iterator(); itr.hasNext();) {
+			String toolid = (String) itr.next();
+			if (!oldLtiTools.containsKey(toolid)) {
+				Map<String, Object> addedLtiTool = m_ltiService.getTool(Long.valueOf(toolid));
+				Properties reqProp = new Properties();
+				reqProp.put(LTIService.LTI_TOOL_ID, toolid);
+				addedLtiTool.put("reqProperties", reqProp);
+				oldLtiTools.put(toolid, addedLtiTool);	
+			}
+		}
+		return oldLtiTools;
+	}
+
+	// SAK-16600 find selected flag for ltiTool
+	private boolean isLtiToolInSite(Long toolId, String siteId) {
+		if (siteId==null) return false;
+		Map<String,Object> toolProps= m_ltiService.getContent(toolId, siteId); // getTool(toolId);
+		if (toolProps==null){
+			return false;
+		} else {
+			String toolSite = StringUtils.trimToNull((String) toolProps.get(m_ltiService.LTI_SITE_ID));	
+			
+			return siteId.equals(toolSite);
+		}
+	}
 	
 	// configure list of ltitools to add to toolgroups; set selected for those
 	// tools already added to a site
-	private List getExternalTools(String groupName, File moreInfoDir,
+	private List getPluginToolGroup(String groupName, File moreInfoDir,
 			String countryCode, String siteId) {
 		List ltiTools = new ArrayList();
 		List<Map<String, Object>> allTools = m_ltiService.getTools(null, null,
@@ -5389,7 +5508,7 @@ public class SiteAction extends PagedResourceActionII {
 				Set keySet = tool.keySet();
 				Integer ltiId = (Integer) tool.get("id");
 				if (ltiId != null) {
-					String ltiToolId = ltiId.toString();
+					String ltiToolId = ltiId.toString(); //"sakai.basiclti_" + ltiId.toString();
 					// int keyindex = tool.indexOf("id");
 					if (ltiToolId != null) {
 						String relativeWebPath = null;
@@ -5402,8 +5521,8 @@ public class SiteAction extends PagedResourceActionII {
 						if (relativeWebPath != null) {
 							newTool.moreInfo = relativeWebPath;
 						}
-						newTool.required = false; // ServerConfigurationService.toolGroupIsRequired(groupId,ltiToolId);
-						newTool.selected = false; // ServerConfigurationService.toolGroupIsSelected(groupId,ltiToolId);
+						newTool.required = false; // SAK16600 should this be a property or specified in toolOrder.xml?
+						newTool.selected = isLtiToolInSite(ltiId.longValue(), siteId);
 						ltiTools.add(newTool);
 					}
 				}
@@ -9829,6 +9948,9 @@ public class SiteAction extends PagedResourceActionII {
                 {
 	                Map<String, Object> toolValues = ltiTool.getValue();
 	                Properties reqProperties = (Properties) toolValues.get("reqProperties");
+	                if (reqProperties==null) {
+	                	reqProperties = new Properties();	                	
+	                }
 	                Object retval = m_ltiService.insertToolContent(null, ltiToolId, reqProperties, site.getId());
 	                if (retval instanceof String)
 	                {
@@ -10715,7 +10837,7 @@ public class SiteAction extends PagedResourceActionII {
 
 		// set tool registration list
 		setToolRegistrationList(state, type);
-		// set tool group list  SAK-16600
+		// set tool group list  SAK-16600 into state
 		setToolGroupList(state,type, site.getId());
 		multipleToolIdAttributeMap = state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION) != null? (Map<String, Map<String, String>>) state.getAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION):new HashMap();
 
@@ -10811,11 +10933,13 @@ public class SiteAction extends PagedResourceActionII {
 				}
 			}
 		}
-
+		
+		// SAK-16600 Make sure toolGroup tools that are selected are reflected in 'selectedList' (especially ltitools)
+		List mergeIdSelected = mergeIdSelected(state,idSelected);
 		state.setAttribute(STATE_MULTIPLE_TOOL_ID_TITLE_MAP, multipleToolIdTitleMap);
 		state.setAttribute(STATE_MULTIPLE_TOOL_CONFIGURATION, multipleToolIdAttributeMap);
 		state.setAttribute(STATE_TOOL_HOME_SELECTED, Boolean.valueOf(check_home));
-		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, idSelected); // List
+		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, mergeIdSelected); // List
 		state.setAttribute(STATE_TOOL_REGISTRATION_LIST, toolRegList);
 		state.setAttribute(STATE_TOOL_REGISTRATION_TITLE_LIST, toolTitles);
 
@@ -10828,6 +10952,25 @@ public class SiteAction extends PagedResourceActionII {
 
 	} // siteToolsIntoState
 
+	// SAK-16600 if any toolGroup entries are selected=true make sure they end up in STATE_TOOL_REGISTRATION_SELECTED_LIST
+	private List mergeIdSelected(SessionState state, List toolOrderSelected){
+				
+		Map<String,List> toolGroupMap  =  (LinkedHashMap<String,List>) state.getAttribute(STATE_TOOL_GROUP_LIST);
+		for (Iterator m_itr = toolGroupMap.keySet().iterator(); m_itr.hasNext();) {
+			String keyname = (String) m_itr.next();
+			List toolGroupList = toolGroupMap.get(keyname);
+			for(Iterator<MyTool> itr = toolGroupList.iterator(); itr.hasNext();) {
+				MyTool selToolId = itr.next();
+				if (!toolOrderSelected.contains(selToolId.id)){
+					if (selToolId.selected==true){
+						toolOrderSelected.add(selToolId.id);
+					}
+				}
+			}
+		}
+		return toolOrderSelected;
+	}
+	
 	/**
 	 * adjust site type
 	 * @param state

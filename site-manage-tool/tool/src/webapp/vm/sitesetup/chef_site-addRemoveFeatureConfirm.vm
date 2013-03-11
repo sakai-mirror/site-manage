@@ -168,6 +168,7 @@
 				#set($ltiToolId=$ltiTool.getKey())
 				#set($ltiToolValues=$ltiTool.getValue())
 				#set($ltiToolTitle=$ltiToolValues.get("title"))
+				#set($ltiToolDescription=$ltiToolValues.get("description"))
 				#set($ltiToolProperties=$ltiToolValues.get("reqProperties"))
 				#if (!$!oldLtiTools.containsKey($ltiToolId))
 					## highlight for newly selected lti tools
