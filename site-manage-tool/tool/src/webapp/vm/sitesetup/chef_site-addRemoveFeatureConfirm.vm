@@ -59,7 +59,7 @@
 						## show the attributes
 						(#foreach ($attribute in $!attributeHashtable.keySet())
 							$attribute = $validator.escapeHtml($!attributeHashtable.get($attribute))
-						#end)
+						#end) 
 					#end
 				#else
 					$!oldToolTitle
