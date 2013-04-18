@@ -683,9 +683,6 @@ public class SiteAction extends PagedResourceActionII {
 	private final static String SORT_ORDER_SECTION = "worksitesetup.sort.order.section";
 
 	private List prefLocales = new ArrayList();
-	private String SAKAI_LOCALES = "locales";
-	private String SAKAI_LOCALES_MORE = "locales.more";
-	private LocaleComparator localeComparator = new LocaleComparator();	
 	
 	/**
 	 * what are the tool ids within Home page?
@@ -12675,52 +12672,23 @@ public class SiteAction extends PagedResourceActionII {
 		else
 			return Locale.getDefault();
 	}
-	
+
 	/**
 	 * @return Returns the prefLocales
 	 */
-	 
-	public List getPrefLocales()
+	public List<Locale> getPrefLocales()
 	{
-		// Initialize list of supported locales, if necessary
-		if (prefLocales.size() == 0)
-		{
-			Locale[] localeArray = null;
-			String localeString = ServerConfigurationService.getString(SAKAI_LOCALES);
-			String localeStringMore = ServerConfigurationService.getString(SAKAI_LOCALES_MORE);
-			
-			if ( localeString == null )
-				localeString = "";
-			if ( localeStringMore != null && !localeStringMore.equals("") )
-				localeString += ","+localeStringMore;
-
-			if ( !localeString.equals("") )
-			{
-				String[] sakai_locales = localeString.split(",");
-				localeArray = new Locale[sakai_locales.length + 1];
-				for (int i = 0; i < sakai_locales.length; i++)
-					localeArray[i] = getLocaleFromString(sakai_locales[i]);
-				localeArray[localeArray.length - 1] = Locale.getDefault();
-			}
-			else
-				// if no locales specified, get default list
-			{
-				localeArray = new Locale[] { Locale.getDefault() };
-			}
-
-			// Sort locales and add to prefLocales (removing duplicates)
-			Arrays.sort(localeArray, localeComparator);
-			for (int i = 0; i < localeArray.length; i++)
-			{
-				if (i == 0 || !localeArray[i].equals(localeArray[i - 1]))
-				{					
-					prefLocales.add(localeArray[i]);
-				}
-			}
-		}
-
-		return prefLocales;
+	    // Initialize list of supported locales, if necessary
+	    if (prefLocales.size() == 0) {
+	        org.sakaiproject.component.api.ServerConfigurationService scs = (org.sakaiproject.component.api.ServerConfigurationService) ComponentManager.get(org.sakaiproject.component.api.ServerConfigurationService.class);
+	        Locale[] localeArray = scs.getSakaiLocales();
+	        // Add to prefLocales list
+	        for (int i = 0; i < localeArray.length; i++) {
+	            prefLocales.add(localeArray[i]);
+	        }
+	    }
+	    return prefLocales;
 	}
-	
+
 }
 
