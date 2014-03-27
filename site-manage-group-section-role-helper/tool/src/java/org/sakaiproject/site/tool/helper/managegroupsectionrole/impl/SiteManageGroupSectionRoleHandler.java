@@ -1617,14 +1617,14 @@ public class SiteManageGroupSectionRoleHandler {
 			}
 		}
     	for(int i = 1; groupsCreated < joinableSetNumOfGroupsInt && i < 1000; i++){
-    		String groupTitle = joinableSetName + " " + i;
+    		String groupTitle = joinableSetName + "-" + i;
     		if(!groupTitles.contains(groupTitle)){
     			Group g = site.addGroup();
     			g.getProperties().addProperty(g.GROUP_PROP_WSETUP_CREATED, Boolean.TRUE.toString());
     			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_SET, joinableSetName);
     			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_SET_MAX, joinableSetNumOfMembers);
     			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_SET_PREVIEW,Boolean.toString(allowViewMembership));
-    			g.setTitle(joinableSetName + " " + i);
+    			g.setTitle(joinableSetName + "-" + i);
     			try{
     				siteService.save(site);
     				groupsCreated++;
