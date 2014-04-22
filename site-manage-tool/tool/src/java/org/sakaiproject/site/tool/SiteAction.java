@@ -46,6 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.apache.velocity.tools.generic.SortTool;
 import org.sakaiproject.alias.api.Alias;
 import org.sakaiproject.alias.cover.AliasService;
@@ -8577,12 +8578,7 @@ public class SiteAction extends PagedResourceActionII {
 		String email = StringUtils.trimToEmpty(params
 				.getString("siteContactEmail"));
 		if (email != null) {
-			String[] parts = email.split("@");
-
-			if (email.length() > 0
-					&& (email.indexOf("@") == -1 || parts.length != 2
-							|| parts[0].length() == 0 || !Validator
-							.checkEmailLocal(parts[0]))) {
+			if (!EmailValidator.getInstance().isValid(email)) {
 				// invalid email
 				addAlert(state, rb.getFormattedMessage("java.invalid.email", new Object[]{email}));
 			}
