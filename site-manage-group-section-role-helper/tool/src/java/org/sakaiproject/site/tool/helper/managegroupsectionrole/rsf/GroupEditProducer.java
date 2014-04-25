@@ -3,6 +3,7 @@ package org.sakaiproject.site.tool.helper.managegroupsectionrole.rsf;
 import java.util.Collection;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -163,17 +164,25 @@ public class GroupEditProducer implements ViewComponentProducer, ActionResultInt
 		 
 		 //Joinable Set:
 		 UIMessage joinableSetLabel = UIMessage.make(groupForm, "group_joinable_set_label", "group.joinable.set");
-		 Set<String> joinableSets = new HashSet<String>();
-		 joinableSets.add("");
+		 List<String> joinableSetValuesSet = new ArrayList<String>();
 		 for(Group group : handler.site.getGroups()){
 			 String joinableSet = group.getProperties().getProperty(group.GROUP_PROP_JOINABLE_SET);
-			 if(joinableSet != null){
-				 joinableSets.add(joinableSet);
+			 if(joinableSet != null && !joinableSetValuesSet.contains(joinableSet)){
+				 joinableSetValuesSet.add(joinableSet);
 			 }
 		 }
-		 String[] joinableSetsArr = joinableSets.toArray(new String[joinableSets.size()]);
-		 UISelect joinableSetSelect = UISelect.make(groupForm, "joinable-set", joinableSetsArr,
-				 joinableSetsArr, "SiteManageGroupSectionRoleHandler.joinableSetName");
+		 Collections.sort(joinableSetValuesSet);
+		 List<String> joinableSetValues = new ArrayList<String>();
+		 List<String> joinableSetNames = new ArrayList<String>();
+		 joinableSetValues.add("");
+		 joinableSetNames.add(messageLocator.getMessage("none"));
+		 joinableSetValues.addAll(joinableSetValuesSet);
+		 joinableSetNames.addAll(joinableSetValuesSet);
+		 
+		 String[] joinableSetNamesArr = joinableSetNames.toArray(new String[joinableSetNames.size()]);
+		 String[] joinableSetValuesArr = joinableSetValues.toArray(new String[joinableSetValues.size()]);
+		 UISelect joinableSetSelect = UISelect.make(groupForm, "joinable-set", joinableSetValuesArr,
+				 joinableSetNamesArr, "SiteManageGroupSectionRoleHandler.joinableSetName");
 		 UILabelTargetDecorator.targetLabel(joinableSetLabel, joinableSetSelect);
 		 //joinable div:
 		 UIBranchContainer joinableDiv = UIBranchContainer.make(groupForm, "joinable-set-div:");
