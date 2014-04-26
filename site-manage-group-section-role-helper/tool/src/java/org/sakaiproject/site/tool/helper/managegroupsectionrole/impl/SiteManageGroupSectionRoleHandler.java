@@ -123,6 +123,8 @@ public class SiteManageGroupSectionRoleHandler {
     public String joinableSetNumOfMembers = "";
     public boolean allowPreviewMembership = false;
     public boolean allowViewMembership = false;
+    public boolean unjoinable = false;
+    public boolean unjoinableOrig = false;
 
     // Tool session attribute name used to schedule a whole page refresh.
     public static final String ATTR_TOP_REFRESH = "sakai.vppa.top.refresh"; 
@@ -217,6 +219,8 @@ public class SiteManageGroupSectionRoleHandler {
 	    joinableSetNumOfMembers = "";
 	    allowPreviewMembership = false;
 	    allowViewMembership = false;
+	    unjoinable = false;
+	    unjoinableOrig = false;
 	}
 	 
     /**
@@ -660,10 +664,12 @@ public class SiteManageGroupSectionRoleHandler {
             	group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_SET, joinableSetName);
             	group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_SET_MAX, joinableSetNumOfMembers);
             	group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_SET_PREVIEW,Boolean.toString(allowPreviewMembership));
+            	group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_UNJOINABLE, Boolean.toString(unjoinable));
             }else{
             	group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET);
             	group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET_MAX);
             	group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET_PREVIEW);
+            	group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_UNJOINABLE);
             }
             
             boolean found = false;
@@ -1627,7 +1633,8 @@ public class SiteManageGroupSectionRoleHandler {
     			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_SET_MAX, joinableSetNumOfMembers);
     			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_SET_PREVIEW,Boolean.toString(allowPreviewMembership));
     			g.getProperties().addProperty(g.GROUP_PROP_VIEW_MEMBERS, Boolean.toString(allowViewMembership));
-    			g.setTitle(joinableSetName + "-" + i);
+    			g.getProperties().addProperty(g.GROUP_PROP_JOINABLE_UNJOINABLE, Boolean.toString(unjoinable));
+    			g.setTitle(joinableSetName + " " + i);
     			try{
     				siteService.save(site);
     				groupsCreated++;
@@ -1650,6 +1657,7 @@ public class SiteManageGroupSectionRoleHandler {
     			group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET);
     			group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET_MAX);
     			group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_SET_PREVIEW);
+    			group.getProperties().removeProperty(group.GROUP_PROP_JOINABLE_UNJOINABLE);
     			updated = true;
     		}
     	}
@@ -1684,7 +1692,7 @@ public class SiteManageGroupSectionRoleHandler {
 			messages.addMessage(new TargettedMessage("groupTitle.empty.alert","groupTitle-group"));
 			return null;
 		}
-    	if(!joinableSetName.equals(joinableSetNameOrig)){
+    	if(!joinableSetName.equals(joinableSetNameOrig) || unjoinable != unjoinableOrig){
     		if(!joinableSetName.equals(joinableSetNameOrig)){
     			//check that the new joinable set name doesn't already exist
     			Collection siteGroups = site.getGroups();
@@ -1708,6 +1716,7 @@ public class SiteManageGroupSectionRoleHandler {
         		String joinableSet = group.getProperties().getProperty(group.GROUP_PROP_JOINABLE_SET);
         		if(joinableSet != null && joinableSet.equals(joinableSetNameOrig)){
         			group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_SET, joinableSetName);
+        			group.getProperties().addProperty(group.GROUP_PROP_JOINABLE_UNJOINABLE, Boolean.toString(unjoinable));
         			updated = true;
         		}
         	}
@@ -1724,8 +1733,10 @@ public class SiteManageGroupSectionRoleHandler {
     public String processGenerateJoinableSet(){
     	// reset the warning messages
     	resetTargettedMessageList();
-    	
-    	//first generate the new groups since it will check all the required fields
+    	//since the user could have changed the values and this action doesn't save the changes, reset to the orig values:
+    	joinableSetName = joinableSetNameOrig;
+    	unjoinable = unjoinableOrig;
+    	//generate the new groups since it will check all the required fields
     	String returnVal = processCreateJoinableSetHelper(false);
     	if(returnVal != null && "success".equals(returnVal)){
     		resetParams();
