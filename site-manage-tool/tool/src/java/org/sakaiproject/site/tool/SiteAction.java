@@ -4691,6 +4691,9 @@ public class SiteAction extends PagedResourceActionII {
 	} // doMenu_site_delete
 
 	public void doSite_delete_confirmed(RunData data) {
+		if (!"POST".equals(data.getRequest().getMethod())) {
+			return;
+		}
 		SessionState state = ((JetspeedRunData) data)
 				.getPortletSessionState(((JetspeedRunData) data).getJs_peid());
 		ParameterParser params = data.getParameters();
