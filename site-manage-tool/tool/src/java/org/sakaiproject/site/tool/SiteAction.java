@@ -5447,6 +5447,14 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			}
 		}
 	}
+	
+	List toolRegistrationSelectedList = (List) state.getAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST);
+	
+	//If this is the first time through add these selected tools as the default otherwise don't touch this
+	if (toolRegistrationSelectedList==null) {
+		state.setAttribute(STATE_TOOL_REGISTRATION_SELECTED_LIST, selectedTools);
+	}
+
 	return toolGroup;
 }
 
@@ -5466,6 +5474,9 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 		// mark the required tools
 		List requiredTools = ServerConfigurationService.getToolsRequired(type);
 		
+		// mark the default tools
+		List defaultTools = ServerConfigurationService.getDefaultTools(SiteTypeUtil.getTargetSiteType(type));
+		
 		// add Home tool only once
 		boolean hasHomeTool = false;
 		for (Iterator itr = toolList.iterator(); itr.hasNext(); ) 
@@ -5479,11 +5490,19 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 			if (tr != null) {
 				newTool = new MyTool();
 				newTool.title = tr.getTitle();
-				newTool.id = tr.getId();
+				newTool.id = toolId;
 				newTool.description = tr.getDescription();
 				newTool.group = groupName;
-				if (requiredTools != null && requiredTools.contains(toolId))
+				// does tool allow multiples and if so are they already defined?
+				newTool.multiple = isMultipleInstancesAllowed(toolId); // SAK-16600 - this flag will allow action for template#3 to massage list into new format
+				
+				if (requiredTools != null && requiredTools.contains(toolId)) {
 					newTool.required = true;
+				}
+
+				if (defaultTools != null && defaultTools.contains(toolId)) {
+					newTool.selected = true;
+				}
 				toolsInOrderedList.add(newTool);
 			}
 		}
