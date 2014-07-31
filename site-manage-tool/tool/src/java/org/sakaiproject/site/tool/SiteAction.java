@@ -9833,7 +9833,7 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 		if (email != null) {
 			if (!email.isEmpty() && !EmailValidator.getInstance().isValid(email)) {
 				// invalid email
-				addAlert(state, rb.getFormattedMessage("java.invalid.email", new Object[]{email}));
+				addAlert(state, rb.getFormattedMessage("java.invalid.email", new Object[]{FormattedText.escapeHtml(email,false)}));
 			}
 			siteInfo.site_contact_email = email;
 		}
