@@ -1531,6 +1531,8 @@ public class SiteAction extends PagedResourceActionII {
 			// each site)
 			context.put("service", SiteService.getInstance());
 			context.put("sortby_title", SortType.TITLE_ASC.toString());
+			context.put("sortby_id", SortType.ID_ASC.toString());
+			context.put("show_id_column", ServerConfigurationService.getBoolean("site.setup.showSiteIdColumn", false));
 			context.put("sortby_type", SortType.TYPE_ASC.toString());
 			context.put("sortby_createdby", SortType.CREATED_BY_ASC.toString());
 			context.put("sortby_publish", SortType.PUBLISHED_ASC.toString());
@@ -4473,6 +4475,9 @@ public class SiteAction extends PagedResourceActionII {
 			} else if (sortBy.equals(SortType.PUBLISHED_ASC.toString())) {
 				sortType = sortAsc ? SortType.PUBLISHED_ASC
 						: SortType.PUBLISHED_DESC;
+			} else if (sortBy.equals(SortType.ID_ASC.toString())){
+				sortType = sortAsc ? SortType.ID_ASC
+						: SortType.ID_DESC;
 			}
 			
 			String term = (String) state.getAttribute(STATE_TERM_VIEW_SELECTED);
