@@ -6777,7 +6777,9 @@ private Map<String,List> getTools(SessionState state, String type, Site site) {
 		// get the request email from configuration
 		String requestEmail = getSetupRequestEmailAddress();
 		User currentUser = UserDirectoryService.getCurrentUser();
-		if (requestEmail != null && currentUser != null) {
+		// read from configuration whether to send out site notification emails, which defaults to be true
+		boolean sendSiteNotificationChoice = ServerConfigurationService.getBoolean("site.setup.creation.notification", true);
+		if (requestEmail != null && currentUser != null && sendSiteNotificationChoice) {
 			userNotificationProvider.notifySiteCreation(site, notifySites, courseSite, term_name, requestEmail);
 		} // if
 
